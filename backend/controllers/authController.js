@@ -270,7 +270,7 @@ class AuthController {
     // POST /usuarios - Criar novo usuário (apenas admin)
     static async criarUsuario(req, res) {
         try {
-            const { nome, email, senha, tipo } = req.body;
+            const { nome, cpf, email, telefone, cep, senha, tipo } = req.body;
             
             // Validações básicas
             if (!nome || nome.trim() === '') {
@@ -281,12 +281,36 @@ class AuthController {
                 });
             }
 
+            if(!cpf || cpf.trim() === ''){
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'CPF obrigatório',
+                    mensagem: 'O CPF é obrigatório'
+                });
+            }
+
             if (!email || email.trim() === '') {
                 return res.status(400).json({
                     sucesso: false,
                     erro: 'Email obrigatório',
                     mensagem: 'O email é obrigatório'
                 });
+            }
+
+            if (!telefone || telefone === ''){
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'telefone obrigatório',
+                    mensagem: 'O telefone é obrigatório'
+                })
+            }
+
+            if (!cep || cep === ''){
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'CEP obrigatório',
+                    mesnagem: 'O CEP é obrigatório'
+                })
             }
 
             if (!senha || senha.trim() === '') {
@@ -314,6 +338,24 @@ class AuthController {
                 });
             }
 
+            if (cpf.length != 14){
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'Caracteres CPF inválido',
+                    mensagem: 'Número de caractéres inválido'
+                })
+            }
+
+            const cpfRegex = /^\d{3}\.\d{3}\.\d{3}\-\d{2}$/;
+
+            if (!cpfRegex.test(cpf)) {
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'Formato CPF inválido',
+                    mensagem: 'Formato de cpf incorreto'
+                })
+            }
+            
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 return res.status(400).json({
@@ -321,6 +363,42 @@ class AuthController {
                     erro: 'Email inválido',
                     mensagem: 'Formato de email inválido'
                 });
+            }
+
+            if(telefone.length != 15){
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'caracteres telefone inválidos',
+                    mensagem: 'Número de caractéres do telefone inválido'
+                })
+            }
+
+            const telRegex = /^\(?[1-9]{2}\)?\s?[9]?[0-9]{4}-?[0-9]{4}$/;
+
+            if (!telRegex.test(telefone)) {
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'telefone inválido',
+                    mensagem: 'formato de telefone inválido'
+                })
+            }
+
+            if(cep.length != 9){
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'caracteres cep inválidos',
+                    mensagem: 'Número de caractéres do CEP inválidos'
+                })
+            }
+
+            const cepRegex = /^\d{5}-\d{3}$/;
+
+            if(!cepRegex.test(cep)){
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'CEP inválido',
+                    mensagem: 'Formatação de CEP incorreta'
+                })
             }
 
             if (senha.length < 6) {
@@ -331,9 +409,9 @@ class AuthController {
                 });
             }
 
-            // Verificar se o email já existe
-            const usuarioExistente = await UsuarioModel.buscarPorEmail(email);
-            if (usuarioExistente) {
+            // Verificar se dados únicos já existem
+            const usuarioEmailExistente = await UsuarioModel.buscarPorEmail(email);
+            if (usuarioEmailExistente) {
                 return res.status(409).json({
                     sucesso: false,
                     erro: 'Email já cadastrado',
@@ -341,10 +419,31 @@ class AuthController {
                 });
             }
 
+            const usuarioCpfExistente = await UsuarioModel.buscarPorCpf(cpf);
+            if (usuarioCpfExistente) {
+                return res.status(409).json({
+                    sucesso: false,
+                    erro: 'CPF já cadastrado',
+                    mensagem: 'Este cpf já está sendo usado por outro usuário'
+                });
+            }
+
+            const usuarioTelefoneExistente = await UsuarioModel.buscarPorTelefone(telefone);
+            if (usuarioTelefoneExistente) {
+                return res.status(409).json({
+                    sucesso: false,
+                    erro: 'Telefone já cadastrado',
+                    mensagem: 'Este telefone já está sendo usado por outro usuário'
+                });
+            }
+
             // Preparar dados do usuário
             const dadosUsuario = {
                 nome: nome.trim(),
+                cpf: cpf.trim(),
                 email: email.trim().toLowerCase(),
+                telefone: telefone.trim(),
+                cep: cep.trim(),
                 senha: senha,
                 tipo: tipo || 'comum'
             };
@@ -358,7 +457,10 @@ class AuthController {
                 dados: {
                     id: usuarioId,
                     nome: dadosUsuario.nome,
+                    cpf: dadosUsuario.cpf,
                     email: dadosUsuario.email,
+                    telefone: dadosUsuario.telefone,
+                    cep: dadosUsuario.cep,
                     tipo: dadosUsuario.tipo
                 }
             });
@@ -376,7 +478,7 @@ class AuthController {
     static async atualizarUsuario(req, res) {
         try {
             const { id } = req.params;
-            const { nome, email, senha, tipo } = req.body;
+            const { nome, cpf, email, telefone, cep, senha, tipo } = req.body;
             
             // Validação do ID
             if (!id || isNaN(id)) {
@@ -416,6 +518,36 @@ class AuthController {
                     });
                 }
                 dadosAtualizacao.nome = nome.trim();
+            }
+
+            if(cpf != undefined){
+                if (cpf.length != 14){
+                    return res.status(400).json({
+                        sucesso: false,
+                        erro: 'Caracteres CPF inválido',
+                        mensagem: 'Número de caractéres inválido'
+                    })
+                }
+
+                const cpfRegex = /^\d{3}\.\d{3}\.\d{3}\-\d{2}$/;
+
+                if (!cpfRegex.test(cpf)) {
+                        return res.status(400).json({
+                            sucesso: false,
+                            erro: 'Formato CPF inválido',
+                            mensagem: 'Formato de cpf incorreto'
+                        })
+                }
+
+                const usuarioCpfExistente = await UsuarioModel.buscarPorCpf(cpf);
+                if (usuarioCpfExistente) {
+                    return res.status(409).json({
+                        sucesso: false,
+                        erro: 'CPF já cadastrado',
+                        mensagem: 'Este cpf já está sendo usado por outro usuário'
+                    });
+                }
+                dadosAtualizacao.cpf = cpf.trim();
             }
 
             if (email !== undefined) {

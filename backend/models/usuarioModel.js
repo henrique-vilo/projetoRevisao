@@ -55,6 +55,28 @@ class UsuarioModel {
         }
     }
 
+    // Buscar usuário por cpf
+    static async buscarPorCpf(cpf) {
+        try {
+            const rows = await read('usuarios', `cpf = '${cpf}'`);
+            return rows[0] || null;
+        } catch (error) {
+            console.error('Erro ao buscar usuário por cpf:', error);
+            throw error;
+        }
+    }
+
+    // Buscar usuário por telefone
+    static async buscarPorTelefone(telefone) {
+        try {
+            const rows = await read('usuarios', `telefone = '${telefone}'`);
+            return rows[0] || null;
+        } catch (error) {
+            console.error('Erro ao buscar usuário por telefone:', error);
+            throw error;
+        }
+    }
+
     // Criar novo usuário
     static async criar(dadosUsuario) {
         try {
