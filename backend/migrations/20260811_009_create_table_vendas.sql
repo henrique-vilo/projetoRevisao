@@ -4,10 +4,10 @@ CREATE TABLE vendas(
 idVendas INT AUTO_INCREMENT PRIMARY KEY,
 idUsuario INT NOT NULL,
 idProduto INT NOT NULL,
-dataPedido DATE NOT NULL,
-dataEntrega DATE NOT NULL,
+dataPedido DATE NULL,
+dataEntrega DATE NULL,
 
-STATUS ENUM('carrino', 'pendente', 'processando', 'enviado', 'entregue', 'cancelado') NOT NULL DEFAULT 'pendente',
+STATUS ENUM('carrinho', 'pendente', 'processando', 'enviado', 'entregue', 'cancelado') NOT NULL DEFAULT 'pendente',
 
 CONSTRAINT fkVendasUsuarios
 FOREIGN KEY (idUsuario)
