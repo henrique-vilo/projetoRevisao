@@ -1,0 +1,12 @@
+USE Everett;
+
+CREATE TABLE usuarios(
+idUsuario INT AUTO_INCREMENT PRIMARY KEY,
+nome VARCHAR(255) NOT NULL,
+email VARCHAR(255) NOT NULL,
+cep VARCHAR(9) NOT NULL,
+cpf VARCHAR(14) NOT NULL,
+tipo ENUM('cliente', 'admin') DEFAULT 'cliente' NOT NULL,
+telefone VARCHAR(15) NOT NULL,
+senha VARCHAR(255) NOT NULL
+);

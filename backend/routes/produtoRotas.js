@@ -1,74 +1,38 @@
 import express from 'express';
 import ProdutoController from '../controllers/produtoController.js';
-import { authMiddleware, adminMiddleware, selfMiddleware } from '../middlewares/authMiddleware.js';
+import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
+import { upload } from '../middlewares/uploadMiddleware.js'; 
 
 const router = express.Router();
 
-// Rotas públicas
-router.get('/', authMiddleware, ProdutoController.listarTodos);
-router.get('/:id', authMiddleware, ProdutoController.buscarPorId);
-router.get('/:nome', authMiddleware, ProdutoController.buscarPorNome);
-router.get('/:categoria', authMiddleware, ProdutoController.buscarPorCategoria);
-router.get('/:categoria/:nome', authMiddleware, ProdutoController.buscarPorCategoria);
-router.get('/:categoria/:subcategoria', authMiddleware, ProdutoController.buscaPorSubcategoria);
-router.get('/:categoria/:subcategoria/:nome', authMiddleware, ProdutoController.buscaPorSubcategoria);
+// Configuração para múltiplos arquivos de imagens do produto
+const cpUpload = upload.fields([
+    { name: 'imagem1', maxCount: 1 },
+    { name: 'imagem2', maxCount: 1 },
+    { name: 'imagem3', maxCount: 1 },
+    { name: 'imagem4', maxCount: 1 }
+]);
 
-router.get('/:', authMiddleware, ProdutoController.buscarPorId);
+// ------------------------------------------
+// Rotas Públicas (Naves/Filtro sem exigência de Login)
+// Exemplo: GET /produtos?idCategoria=1&idCor=2&precoMin=50&busca=camisa
+// ------------------------------------------
+router.get('/', ProdutoController.listarOuFiltrar);
+router.get('/:id', ProdutoController.buscarPorId);
 
-
-// Rotas protegidas por admin
-router.post('/', authMiddleware, adminMiddleware, ProdutoController.criar);
-router.put('/:id', authMiddleware, adminMiddleware, ProdutoController.atualizar);
+// ------------------------------------------
+// Rotas de Administração (Protegidas)
+// ------------------------------------------
+router.post('/', authMiddleware, adminMiddleware, cpUpload, ProdutoController.criar);
+router.put('/:id', authMiddleware, adminMiddleware, cpUpload, ProdutoController.atualizar);
 router.delete('/:id', authMiddleware, adminMiddleware, ProdutoController.excluir);
 
-// ==========================================
-// Rotas OPTIONS para CORS (preflight requests)
-// ==========================================
-
-// Rota: /login
-router.options('/login', (req, res) => {
+// ------------------------------------------
+// CORS Preflight Handler para a Rota de Produtos
+// ------------------------------------------
+router.options('*', (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type');
-    res.sendStatus(200);
-});
-
-// Rota: /registrar
-router.options('/registrar', (req, res) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type');
-    res.sendStatus(200);
-});
-
-// Rota: /perfil (Baseada no GET /perfil)
-router.options('/perfil', (req, res) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.sendStatus(200);
-});
-
-// Rota: /perfil/:id (Baseada no PUT e DELETE /perfil/:id)
-router.options('/perfil/:id', (req, res) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.sendStatus(200);
-});
-
-// Rota: / raiz (Baseada no GET e POST /)
-router.options('/', (req, res) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.sendStatus(200);
-});
-
-// Rota: /:id (Baseada no PUT e DELETE /:id)
-router.options('/:id', (req, res) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.sendStatus(200);
 });
