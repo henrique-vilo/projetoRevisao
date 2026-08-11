@@ -90,7 +90,7 @@ async function comparePassword(password, hash) {
 
 async function hashPassword(password) {
     try {
-        return await bcrypt.hash(password, 10);
+        return await bcrypt.hash(password, 12);
     } catch (error) {
         console.error('Erro ao gerar hash da senha:', error);
         throw error;
