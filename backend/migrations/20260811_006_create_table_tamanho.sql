@@ -1,0 +1,6 @@
+USE Everett;
+
+CREATE TABLE tamanho(
+idTamanho INT AUTO_INCREMENT PRIMARY KEY,
+codigoTamanho VARCHAR(100) NOT NULL
+);
