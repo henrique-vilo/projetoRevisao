@@ -52,7 +52,7 @@ class ProdutoController {
             // Trata upload de arquivos (req.files do multer para múltiplos arquivos)
             const imagens = req.files || {};
             if (!imagens.imagem1 || !imagens.imagem1[0]) {
-                return res.status(400).json({ sucesso: false, erro: 'A imagem1 principal é obrigatória' });
+                return res.status(400).json({ sucesso: false, erro: 'A imagem principal é obrigatória' });
             }
 
             const dadosProduto = {

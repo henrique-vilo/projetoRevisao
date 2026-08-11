@@ -27,16 +27,6 @@ class AuthController {
                 });
             }
 
-            // Validação básica de formato de email
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                return res.status(400).json({
-                    sucesso: false,
-                    erro: 'Email inválido',
-                    mensagem: 'Formato de email inválido'
-                });
-            }
-
             // Verificar credenciais
             const usuario = await UsuarioModel.verificarCredenciais(email.trim(), senha);
             
@@ -128,7 +118,7 @@ class AuthController {
                 })
             }
 
-            if (!senha || senha.trim() === '') {
+            if (!senha || senha === '') {
                 return res.status(400).json({
                     sucesso: false,
                     erro: 'Senha obrigatória',
@@ -259,7 +249,7 @@ class AuthController {
                 email: email.trim().toLowerCase(),
                 telefone: telefone.trim(),
                 cep: cep.trim(),
-                senha: senha,
+                senha: senha.toString().trim(),
                 tipo: tipo || 'comum'
             };
 
@@ -415,7 +405,7 @@ class AuthController {
                 })
             }
 
-            if (!senha || senha.trim() === '') {
+            if (!senha || senha === '') {
                 return res.status(400).json({
                     sucesso: false,
                     erro: 'Senha obrigatória',
