@@ -1,19 +1,25 @@
 import express from 'express';
-import AuthController from '../controllers/AuthController.js';
+import ProdutoController from '../controllers/produtoController.js';
 import { authMiddleware, adminMiddleware, selfMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// Rotas púnlicas
-router.get('/perfil', authMiddleware, AuthController.obterPerfil);
-router.put('/perfil/:id', authMiddleware, selfMiddleware, AuthController.atualizarUsuario);
-router.delete('/perfil/:id', authMiddleware, selfMiddleware, AuthController.excluirUsuario);
+// Rotas públicas
+router.get('/', authMiddleware, ProdutoController.listarTodos);
+router.get('/:id', authMiddleware, ProdutoController.buscarPorId);
+router.get('/:nome', authMiddleware, ProdutoController.buscarPorNome);
+router.get('/:categoria', authMiddleware, ProdutoController.buscarPorCategoria);
+router.get('/:categoria/:nome', authMiddleware, ProdutoController.buscarPorCategoria);
+router.get('/:categoria/:subcategoria', authMiddleware, ProdutoController.buscaPorSubcategoria);
+router.get('/:categoria/:subcategoria/:nome', authMiddleware, ProdutoController.buscaPorSubcategoria);
+
+router.get('/:', authMiddleware, ProdutoController.buscarPorId);
+
 
 // Rotas protegidas por admin
-router.get('/', authMiddleware, adminMiddleware, AuthController.listarUsuarios);
-router.post('/', authMiddleware, adminMiddleware, AuthController.criarUsuario);
-router.put('/:id', authMiddleware, adminMiddleware, AuthController.atualizarUsuario);
-router.delete('/:id', authMiddleware, adminMiddleware, AuthController.excluirUsuario);
+router.post('/', authMiddleware, adminMiddleware, ProdutoController.criar);
+router.put('/:id', authMiddleware, adminMiddleware, ProdutoController.atualizar);
+router.delete('/:id', authMiddleware, adminMiddleware, ProdutoController.excluir);
 
 // ==========================================
 // Rotas OPTIONS para CORS (preflight requests)
