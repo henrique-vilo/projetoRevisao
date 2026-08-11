@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 
 const products = [
@@ -117,54 +119,80 @@ const products = [
 
 export default function Page() {
   return (
-    <div className="p-8 bg-white max-w-7xl mx-auto">
-      <div className="flex flex-wrap gap-x-6 gap-y-10 justify-center">
+    <div className="container py-5 bg-white">
+      <div className="row g-4 justify-content-center">
         {products.map((product) => (
           <div 
             key={product.id} 
-            className="flex flex-col w-64 group cursor-pointer"
+            className="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center"
           >
-            {/* Box de Imagem com Arredondamento */}
-            <div className="relative w-full h-80 bg-gray-100 overflow-hidden mb-4 rounded-xl">
-              {product.imageUrl ? (
-                <Image
-                  src={product.imageUrl}
-                  alt={product.title}
-                  fill
-                  sizes="256px"
-                  className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
-                />
-              ) : (
-                <span className="flex items-center justify-center h-full text-xs text-gray-500">
-                  Foto do Produto
-                </span>
-              )}
-            </div>
-
-            {/* Container de Informações Centralizadas */}
-            <div className="flex flex-col flex-1 text-center px-1">
-              
-              {/* Título com Altura Fixa */}
-              <div className="h-10 flex items-start justify-center">
-                <h3 className="text-sm font-normal text-gray-700 leading-tight line-clamp-2">
-                  {product.title}
-                </h3>
+            <div 
+              className="d-flex flex-column w-100 product-card" 
+              style={{ maxWidth: '256px', cursor: 'pointer' }}
+            >
+              {/* Box de Imagem com Arredondamento */}
+              <div 
+                className="position-relative w-100 bg-light overflow-hidden mb-3 rounded-3" 
+                style={{ height: '320px' }}
+              >
+                {product.imageUrl ? (
+                  <Image
+                    src={product.imageUrl}
+                    alt={product.title}
+                    fill
+                    sizes="256px"
+                    className="object-fit-cover product-image"
+                  />
+                ) : (
+                  <span className="d-flex align-items-center justify-content-center h-100 small text-secondary">
+                    Foto do Produto
+                  </span>
+                )}
               </div>
 
-              {/* Bloco de Preço + Parcelamento COM ESPAÇO */}
-              <div className="mt-4 flex flex-col gap-1">
-                <p className="text-base font-bold text-black">
-                  R$ {product.price}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {product.installments}
-                </p>
-              </div>
+              {/* Container de Informações Centralizadas */}
+              <div className="d-flex flex-column flex-grow-1 text-center px-1">
+                
+                {/* Título com Altura Fixa */}
+                <div 
+                  className="d-flex align-items-start justify-content-center" 
+                  style={{ height: '2.5rem' }}
+                >
+                  <h3 className="fs-6 fw-normal text-secondary lh-sm m-0 product-title">
+                    {product.title}
+                  </h3>
+                </div>
 
+                {/* Bloco de Preço + Parcelamento */}
+                <div className="mt-3 d-flex flex-column gap-1">
+                  <p className="fs-6 fw-bold text-dark mb-0">
+                    R$ {product.price}
+                  </p>
+                  <p className="small text-secondary mb-0">
+                    {product.installments}
+                  </p>
+                </div>
+
+              </div>
             </div>
           </div>
         ))}
       </div>
+
+      <style jsx>{`
+        .product-image {
+          transition: transform 0.5s ease-in-out;
+        }
+        .product-card:hover .product-image {
+          transform: scale(1.1);
+        }
+        .product-title {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
     </div>
   );
 }

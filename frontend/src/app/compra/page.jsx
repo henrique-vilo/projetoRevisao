@@ -26,81 +26,88 @@ export default function ProductPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans">
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-vh-100 bg-white text-dark">
+      <div className="container py-4 py-md-5" style={{ maxWidth: '1200px' }}>
         
         {/* Navegação Breadcrumbs */}
-        <nav className="text-xs text-gray-500 mb-6 uppercase tracking-wider">
-          <span className="cursor-pointer hover:text-black transition-colors">Início</span> 
+        <nav className="small text-muted text-uppercase mb-4">
+          <span className="cursor-pointer text-hover-dark">Início</span> 
           <span className="mx-2">/</span> 
-          <span className="cursor-pointer hover:text-black transition-colors">Masculino</span> 
+          <span className="cursor-pointer text-hover-dark">Masculino</span> 
           <span className="mx-2">/</span> 
-          <span className="cursor-pointer hover:text-black transition-colors">Casacos e Jaquetas</span> 
+          <span className="cursor-pointer text-hover-dark">Casacos e Jaquetas</span> 
           <span className="mx-2">/</span> 
-          <span className="font-semibold text-black">{product.title}</span>
+          <span className="fw-semibold text-dark">{product.title}</span>
         </nav>
 
         {/* Container Principal: Grid dividindo Imagem e Detalhes */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
+        <div className="row g-4 g-lg-5 align-items-start">
           
-          {/* Coluna da Imagem (Sticky para acompanhar o scroll) */}
-          <div className="w-full lg:sticky lg:top-8">
-            <div className="relative w-full aspect-[3/4] bg-gray-100 rounded-sm overflow-hidden">
+          {/* Coluna da Imagem (Sticky no desktop) */}
+          <div className="col-12 col-lg-6 sticky-lg-top" style={{ top: '2rem' }}>
+            <div 
+              className="position-relative w-100 bg-light rounded-1 overflow-hidden"
+              style={{ aspectRatio: '3/4' }}
+            >
               <Image
                 src={product.imageUrl}
                 alt={product.title}
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover object-top hover:scale-105 transition-transform duration-700 ease-in-out"
+                className="object-fit-cover object-position-top product-image"
                 priority
               />
             </div>
           </div>
 
-          {/* Coluna de Informações do Produto (Alinhada ao topo) */}
-          <div className="w-full flex flex-col pt-2 lg:pt-0">
+          {/* Coluna de Informações do Produto */}
+          <div className="col-12 col-lg-6 d-flex flex-column pt-2 pt-lg-0">
             
             {/* Título e Ref */}
-            <h1 className="text-2xl lg:text-3xl font-medium text-black mb-2 uppercase leading-snug">
+            <h1 className="fs-3 fs-lg-2 fw-medium text-dark mb-2 text-uppercase lh-sm">
               {product.title}
             </h1>
-            <p className="text-xs text-gray-400 mb-6">Ref: {product.id}</p>
+            <p className="small text-muted mb-4">Ref: {product.id}</p>
             
             {/* Preço e Parcelamento */}
-            <div className="mb-8">
-              <p className="text-3xl lg:text-4xl font-bold text-black mb-1">
+            <div className="mb-4">
+              <p className="fs-2 fw-bold text-dark mb-1">
                 R$ {product.price}
               </p>
-              <p className="text-sm text-gray-600">
-                ou <span className="font-semibold">{product.installments}</span> sem juros no cartão
+              <p className="small text-secondary mb-0">
+                ou <span className="fw-semibold">{product.installments}</span> sem juros no cartão
               </p>
             </div>
 
             {/* Linha Divisória */}
-            <hr className="border-gray-200 mb-8" />
+            <hr className="text-secondary opacity-25 mb-4" />
 
             {/* Seleção de Tamanho */}
             <div>
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-sm font-semibold text-black uppercase tracking-wider">
-                  Tamanho: <span className="font-normal text-gray-500">{selectedSize || 'Selecione'}</span>
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <span className="small fw-bold text-dark text-uppercase">
+                  Tamanho: <span className="fw-normal text-muted">{selectedSize || 'Selecione'}</span>
                 </span>
-                <button className="text-xs text-black underline hover:text-gray-600 transition-colors">
+                <button 
+                  type="button"
+                  className="btn btn-link p-0 text-dark small text-decoration-underline shadow-none"
+                >
                   Guia de Medidas
                 </button>
               </div>
               
-              <div className="flex flex-wrap gap-2 mb-6">
+              <div className="d-flex flex-wrap gap-2 mb-4">
                 {product.sizes.map((size) => (
                   <button
                     key={size}
+                    type="button"
                     onClick={() => setSelectedSize(size)}
-                    // Adicionado 'rounded-full' nas classes abaixo para deixá-los redondos
-                    className={`w-12 h-12 rounded-full flex items-center justify-center border text-sm font-medium transition-all duration-200 ${
+                    className={`btn rounded-circle d-flex align-items-center justify-content-center p-0 fw-medium transition-all ${
                       selectedSize === size 
-                        ? 'border-black bg-black text-white' 
-                        : 'border-gray-300 text-gray-700 hover:border-black'
+                        ? 'btn-dark' 
+                        : 'btn-outline-secondary text-dark'
                     }`}
+                    style={{ width: '48px', height: '48px' }}
                   >
                     {size}
                   </button>
@@ -110,18 +117,19 @@ export default function ProductPage() {
 
             {/* Botão de Compra */}
             <button 
+              type="button"
               onClick={handleBuy}
-              className="w-full py-4 bg-[#008542] hover:bg-[#006e36] text-white rounded-sm font-bold text-sm uppercase tracking-widest transition-colors mb-8 shadow-sm"
+              className="btn btn-buy text-white w-100 py-3 fw-bold small text-uppercase shadow-sm mb-4"
             >
               Adicionar ao carrinho
             </button>
 
-            {/* Descrição do Produto em Accordion/Bloco */}
-            <div className="border-t border-gray-200 pt-6 mt-2">
-              <h3 className="text-sm font-semibold text-black mb-4 uppercase tracking-wider">
+            {/* Descrição do Produto */}
+            <div className="border-top pt-4 mt-2">
+              <h3 className="fs-6 fw-bold text-dark mb-3 text-uppercase">
                 Descrição do Produto
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="small text-secondary lh-base mb-0">
                 {product.description}
               </p>
             </div>
@@ -129,6 +137,28 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
+
+      {/* Regras específicas de estilo que não existem como utilitários nativos no Bootstrap */}
+      <style jsx>{`
+        .product-image {
+          transition: transform 0.7s ease-in-out;
+        }
+        .product-image:hover {
+          transform: scale(1.05);
+        }
+        .text-hover-dark:hover {
+          color: #000 !important;
+          cursor: pointer;
+        }
+        .btn-buy {
+          background-color: #008542;
+          letter-spacing: 0.1em;
+          border: none;
+        }
+        .btn-buy:hover {
+          background-color: #006e36;
+        }
+      `}</style>
     </div>
   );
 }
