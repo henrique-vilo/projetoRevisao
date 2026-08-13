@@ -1,195 +1,127 @@
 import "./Header.css";
 
-
 export default function Header() {
   return (
-    <>
-      <nav className="navbar navbar-expand-lg navbar-custom">
+    <nav className="navbar navbar-expand-lg navbar-custom">
 
-<<<<<<< HEAD
-        {/* Neve */}
-        <div className="snow">
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-=======
-    return(
-        <>
- <nav className="navbar navbar-expand-lg navbar-custom">
-    <div className="snow">
-  <span></span>
-  <span></span>
-  <span></span>
-  <span></span>
-  <span></span>
-  <span></span>
-  <span></span>
-  <span></span> 
-  <span></span>
-  <span></span>
-  <span></span>
-  <span></span>
-</div>
-  <div className="container-fluid">
+      {/* Neve */}
+      <div className="snow">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
 
-    {/* Logo */}
-    <a className="navbar-brand" href="#">
-      <img
-        src="/everettlogo.png"
-        alt="Everett"
-        width={85}
-        height={70}
-      />
-    </a>
+      <div className="container-fluid">
 
-    <button
-      className="navbar-toggler"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#navbarSupportedContent"
-      aria-controls="navbarSupportedContent"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
-      <span className="navbar-toggler-icon" />
-    </button>
-
-    <div className="collapse navbar-collapse" id="navbarSupportedContent">
-
-      {/* Menu */}
-      <ul className="navbar-nav">
-        <li className="nav-item">
-          <a className="nav-link active" href="#">
-            Novidades
-          </a>
-        </li>
-
-        <li className="nav-item">
-          <a className="nav-link" href="#">
-            Masculino
-          </a>
-        </li>
-
-        <li className="nav-item">
-          <a className="nav-link" href="#">
-            Feminino
-          </a>
-        </li>
-
-      </ul>
-
-      {/* Barra de pesquisa */}
-      <form className="search-form mx-auto" role="search">
-        <div className="search-box">
-          <i className="bi bi-search search-icon"></i>
-
-          <input
-            className="form-control search-input"
-            type="search"
-            placeholder="Buscar"
+        {/* Logo */}
+        <a className="navbar-brand" href="#">
+          <img
+            src="/everettlogo.png"
+            alt="Everett"
+            width={85}
+            height={70}
           />
->>>>>>> a7fc7656e7d33021938f263ffb24c9b0df8cf3c2
-        </div>
+        </a>
 
-        <div className="container-fluid">
+        {/* Botão do menu mobile */}
+        <button
+          className="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
 
-          {/* Logo */}
-          <a className="navbar-brand" href="#">
-            <img
-              src="/everettlogo.png"
-              alt="Everett"
-              width={85}
-              height={70}
-            />
-          </a>
+        <div
+          className="collapse navbar-collapse"
+          id="navbarSupportedContent"
+        >
 
-          {/* Botão do menu mobile */}
-          <button
-            className="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent"
-            aria-expanded="false"
-            aria-label="Toggle navigation"
-          >
-            <span className="navbar-toggler-icon"></span>
-          </button>
+          {/* Menu */}
+          <ul className="navbar-nav">
 
-          <div
-            className="collapse navbar-collapse"
-            id="navbarSupportedContent"
-          >
+            <li className="nav-item">
+              <a className="nav-link active" href="#">
+                Novidades
+              </a>
+            </li>
 
-            {/* Menu */}
-            <ul className="navbar-nav">
+            <li className="nav-item">
+              <a className="nav-link" href="#">
+                Masculino
+              </a>
+            </li>
 
-              <li className="nav-item">
-                <a className="nav-link active" href="#">
-                  Novidades
-                </a>
-              </li>
+            <li className="nav-item">
+              <a className="nav-link" href="#">
+                Feminino
+              </a>
+            </li>
 
-              <li className="nav-item">
-                <a className="nav-link" href="#">
-                  Masculino
-                </a>
-              </li>
+          </ul>
 
-              <li className="nav-item">
-                <a className="nav-link" href="#">
-                  Feminino
-                </a>
-              </li>
+          {/* Barra de pesquisa */}
+          <form className="search-form mx-auto" role="search">
+            <div className="search-box">
 
-            </ul>
+              <i className="bi bi-search search-icon"></i>
 
-            {/* Barra de pesquisa */}
-            <form className="search-form mx-auto" role="search">
-              <div className="search-box">
+              <input
+                className="form-control search-input"
+                type="search"
+                placeholder="Buscar"
+              />
 
-                <i className="bi bi-search search-icon"></i>
+            </div>
+          </form>
 
-                <input
-                  className="form-control search-input"
-                  type="search"
-                  placeholder="Buscar"
-                />
+          {/* Ações do Header */}
+          <div className="header-actions">
 
-              </div>
-            </form>
+            {/* Perfil */}
+            <a
+              href="#"
+              className="header-action"
+              title="Perfil"
+            >
+              <i className="bi bi-person-fill"></i>
+            </a>
 
-          
-<div className="header-actions">
-  <a href="#" className="header-action" title="Localização">
-    <i className="bi bi-person-fill"></i>
-  </a>
+            {/* Carrinho */}
+            <a
+              href="#"
+              className="header-action"
+              title="Carrinho"
+            >
+              <i className="bi bi-cart"></i>
+            </a>
 
-  <a href="#" className="header-action" title="Perfil">
-    <i className="bi bi-cart"></i>
-  </a>
-
-  <a href="#" className="header-action cart-button" title="Carrinho">
-   
-    <i className="bi bi-geo-alt-fill"></i>
-  </a>
-</div>
-
-
-
+            {/* Localização */}
+            <a
+              href="#"
+              className="header-action"
+              title="Localização"
+            >
+              <i className="bi bi-geo-alt-fill"></i>
+            </a>
 
           </div>
+
         </div>
-      </nav>
-    </>
+      </div>
+    </nav>
   );
 }
