@@ -8,7 +8,6 @@ INSERT INTO subcategoias (nomeSubcategoria) VALUES
 ('Vestidos'),
 ('Bermudas e Shorts'),
 ('Bonés e Chapéus'),
-('Biquínis e Maiôs'),
 ('Moletons'),
 ('Saias'),
 ('Camisas Sociais'),
