@@ -8,11 +8,18 @@ import { fileURLToPath } from 'url';
 
 //importar rotas
 import authRotas from './routes/authRotas.js';
+import produtoRotas from './routes/produtoRotas.js';
+import categoriaRotas from './routes/categoriaRotas.js';
+import subcategoriaRotas from './routes/subcategoriaRotas.js';
+import corRotas from './routes/corRotas.js';
+import tamanhoRotas from './routes/tamanhoRotas.js';
+import modeloRotas from './routes/modeloRotas.js';
 
 //importar middlewares
+import { logMiddleware } from './middlewares/logMiddleware.js';
+import { errorMiddleware } from './middlewares/errorMiddleware.js';
 
 //carregar .env
-
 dotenv.config();
 
 const app = express();
@@ -23,7 +30,9 @@ const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 3000;
 
 //middlewares globais
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 
 // Configuração CORS global
 app.use(cors({
@@ -41,19 +50,32 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 //middleare de log
+app.use(logMiddleware);
+
 
 //rotas api use 
 app.use('/api/auth', authRotas);
+app.use('/api/produtos', produtoRotas);
+app.use('/api/categorias', categoriaRotas);
+app.use('/api/subcategorias', subcategoriaRotas);
+app.use('/api/cores', corRotas);
+app.use('/api/tamanhos', tamanhoRotas);
+app.use('/api/modelos', modeloRotas);
 
 //rota raiz
-
 app.get('/', (req, res) => {
     res.json({
         sucesso: true,
         mensagem: 'API de gestão para loja de roupas',
         versao: '0.0.1',
         rotas: {
-            autenticacao: '/api/auth'
+            autenticacao: '/api/auth',
+            produtos: '/api/produtos',
+            categorias: '/api/categorias',
+            subcategorias: '/api/subcategorias',
+            cores: '/api/cores',
+            tamanhos: '/api/tamanhos',
+            modelos: '/api/modelos'
         },
         documentacao: {
             login: 'POST /api/auth/login',
@@ -72,9 +94,9 @@ app.use('*', (req, res) => {
 })
 
 //middleware de erro
+app.use(errorMiddleware);
 
 //iniciar servidor
-
 app.listen(PORT, () => {
     console.log(`acesse http://localhost:${PORT}`);
     console.log('API de gestão para loja de roupas')

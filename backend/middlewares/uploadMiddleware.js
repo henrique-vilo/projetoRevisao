@@ -41,20 +41,6 @@ const storageImagens = multer.diskStorage({
     }
 });
 
-// Configuração do multer para upload de outros arquivos
-const storageArquivos = multer.diskStorage({
-    destination: (req, file, cb) => {
-        // Verificar se pasta existe, criar se não existir
-        if (!fs.existsSync(uploadPathArquivos)) {
-            fs.mkdirSync(uploadPathArquivos, { recursive: true });
-        }
-        cb(null, uploadPathArquivos);
-    },
-    filename: (req, file, cb) => {
-        const nomeArquivo = gerarNomeUnico(file.originalname);
-        cb(null, nomeArquivo);
-    }
-});
 
 // Verificar se é imagem
 const isImage = (mimetype) => {
@@ -74,31 +60,17 @@ const fileFilterImagens = (req, file, cb) => {
     }
 };
 
-// Filtro genérico para outros arquivos (pode ser expandido)
-const fileFilterArquivos = (req, file, cb) => {
-    // Por padrão, aceitar qualquer tipo de arquivo para uploads genéricos
-    cb(null, true);
-};
 
 // Obter tamanho máximo do arquivo
 const maxFileSize = parseInt(process.env.MAX_FILE_SIZE) || 5242880; // 5MB por padrão
 
 // Upload para imagens
-const uploadImagens = multer({
+const upload = multer({
     storage: storageImagens,
     limits: {
         fileSize: maxFileSize
     },
     fileFilter: fileFilterImagens
-});
-
-// Upload para outros arquivos
-const uploadArquivos = multer({
-    storage: storageArquivos,
-    limits: {
-        fileSize: maxFileSize * 2 // 10MB para arquivos não-imagem
-    },
-    fileFilter: fileFilterArquivos
 });
 
 // Middleware para tratamento de erros do multer
@@ -158,4 +130,4 @@ export const removerArquivoAntigo = async (nomeArquivo, tipo = 'imagem') => {
     }
 };
 
-export { uploadImagens, uploadArquivos, handleUploadError };
+export { upload, handleUploadError };

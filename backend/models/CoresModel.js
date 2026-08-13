@@ -7,11 +7,11 @@ class CoresModel {
         try {
             const connection = await getConnection();
             try {
-                const sql = 'SELECT * FROM cor ORDER BY idCor DESC LIMIT ? OFFSET ?';
+                const sql = 'SELECT * FROM cores ORDER BY idCor DESC LIMIT ? OFFSET ?';
 
                 const [cores] = await connection.query(sql, [limite, offset]);
 
-                const [totalResult] = await connection.execute('SELECT COUNT(*) as total FROM cor');
+                const [totalResult] = await connection.execute('SELECT COUNT(*) as total FROM cores');
                 const total = totalResult[0].total;
 
                 const paginaAtual = (offset / limite) + 1;
@@ -33,53 +33,53 @@ class CoresModel {
         }
     }
 
-    // Buscar cor por ID
+    // Buscar cores por ID
     static async buscarPorId(id) {
         try {
-            const rows = await read('cor', `idCor = ${id}`);
+            const rows = await read('cores', `idCor = ${id}`);
             return rows[0] || null;
         } catch (error) {
-            console.error('Erro ao buscar cor por ID:', error);
+            console.error('Erro ao buscar cores por ID:', error);
             throw error;
         }
     }
 
-    // Criar nova cor
+    // Criar nova cores
     static async criar(dadosCor) {
         try {
-            return await create('cor', dadosCor);
+            return await create('cores', dadosCor);
         } catch (error) {
-            console.error('Erro ao criar cor:', error);
+            console.error('Erro ao criar cores:', error);
             throw error;
         }
     }
 
-    // Atualizar cor
+    // Atualizar cores
     static async atualizar(id, dadosCor) {
         try {
-            return await update('cor', dadosCor, `idCor = ${id}`);
+            return await update('cores', dadosCor, `idCor = ${id}`);
         } catch (error) {
-            console.error('Erro ao atualizar cor:', error);
+            console.error('Erro ao atualizar cores:', error);
             throw error;
         }
     }
 
-    // Excluir cor
+    // Excluir cores
     static async excluir(id) {
         try {
-            return await deleteRecord('cor', `idCor = ${id}`);
+            return await deleteRecord('cores', `idCor = ${id}`);
         } catch (error) {
-            console.error('Erro ao excluir cor:', error);
+            console.error('Erro ao excluir cores:', error);
             throw error;
         }
     }
 
-    // Buscar cor por nome
+    // Buscar cores por nome
     static async buscarPorNome(nomeCor) {
         try {
-            return await read('cor', `nomeCor = '${nomeCor}'`);
+            return await read('cores', `nomeCor = '${nomeCor}'`);
         } catch (error) {
-            console.error('Erro ao buscar cor por nome:', error);
+            console.error('Erro ao buscar cores por nome:', error);
             throw error;
         }
     }

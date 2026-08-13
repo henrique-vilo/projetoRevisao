@@ -1,6 +1,6 @@
-import SubcategoriaModel from '../models/SubcategoriaModel.js';
+import subModel from '../models/subModel.js';
 
-class SubcategoriaController {
+class SubController {
 
     // GET /subcategorias - Listar todas as subcategorias (com paginação)
     static async listarTodos(req, res) {
@@ -21,7 +21,7 @@ class SubcategoriaController {
             }
 
             const offset = (pagina - 1) * limite;
-            const resultado = await SubcategoriaModel.listarTodos(limite, offset);
+            const resultado = await subModel.listarTodos(limite, offset);
 
             res.status(200).json({
                 sucesso: true,
@@ -48,7 +48,7 @@ class SubcategoriaController {
                 return res.status(400).json({ sucesso: false, erro: 'ID inválido', mensagem: 'O ID deve ser numérico' });
             }
 
-            const subcategoria = await SubcategoriaModel.buscarPorId(id);
+            const subcategoria = await subModel.buscarPorId(id);
 
             if (!subcategoria) {
                 return res.status(404).json({ sucesso: false, erro: 'Não encontrado', mensagem: `Subcategoria ID ${id} não encontrada` });
@@ -80,7 +80,7 @@ class SubcategoriaController {
                 nomeSubcategoria: nomeSubcategoria.trim()
             };
 
-            const subcategoriaId = await SubcategoriaModel.criar(dadosSubcategoria);
+            const subcategoriaId = await subModel.criar(dadosSubcategoria);
 
             res.status(201).json({
                 sucesso: true,
@@ -103,7 +103,7 @@ class SubcategoriaController {
                 return res.status(400).json({ sucesso: false, erro: 'ID inválido', mensagem: 'O ID deve ser numérico' });
             }
 
-            const subcategoriaExistente = await SubcategoriaModel.buscarPorId(id);
+            const subcategoriaExistente = await subModel.buscarPorId(id);
             if (!subcategoriaExistente) {
                 return res.status(404).json({ sucesso: false, erro: 'Não encontrado', mensagem: `Subcategoria ID ${id} não encontrada` });
             }
@@ -121,7 +121,7 @@ class SubcategoriaController {
                 return res.status(400).json({ sucesso: false, erro: 'Sem alterações', mensagem: 'Nenhum dado válido fornecido para atualização' });
             }
 
-            const resultado = await SubcategoriaModel.atualizar(id, dadosAtualizacao);
+            const resultado = await subModel.atualizar(id, dadosAtualizacao);
 
             res.status(200).json({
                 sucesso: true,
@@ -143,12 +143,12 @@ class SubcategoriaController {
                 return res.status(400).json({ sucesso: false, erro: 'ID inválido', mensagem: 'O ID deve ser numérico' });
             }
 
-            const subcategoriaExistente = await SubcategoriaModel.buscarPorId(id);
+            const subcategoriaExistente = await subModel.buscarPorId(id);
             if (!subcategoriaExistente) {
                 return res.status(404).json({ sucesso: false, erro: 'Não encontrado', mensagem: `Subcategoria ID ${id} não encontrada` });
             }
 
-            const resultado = await SubcategoriaModel.excluir(id);
+            const resultado = await subModel.excluir(id);
 
             res.status(200).json({
                 sucesso: true,
@@ -162,4 +162,4 @@ class SubcategoriaController {
     }
 }
 
-export default SubcategoriaController;
+export default SubController;

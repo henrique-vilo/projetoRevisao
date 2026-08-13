@@ -5,8 +5,8 @@ import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.j
 const router = express.Router();
 
 // Rotas públicas / autenticadas
-router.get('/', authMiddleware, CorController.listarTodos);
-router.get('/:id', authMiddleware, CorController.buscarPorId);
+router.get('/',  CorController.listarTodos);
+router.get('/:id',  CorController.buscarPorId);
 
 // Rotas protegidas por admin
 router.post('/', authMiddleware, adminMiddleware, CorController.criar);

@@ -1,17 +1,17 @@
 import express from 'express';
-import SubcategoriaController from '../controllers/SubcategoriaController.js';
+import SubController from '../controllers/SubController.js';
 import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 // Rotas públicas / autenticadas
-router.get('/', authMiddleware, SubcategoriaController.listarTodos);
-router.get('/:id', authMiddleware, SubcategoriaController.buscarPorId);
+router.get('/', authMiddleware, SubController.listarTodos);
+router.get('/:id', authMiddleware, SubController.buscarPorId);
 
 // Rotas protegidas por admin
-router.post('/', authMiddleware, adminMiddleware, SubcategoriaController.criar);
-router.put('/:id', authMiddleware, adminMiddleware, SubcategoriaController.atualizar);
-router.delete('/:id', authMiddleware, adminMiddleware, SubcategoriaController.excluir);
+router.post('/', authMiddleware, adminMiddleware, SubController.criar);
+router.put('/:id', authMiddleware, adminMiddleware, SubController.atualizar);
+router.delete('/:id', authMiddleware, adminMiddleware, SubController.excluir);
 
 // ==========================================
 // Rotas OPTIONS para CORS (preflight requests)
