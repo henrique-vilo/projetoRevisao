@@ -1,6 +1,6 @@
 USE Everett;
 
-INSERT INTO tamanho (codigoTamanho) VALUES
+INSERT INTO tamanhos (codigoTamanho) VALUES
 ('PP'),
 ('P'),
 ('M'),

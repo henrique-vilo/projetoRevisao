@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 
-const products = [
+export const products = [
   {
     id: 1,
     title: 'Jaqueta PU Camurçada com Zíper Frontal',

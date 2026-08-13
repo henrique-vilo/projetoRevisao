@@ -1,0 +1,27 @@
+.footer {
+  background-color: #111;
+  color: #fff;
+  margin-top: 0px;
+}
+.footer {
+  background: linear-gradient(
+    90deg,
+    #fcfcfc 10%,
+    #d0dbf0c4 30%,
+    #c6d2ee 80%
+  );
+
+  color: #111;
+}
+
+.footer a {
+  color: #111;
+}
+
+.footer a:hover {
+  color: #353535c7;
+}
+
+.footer hr {
+  border-color: rgba(0, 0, 0, 0.15);
+}

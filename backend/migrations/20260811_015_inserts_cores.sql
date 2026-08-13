@@ -1,6 +1,6 @@
 USE Everett;
 
-INSERT INTO cor (tom, nomeCor, codigoCor) VALUES
+INSERT INTO cores (tom, nomeCor, codigoCor) VALUES
 ('Claro', 'Branco', '#FFFFFF'),
 ('Escuro', 'Preto', '#000000'),
 ('Frio', 'Azul Marinho', '#000080'),

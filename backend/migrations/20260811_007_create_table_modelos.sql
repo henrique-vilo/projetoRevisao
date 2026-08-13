@@ -1,6 +1,6 @@
 USE Everett;
 
-CREATE TABLE modelo(
+CREATE TABLE modelos(
 idModelo INT AUTO_INCREMENT PRIMARY KEY,
 nomeModelo VARCHAR(100) NOT NULL
 );

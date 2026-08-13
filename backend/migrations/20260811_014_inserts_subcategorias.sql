@@ -1,6 +1,6 @@
 USE Everett;
 
-INSERT INTO subcategoias (nomeSubcategoria) VALUES
+INSERT INTO subcategorias (nomeSubcategoria) VALUES
 ('Camisetas'),
 ('Calças Jeans'),
 ('pijamas'),
