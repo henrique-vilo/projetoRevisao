@@ -1,0 +1,668 @@
+:root {
+  --primary-blue: #2563eb;
+  --primary-blue-dark: #1d4ed8;
+  --primary-blue-light: #eff6ff;
+
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+
+  --border: #e8edf3;
+
+  --text-primary: #172033;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+
+  --sidebar-width: 256px;
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+
+  --transition-fast: 180ms ease;
+}
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  z-index: 1030;
+
+  background: var(--surface);
+
+  border-right: 1px solid var(--border);
+
+  color: var(--text-primary);
+
+  box-sizing: border-box;
+}
+
+.sidebar-inner {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 20px 14px;
+
+  box-sizing: border-box;
+}
+
+/* =====================================================
+   BRAND
+===================================================== */
+
+.sidebar-brand {
+  padding: 2px 8px 24px;
+}
+
+.sidebar-brand-link {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 10px;
+
+  color: inherit;
+
+  text-decoration: none;
+}
+
+.sidebar-brand-mark {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background: var(--primary-blue);
+
+  color: #fff;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  box-shadow:
+    0 3px 10px rgba(37, 99, 235, 0.16);
+}
+
+.sidebar-brand-name {
+  color: var(--text-primary);
+
+  font-size: 17px;
+  font-weight: 700;
+
+  letter-spacing: -0.025em;
+}
+
+.sidebar-brand-name span {
+  color: var(--primary-blue);
+}
+
+/* =====================================================
+   NAVIGATION
+===================================================== */
+
+.sidebar-navigation {
+  flex: 1;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    #dce3ec
+    transparent;
+}
+
+.sidebar-section {
+  margin-bottom: 24px;
+}
+
+.sidebar-section-title {
+  display: block;
+
+  padding: 0 10px;
+
+  margin-bottom: 8px;
+
+  color: var(--text-muted);
+
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 0.09em;
+
+  text-transform: uppercase;
+}
+
+.sidebar-menu {
+  padding: 0;
+  margin: 0;
+
+  list-style: none;
+}
+
+.sidebar-menu-item {
+  margin-bottom: 3px;
+}
+
+/* =====================================================
+   SIDEBAR LINK
+===================================================== */
+
+.sidebar-link {
+  min-height: 42px;
+
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 0 11px;
+
+  border-radius: var(--radius-md);
+
+  color: var(--text-secondary);
+
+  text-decoration: none;
+
+  font-size: 13.5px;
+  font-weight: 500;
+
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
+
+  box-sizing: border-box;
+}
+
+.sidebar-link:hover {
+  color: var(--text-primary);
+
+  background: #f7f9fc;
+}
+
+.sidebar-link:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.35);
+
+  outline-offset: 2px;
+}
+
+.sidebar-link.active {
+  color: var(--primary-blue-dark);
+
+  background: var(--primary-blue-light);
+
+  font-weight: 600;
+}
+
+.sidebar-link-icon {
+  width: 20px;
+  height: 20px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  color: currentColor;
+}
+
+.sidebar-link-label {
+  flex: 1;
+}
+
+.sidebar-active-indicator {
+  width: 3px;
+  height: 18px;
+
+  position: absolute;
+
+  right: 0;
+
+  border-radius: 999px;
+
+  background: var(--primary-blue);
+}
+
+/* =====================================================
+   PRODUCTS DROPDOWN
+===================================================== */
+
+.sidebar-dropdown-trigger {
+  width: 100%;
+
+  border: 0;
+
+  background: transparent;
+
+  font-family: inherit;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.sidebar-dropdown-trigger.open {
+  color: var(--text-primary);
+
+  background: #f7f9fc;
+}
+
+.sidebar-dropdown-arrow {
+  width: 18px;
+  height: 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  color: var(--text-muted);
+
+  font-size: 10px;
+
+  transition:
+    transform var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.sidebar-dropdown-arrow.open {
+  color: var(--primary-blue);
+
+  transform: rotate(180deg);
+}
+
+/* =====================================================
+   PRODUCTS SUBMENU
+===================================================== */
+
+.sidebar-submenu {
+  display: grid;
+
+  grid-template-rows: 0fr;
+
+  margin-left: 31px;
+
+  opacity: 0;
+
+  transition:
+    grid-template-rows 220ms ease,
+    opacity 180ms ease;
+}
+
+.sidebar-submenu.open {
+  grid-template-rows: 1fr;
+
+  opacity: 1;
+}
+
+.sidebar-submenu > ul {
+  min-height: 0;
+
+  overflow: hidden;
+
+  padding: 0;
+  margin: 0;
+
+  list-style: none;
+
+  border-left: 1px solid var(--border);
+}
+
+.sidebar-submenu-link {
+  min-height: 34px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 0 10px 0 14px;
+
+  color: var(--text-secondary);
+
+  text-decoration: none;
+
+  font-size: 12.5px;
+  font-weight: 500;
+
+  border-radius: 7px;
+
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.sidebar-submenu-link:hover {
+  color: var(--primary-blue-dark);
+
+  background: var(--primary-blue-light);
+}
+
+.sidebar-submenu-link:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.35);
+
+  outline-offset: 1px;
+}
+
+.sidebar-submenu-dot {
+  width: 4px;
+  height: 4px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: var(--text-muted);
+
+  transition:
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.sidebar-submenu-link:hover .sidebar-submenu-dot {
+  background: var(--primary-blue);
+
+  transform: scale(1.25);
+}
+
+/* =====================================================
+   BOTTOM
+===================================================== */
+
+.sidebar-bottom {
+  padding-top: 14px;
+
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-bottom-menu {
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+
+  margin-bottom: 14px;
+}
+
+/* =====================================================
+   USER
+===================================================== */
+
+.sidebar-user {
+  min-height: 58px;
+
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 9px;
+
+  border: 1px solid var(--border);
+
+  border-radius: var(--radius-lg);
+
+  background: var(--surface-muted);
+
+  box-sizing: border-box;
+}
+
+.sidebar-user-avatar {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #e7efff;
+
+  color: var(--primary-blue-dark);
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.sidebar-user-info {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  flex: 1;
+}
+
+.sidebar-user-info strong {
+  overflow: hidden;
+
+  color: var(--text-primary);
+
+  font-size: 12px;
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-info span {
+  margin-top: 2px;
+
+  color: var(--text-muted);
+
+  font-size: 10.5px;
+
+  white-space: nowrap;
+}
+
+/* =====================================================
+   USER MENU
+===================================================== */
+
+.sidebar-user-menu {
+  position: relative;
+
+  flex-shrink: 0;
+}
+
+.sidebar-user-action {
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border: 0;
+
+  border-radius: 7px;
+
+  background: transparent;
+
+  color: var(--text-muted);
+
+  cursor: pointer;
+
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.sidebar-user-action:hover,
+.sidebar-user-action.open {
+  background: #edf1f6;
+
+  color: var(--text-primary);
+}
+
+.sidebar-user-action:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.35);
+
+  outline-offset: 2px;
+}
+
+/* =====================================================
+   USER DROPDOWN
+===================================================== */
+
+.sidebar-user-dropdown {
+  width: 150px;
+
+  position: absolute;
+
+  right: 0;
+
+  bottom: calc(100% + 8px);
+
+  padding: 5px;
+
+  border: 1px solid var(--border);
+
+  border-radius: 10px;
+
+  background: var(--surface);
+
+  box-shadow:
+    0 10px 30px rgba(15, 23, 42, 0.10),
+    0 2px 8px rgba(15, 23, 42, 0.05);
+
+  opacity: 0;
+
+  visibility: hidden;
+
+  transform: translateY(5px);
+
+  pointer-events: none;
+
+  transition:
+    opacity 160ms ease,
+    visibility 160ms ease,
+    transform 160ms ease;
+
+  z-index: 1050;
+}
+
+.sidebar-user-dropdown.open {
+  opacity: 1;
+
+  visibility: visible;
+
+  transform: translateY(0);
+
+  pointer-events: auto;
+}
+
+.sidebar-user-dropdown-item {
+  width: 100%;
+  min-height: 36px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 0 10px;
+
+  border: 0;
+
+  border-radius: 7px;
+
+  background: transparent;
+
+  color: var(--text-secondary);
+
+  font-family: inherit;
+
+  font-size: 12.5px;
+  font-weight: 500;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.sidebar-user-dropdown-item:hover {
+  color: var(--danger);
+
+  background: #fff5f5;
+}
+
+.sidebar-user-dropdown-item i {
+  font-size: 14px;
+}
+
+.sidebar-user-dropdown-item:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.35);
+
+  outline-offset: -2px;
+}
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 991.98px) {
+
+  :root {
+    --sidebar-width: 280px;
+  }
+
+  .sidebar {
+    width: var(--sidebar-width);
+  }
+}
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 767.98px) {
+
+  :root {
+    --sidebar-width: 0px;
+  }
+
+  .sidebar {
+    width: 0;
+
+    overflow: hidden;
+
+    border-right: 0;
+  }
+}

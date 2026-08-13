@@ -1,547 +1,927 @@
 'use client';
 
-import './dashboard.css'
-import { useMemo, useState } from "react";
+import './dashboard.css';
+
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   ArcElement,
   Tooltip,
-  Filler,
   Legend,
-} from "chart.js";
-import { Line, Doughnut } from "react-chartjs-2";
+  Filler,
+} from 'chart.js';
+
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   ArcElement,
   Tooltip,
-  Filler,
-  Legend
+  Legend,
+  Filler
 );
-
-const navGroups = [
-  {
-    label: "PRINCIPAL",
-    items: [
-      ["Dashboard", "bi-grid-1x2-fill"],
-      ["Pedidos", "bi-bag"],
-      ["Produtos", "bi-box-seam"],
-      ["Clientes", "bi-people"],
-      ["Relatórios", "bi-bar-chart"],
-      ["Financeiro", "bi-wallet2"],
-    ],
-  },
-  {
-    label: "GERENCIAMENTO",
-    items: [
-      ["Usuários", "bi-person"],
-      ["Funções", "bi-shield-check"],
-      ["Configurações", "bi-gear"],
-      ["Integrações", "bi-link-45deg"],
-    ],
-  },
-  {
-    label: "SUPORTE",
-    items: [
-      ["Central de Ajuda", "bi-question-circle"],
-      ["Suporte", "bi-headset"],
-    ],
-  },
-];
 
 const metrics = [
   {
-    title: "Receita total",
-    value: "R$ 84.250,00",
-    delta: "12,8%",
-    positive: true,
-    icon: "bi-currency-dollar",
-    accent: "blue",
-    points: [28, 34, 31, 42, 38, 52, 48, 58],
+    title: 'Receita total',
+    value: 'R$ 84.250',
+    change: '+12,8%',
+    description: 'vs. mês anterior',
+    icon: 'bi-currency-dollar',
+    type: 'positive',
   },
   {
-    title: "Pedidos",
-    value: "1.452",
-    delta: "8,4%",
-    positive: true,
-    icon: "bi-bag",
-    accent: "green",
-    points: [32, 38, 35, 48, 43, 50, 46, 61],
+    title: 'Pedidos',
+    value: '1.284',
+    change: '+8,4%',
+    description: 'vs. mês anterior',
+    icon: 'bi-bag-check',
+    type: 'positive',
   },
   {
-    title: "Clientes",
-    value: "823",
-    delta: "5,7%",
-    positive: true,
-    icon: "bi-people",
-    accent: "violet",
-    points: [30, 29, 40, 37, 49, 44, 55, 61],
+    title: 'Clientes',
+    value: '8.492',
+    change: '+5,2%',
+    description: 'vs. mês anterior',
+    icon: 'bi-people',
+    type: 'positive',
   },
   {
-    title: "Ticket médio",
-    value: "R$ 58,02",
-    delta: "2,4%",
-    positive: false,
-    icon: "bi-graph-up-arrow",
-    accent: "amber",
-    points: [52, 57, 50, 68, 59, 45, 53, 48],
+    title: 'Taxa de conversão',
+    value: '4,82%',
+    change: '-1,4%',
+    description: 'vs. mês anterior',
+    icon: 'bi-graph-up-arrow',
+    type: 'negative',
   },
 ];
 
 const orders = [
-  ["#10254", "Lucas Ferreira", "12/06/2025", "R$ 1.250,00", "Concluído", "success"],
-  ["#10253", "Juliana Costa", "12/06/2025", "R$ 890,50", "Em andamento", "info"],
-  ["#10252", "Rafael Almeida", "11/06/2025", "R$ 2.450,00", "Pendente", "warning"],
-  ["#10251", "Mariana Santos", "11/06/2025", "R$ 560,00", "Concluído", "success"],
-  ["#10250", "Gustavo Lima", "10/06/2025", "R$ 1.780,00", "Cancelado", "danger"],
+  {
+    id: '#ORD-8492',
+    customer: 'Mariana Costa',
+    product: 'Plano Enterprise',
+    date: '13 Ago, 2026',
+    value: 'R$ 2.490,00',
+    status: 'Concluído',
+    statusClass: 'success',
+  },
+  {
+    id: '#ORD-8491',
+    customer: 'Lucas Almeida',
+    product: 'Plano Professional',
+    date: '13 Ago, 2026',
+    value: 'R$ 890,00',
+    status: 'Em andamento',
+    statusClass: 'info',
+  },
+  {
+    id: '#ORD-8490',
+    customer: 'Ana Beatriz',
+    product: 'Plano Starter',
+    date: '12 Ago, 2026',
+    value: 'R$ 249,00',
+    status: 'Pendente',
+    statusClass: 'warning',
+  },
+  {
+    id: '#ORD-8489',
+    customer: 'Gabriel Souza',
+    product: 'Plano Enterprise',
+    date: '12 Ago, 2026',
+    value: 'R$ 2.490,00',
+    status: 'Concluído',
+    statusClass: 'success',
+  },
+  {
+    id: '#ORD-8488',
+    customer: 'Julia Martins',
+    product: 'Plano Professional',
+    date: '11 Ago, 2026',
+    value: 'R$ 890,00',
+    status: 'Cancelado',
+    statusClass: 'danger',
+  },
 ];
 
 const activities = [
-  ["bi-cart-check", "Novo pedido #10254 criado", "Lucas Ferreira • há 5 min", "blue"],
-  ["bi-box-seam", 'Produto "Notebook Pro" atualizado', "Bruno Silva • há 1 hora", "green"],
-  ["bi-person-plus", "Novo cliente cadastrado", "Juliana Costa • há 2 horas", "violet"],
-  ["bi-currency-dollar", "Pagamento recebido", "Pedido #10253 • há 3 horas", "orange"],
+  {
+    initials: 'MC',
+    name: 'Mariana Costa',
+    action: 'realizou um novo pedido',
+    context: '#ORD-8492',
+    time: 'há 8 minutos',
+  },
+  {
+    initials: 'LA',
+    name: 'Lucas Almeida',
+    action: 'atualizou seu plano',
+    context: 'Professional',
+    time: 'há 24 minutos',
+  },
+  {
+    initials: 'AB',
+    name: 'Ana Beatriz',
+    action: 'criou uma conta',
+    context: 'Novo cliente',
+    time: 'há 42 minutos',
+  },
+  {
+    initials: 'GS',
+    name: 'Gabriel Souza',
+    action: 'realizou um pagamento',
+    context: 'R$ 2.490,00',
+    time: 'há 1 hora',
+  },
 ];
 
-function MiniSparkline({ points }) {
-  const max = Math.max(...points);
-  const min = Math.min(...points);
-  const width = 110;
-  const height = 34;
-  const path = points
-    .map((value, index) => {
-      const x = (index / (points.length - 1)) * width;
-      const y = height - ((value - min) / Math.max(max - min, 1)) * 26 - 4;
-      return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
-    })
-    .join(" ");
+const revenueData = {
+  labels: [
+    'Jan',
+    'Fev',
+    'Mar',
+    'Abr',
+    'Mai',
+    'Jun',
+    'Jul',
+    'Ago',
+  ],
+  datasets: [
+    {
+      label: 'Receita',
+      data: [
+        42000,
+        48000,
+        45500,
+        59000,
+        61000,
+        68500,
+        74200,
+        84250,
+      ],
+      borderColor: '#2563eb',
+      backgroundColor: 'rgba(37, 99, 235, 0.08)',
+      borderWidth: 2,
+      pointRadius: 0,
+      pointHoverRadius: 5,
+      tension: 0.4,
+      fill: true,
+    },
+  ],
+};
 
-  return (
-    <svg className="metric-sparkline" viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
-      <path d={path} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SidebarContent({ active, setActive, mobile = false }) {
-  return (
-    <div className={`sidebar-content ${mobile ? "sidebar-content-mobile" : ""}`}>
-      <div className="brand">
-        <span className="brand-mark">
-          <i className="bi bi-layers-fill" />
-        </span>
-        <span>SaaS<span className="brand-accent">Pro</span></span>
-      </div>
-
-      <nav className="sidebar-nav" aria-label="Navegação principal">
-        {navGroups.map((group) => (
-          <div className="nav-group" key={group.label}>
-            <div className="nav-group-label">{group.label}</div>
-            {group.items.map(([label, icon]) => {
-              const selected = active === label;
-              return (
-                <button
-                  key={label}
-                  type="button"
-                  className={`nav-item ${selected ? "is-active" : ""}`}
-                  onClick={() => setActive(label)}
-                  aria-current={selected ? "page" : undefined}
-                  data-bs-dismiss={mobile ? "offcanvas" : undefined}
-                >
-                  <i className={`bi ${icon}`} aria-hidden="true" />
-                  <span>{label}</span>
-                  {label === "Pedidos" && <span className="nav-count">12</span>}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
-      <div className="sidebar-bottom">
-        <div className="profile-card">
-          <div className="avatar avatar-dark">BS</div>
-          <div className="profile-copy">
-            <strong>Bruno Silva</strong>
-            <span>Administrador</span>
-          </div>
-          <button className="icon-button subtle" aria-label="Abrir opções do perfil">
-            <i className="bi bi-chevron-down" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MetricCard({ metric }) {
-  return (
-    <article className="metric-card card h-100">
-      <div className="metric-top">
-        <div>
-          <span className="metric-label">{metric.title}</span>
-          <div className="metric-value">{metric.value}</div>
-        </div>
-        <div className={`metric-icon ${metric.accent}`}>
-          <i className={`bi ${metric.icon}`} aria-hidden="true" />
-        </div>
-      </div>
-      <div className="metric-bottom">
-        <span className={`metric-change ${metric.positive ? "positive" : "negative"}`}>
-          <i className={`bi ${metric.positive ? "bi-arrow-up-right" : "bi-arrow-down-right"}`} />
-          {metric.delta}
-        </span>
-        <span className="metric-period">vs. mês anterior</span>
-        <MiniSparkline points={metric.points} />
-      </div>
-    </article>
-  );
-}
-
-export default function DashboardPage() {
-  const [active, setActive] = useState("Dashboard");
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-
-  const filteredOrders = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return orders;
-    return orders.filter((row) => row.join(" ").toLowerCase().includes(query));
-  }, [search]);
-
-  const lineData = {
-    labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"],
-    datasets: [
-      {
-        label: "Receita",
-        data: [32, 54, 61, 42, 71, 85],
-        borderColor: "#1769e0",
-        backgroundColor: "rgba(23,105,224,.10)",
-        fill: true,
-        tension: 0.38,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        pointBackgroundColor: "#fff",
-        pointBorderWidth: 2,
-        pointBorderColor: "#1769e0",
-      },
-    ],
-  };
-
-  const doughnutData = {
-    labels: ["Concluído", "Em andamento", "Pendente", "Cancelado"],
-    datasets: [
-      {
-        data: [856, 342, 154, 100],
-        backgroundColor: ["#1769e0", "#42b883", "#f2b84b", "#f27878"],
-        borderWidth: 0,
-        hoverOffset: 5,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: "#101828",
-        padding: 12,
-        displayColors: false,
-        titleFont: { size: 12, weight: "600" },
-        bodyFont: { size: 12 },
+const revenueOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: {
+    intersect: false,
+    mode: 'index',
+  },
+  plugins: {
+    legend: {
+      display: false,
+    },
+    tooltip: {
+      backgroundColor: '#172033',
+      padding: 12,
+      cornerRadius: 8,
+      displayColors: false,
+      callbacks: {
+        label: (context) =>
+          ` R$ ${context.raw.toLocaleString('pt-BR')}`,
       },
     },
-    scales: {
-      x: {
-        grid: { display: false },
-        border: { display: false },
-        ticks: { color: "#7a8699", font: { size: 11 } },
+  },
+  scales: {
+    x: {
+      border: {
+        display: false,
       },
-      y: {
-        grid: { color: "#edf1f6", drawTicks: false },
-        border: { display: false },
-        ticks: {
-          color: "#7a8699",
-          font: { size: 11 },
-          callback: (value) => `${value}k`,
+      grid: {
+        display: false,
+      },
+      ticks: {
+        color: '#94a3b8',
+        font: {
+          size: 11,
         },
       },
     },
-  };
+    y: {
+      border: {
+        display: false,
+      },
+      grid: {
+        color: '#eef2f6',
+      },
+      ticks: {
+        color: '#94a3b8',
+        font: {
+          size: 11,
+        },
+        callback: (value) =>
+          `R$ ${(value / 1000).toFixed(0)}k`,
+      },
+    },
+  },
+};
 
-  const doughnutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: "72%",
-    plugins: { legend: { display: false } },
-  };
+const ordersData = {
+  labels: [
+    'Jan',
+    'Fev',
+    'Mar',
+    'Abr',
+    'Mai',
+    'Jun',
+    'Jul',
+    'Ago',
+  ],
+  datasets: [
+    {
+      label: 'Pedidos',
+      data: [820, 910, 870, 1040, 1120, 1190, 1240, 1284],
+      backgroundColor: '#dbeafe',
+      hoverBackgroundColor: '#2563eb',
+      borderRadius: 5,
+      borderSkipped: false,
+      barThickness: 18,
+    },
+  ],
+};
 
+const ordersOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: false,
+    },
+    tooltip: {
+      backgroundColor: '#172033',
+      padding: 10,
+      cornerRadius: 8,
+    },
+  },
+  scales: {
+    x: {
+      border: {
+        display: false,
+      },
+      grid: {
+        display: false,
+      },
+      ticks: {
+        color: '#94a3b8',
+        font: {
+          size: 11,
+        },
+      },
+    },
+    y: {
+      border: {
+        display: false,
+      },
+      grid: {
+        color: '#eef2f6',
+      },
+      ticks: {
+        color: '#94a3b8',
+        font: {
+          size: 11,
+        },
+      },
+    },
+  },
+};
+
+const distributionData = {
+  labels: [
+    'Enterprise',
+    'Professional',
+    'Starter',
+  ],
+  datasets: [
+    {
+      data: [42, 36, 22],
+      backgroundColor: [
+        '#2563eb',
+        '#93c5fd',
+        '#dbeafe',
+      ],
+      borderWidth: 0,
+      hoverOffset: 4,
+    },
+  ],
+};
+
+const distributionOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '72%',
+  plugins: {
+    legend: {
+      display: false,
+    },
+    tooltip: {
+      backgroundColor: '#172033',
+      padding: 10,
+      cornerRadius: 8,
+    },
+  },
+};
+
+export default function DashboardPage() {
   return (
-    <div className="dashboard-shell">
-      <aside className="sidebar-desktop">
-        <SidebarContent active={active} setActive={setActive} />
-      </aside>
+    <main className="dashboard-page">
 
-      <div
-        className="offcanvas offcanvas-start sidebar-mobile"
-        tabIndex="-1"
-        id="mobileSidebar"
-        aria-labelledby="mobileSidebarLabel"
+      {/* =====================================================
+          PAGE HEADER
+      ===================================================== */}
+
+      <section className="dashboard-heading">
+        <div>
+          <span className="dashboard-eyebrow">
+            Visão geral
+          </span>
+
+          <h1>
+            Dashboard
+          </h1>
+
+          <p>
+            Acompanhe o desempenho da sua operação em tempo real.
+          </p>
+        </div>
+
+        <div className="dashboard-heading-actions">
+          <button
+            type="button"
+            className="dashboard-btn dashboard-btn-secondary"
+          >
+            <i className="bi bi-calendar3" />
+            Últimos 30 dias
+            <i className="bi bi-chevron-down" />
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-btn dashboard-btn-primary"
+          >
+            <i className="bi bi-download" />
+            Exportar
+          </button>
+        </div>
+      </section>
+
+      {/* =====================================================
+          METRICS
+      ===================================================== */}
+
+      <section
+        className="row g-3 dashboard-metrics"
+        aria-label="Principais métricas"
       >
-        <div className="offcanvas-body p-0">
-          <SidebarContent active={active} setActive={setActive} mobile />
-        </div>
-      </div>
+        {metrics.map((metric) => (
+          <div
+            className="col-12 col-sm-6 col-xl-3"
+            key={metric.title}
+          >
+            <article className="metric-card">
 
-      <main className="main-area">
-        <header className="topbar navbar">
-          <div className="topbar-left">
-            <button
-              className="mobile-menu-button"
-              type="button"
-              data-bs-toggle="offcanvas"
-              data-bs-target="#mobileSidebar"
-              aria-controls="mobileSidebar"
-              aria-label="Abrir menu"
-            >
-              <i className="bi bi-list" />
-            </button>
-            <div className="page-heading">
-              <div className="page-title-row">
-                <h1>{active}</h1>
-                <span className="breadcrumb-current">/ Visão geral</span>
+              <div className="metric-card-top">
+                <div className="metric-icon">
+                  <i className={`bi ${metric.icon}`} />
+                </div>
+
+                <button
+                  type="button"
+                  className="metric-more"
+                  aria-label={`Mais opções para ${metric.title}`}
+                >
+                  <i className="bi bi-three-dots" />
+                </button>
               </div>
-              <span className="page-subtitle">Acompanhe o desempenho do seu negócio.</span>
-            </div>
-          </div>
 
-          <div className="topbar-actions">
-            <label className="search-box">
-              <i className="bi bi-search" />
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar..."
-                aria-label="Buscar no dashboard"
+              <div className="metric-content">
+                <span className="metric-title">
+                  {metric.title}
+                </span>
+
+                <strong className="metric-value">
+                  {metric.value}
+                </strong>
+              </div>
+
+              <div className="metric-footer">
+                <span
+                  className={`metric-change ${metric.type}`}
+                >
+                  <i
+                    className={
+                      metric.type === 'positive'
+                        ? 'bi bi-arrow-up-right'
+                        : 'bi bi-arrow-down-right'
+                    }
+                  />
+
+                  {metric.change}
+                </span>
+
+                <span className="metric-description">
+                  {metric.description}
+                </span>
+              </div>
+
+            </article>
+          </div>
+        ))}
+      </section>
+
+      {/* =====================================================
+          CHARTS
+      ===================================================== */}
+
+      <section className="row g-3 dashboard-charts">
+
+        {/* Revenue */}
+        <div className="col-12 col-xl-8">
+          <article className="dashboard-card chart-card">
+
+            <div className="dashboard-card-header">
+              <div>
+                <span className="dashboard-card-label">
+                  Desempenho financeiro
+                </span>
+
+                <h2>
+                  Receita
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                className="chart-period"
+              >
+                Mensal
+                <i className="bi bi-chevron-down" />
+              </button>
+            </div>
+
+            <div className="chart-summary">
+              <strong>
+                R$ 84.250
+              </strong>
+
+              <span className="summary-positive">
+                +12,8%
+              </span>
+            </div>
+
+            <div className="chart-container chart-large">
+              <Line
+                data={revenueData}
+                options={revenueOptions}
               />
-              <kbd>Ctrl K</kbd>
-            </label>
-            <button className="icon-button notification" aria-label="Notificações">
-              <i className="bi bi-bell" />
-              <span>3</span>
-            </button>
-            <button className="icon-button notification" aria-label="Mensagens">
-              <i className="bi bi-envelope" />
-              <span>5</span>
-            </button>
-            <button className="user-trigger" aria-label="Abrir menu do usuário">
-              <span className="avatar avatar-sm">BS</span>
-              <span className="user-name">Bruno Silva</span>
-              <i className="bi bi-chevron-down" />
-            </button>
-          </div>
-        </header>
-
-        <div className="content">
-          <section className="content-intro">
-            <div>
-              <h2>Olá, Bruno! <span aria-hidden="true">👋</span></h2>
-              <p>Aqui está o resumo do seu negócio hoje.</p>
-            </div>
-            <button className="btn filter-button">
-              <i className="bi bi-calendar3" />
-              01 Jun — 30 Jun
-              <i className="bi bi-chevron-down" />
-            </button>
-          </section>
-
-          <section className="row g-3 g-xl-4 mb-3 mb-xl-4" aria-label="Métricas principais">
-            {metrics.map((metric) => (
-              <div className="col-12 col-sm-6 col-xl-3" key={metric.title}>
-                <MetricCard metric={metric} />
-              </div>
-            ))}
-          </section>
-
-          <section className="row g-3 g-xl-4">
-            <div className="col-12 col-xl-7">
-              <article className="surface-card chart-card">
-                <div className="surface-header">
-                  <div>
-                    <h3>Receita nos últimos 6 meses</h3>
-                    <p>Evolução da receita mensal</p>
-                  </div>
-                  <button className="btn compact-button">
-                    6 meses <i className="bi bi-chevron-down" />
-                  </button>
-                </div>
-                <div className="chart-wrap line-chart">
-                  <Line data={lineData} options={chartOptions} />
-                </div>
-              </article>
             </div>
 
-            <div className="col-12 col-xl-5">
-              <article className="surface-card chart-card">
-                <div className="surface-header">
-                  <div>
-                    <h3>Pedidos por status</h3>
-                    <p>Distribuição do período</p>
-                  </div>
-                  <button className="btn compact-button">
-                    Este mês <i className="bi bi-chevron-down" />
-                  </button>
-                </div>
-                <div className="donut-layout">
-                  <div className="donut-chart">
-                    <Doughnut data={doughnutData} options={doughnutOptions} />
-                    <div className="donut-center">
-                      <strong>1.452</strong>
-                      <span>Total</span>
-                    </div>
-                  </div>
-                  <div className="legend-list">
-                    {[
-                      ["Concluído", "856", "58,9%", "blue"],
-                      ["Em andamento", "342", "23,6%", "green"],
-                      ["Pendente", "154", "10,6%", "amber"],
-                      ["Cancelado", "100", "6,9%", "red"],
-                    ].map(([label, value, percent, tone]) => (
-                      <div className="legend-item" key={label}>
-                        <span className={`legend-dot ${tone}`} />
-                        <span className="legend-label">{label}</span>
-                        <span className="legend-value">{value} <small>({percent})</small></span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </article>
-            </div>
-
-            <div className="col-12 col-xl-8">
-              <article className="surface-card table-card">
-                <div className="surface-header">
-                  <div>
-                    <h3>Últimos pedidos</h3>
-                    <p>Pedidos mais recentes do sistema</p>
-                  </div>
-                  <button className="btn compact-button">Ver todos</button>
-                </div>
-
-                <div className="table-responsive">
-                  <table className="table dashboard-table align-middle mb-0">
-                    <thead>
-                      <tr>
-                        <th>Pedido</th>
-                        <th>Cliente</th>
-                        <th>Data</th>
-                        <th>Valor</th>
-                        <th>Status</th>
-                        <th className="text-end">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredOrders.map(([id, customer, date, value, status, tone]) => (
-                        <tr key={id}>
-                          <td><strong>{id}</strong></td>
-                          <td>{customer}</td>
-                          <td>{date}</td>
-                          <td>{value}</td>
-                          <td><span className={`status-badge ${tone}`}>{status}</span></td>
-                          <td className="text-end">
-                            <button className="row-action" aria-label={`Ações do pedido ${id}`}>
-                              <i className="bi bi-three-dots" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                      {!filteredOrders.length && (
-                        <tr>
-                          <td colSpan="6" className="empty-state">
-                            Nenhum pedido encontrado.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="table-footer">
-                  <span>Mostrando 1 a 5 de 20 pedidos</span>
-                  <nav aria-label="Paginação">
-                    <ul className="pagination pagination-sm mb-0 dashboard-pagination">
-                      <li className="page-item disabled"><button className="page-link">‹</button></li>
-                      {[1, 2, 3, 4].map((number) => (
-                        <li className={`page-item ${page === number ? "active" : ""}`} key={number}>
-                          <button className="page-link" onClick={() => setPage(number)}>{number}</button>
-                        </li>
-                      ))}
-                      <li className="page-item"><button className="page-link">›</button></li>
-                    </ul>
-                  </nav>
-                </div>
-              </article>
-            </div>
-
-            <div className="col-12 col-xl-4">
-              <div className="d-flex flex-column gap-3 gap-xl-4">
-                <article className="surface-card activity-card">
-                  <div className="surface-header">
-                    <div>
-                      <h3>Atividades recentes</h3>
-                      <p>Últimas movimentações</p>
-                    </div>
-                    <button className="btn compact-button">Ver todas</button>
-                  </div>
-                  <div className="activity-list">
-                    {activities.map(([icon, title, meta, tone]) => (
-                      <div className="activity-item" key={title}>
-                        <span className={`activity-icon ${tone}`}><i className={`bi ${icon}`} /></span>
-                        <div className="activity-copy">
-                          <strong>{title}</strong>
-                          <span>{meta}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </article>
-
-                <article className="surface-card quick-card">
-                  <div className="surface-header">
-                    <div>
-                      <h3>Ações rápidas</h3>
-                      <p>Atalhos para tarefas frequentes</p>
-                    </div>
-                  </div>
-                  <div className="quick-grid">
-                    {[
-                      ["Novo pedido", "bi-cart-plus"],
-                      ["Adicionar produto", "bi-box-seam"],
-                      ["Exportar relatório", "bi-file-earmark-arrow-down"],
-                      ["Ver usuários", "bi-people"],
-                    ].map(([label, icon]) => (
-                      <button className="quick-action" key={label}>
-                        <span><i className={`bi ${icon}`} /></span>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </article>
-              </div>
-            </div>
-          </section>
+          </article>
         </div>
-      </main>
-    </div>
+
+        {/* Distribution */}
+        <div className="col-12 col-xl-4">
+          <article className="dashboard-card distribution-card">
+
+            <div className="dashboard-card-header">
+              <div>
+                <span className="dashboard-card-label">
+                  Distribuição
+                </span>
+
+                <h2>
+                  Planos
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                className="card-icon-button"
+                aria-label="Mais informações"
+              >
+                <i className="bi bi-three-dots" />
+              </button>
+            </div>
+
+            <div className="donut-wrapper">
+              <div className="donut-chart">
+                <Doughnut
+                  data={distributionData}
+                  options={distributionOptions}
+                />
+
+                <div className="donut-center">
+                  <strong>8.492</strong>
+                  <span>clientes</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="distribution-legend">
+
+              <div className="legend-item">
+                <span>
+                  <i className="legend-dot enterprise" />
+                  Enterprise
+                </span>
+
+                <strong>42%</strong>
+              </div>
+
+              <div className="legend-item">
+                <span>
+                  <i className="legend-dot professional" />
+                  Professional
+                </span>
+
+                <strong>36%</strong>
+              </div>
+
+              <div className="legend-item">
+                <span>
+                  <i className="legend-dot starter" />
+                  Starter
+                </span>
+
+                <strong>22%</strong>
+              </div>
+
+            </div>
+
+          </article>
+        </div>
+
+        {/* Orders */}
+        <div className="col-12 col-xl-8">
+          <article className="dashboard-card chart-card">
+
+            <div className="dashboard-card-header">
+              <div>
+                <span className="dashboard-card-label">
+                  Volume operacional
+                </span>
+
+                <h2>
+                  Pedidos
+                </h2>
+              </div>
+
+              <span className="chart-header-value">
+                1.284 pedidos
+              </span>
+            </div>
+
+            <div className="chart-container chart-medium">
+              <Bar
+                data={ordersData}
+                options={ordersOptions}
+              />
+            </div>
+
+          </article>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="col-12 col-xl-4">
+          <article className="dashboard-card quick-actions-card">
+
+            <div className="dashboard-card-header">
+              <div>
+                <span className="dashboard-card-label">
+                  Atalhos
+                </span>
+
+                <h2>
+                  Ações rápidas
+                </h2>
+              </div>
+            </div>
+
+            <div className="quick-actions">
+
+              <button className="quick-action">
+                <span className="quick-action-icon blue">
+                  <i className="bi bi-plus-lg" />
+                </span>
+
+                <span>
+                  <strong>Novo pedido</strong>
+                  <small>Criar uma nova venda</small>
+                </span>
+
+                <i className="bi bi-chevron-right" />
+              </button>
+
+              <button className="quick-action">
+                <span className="quick-action-icon purple">
+                  <i className="bi bi-box-seam" />
+                </span>
+
+                <span>
+                  <strong>Adicionar produto</strong>
+                  <small>Cadastrar novo produto</small>
+                </span>
+
+                <i className="bi bi-chevron-right" />
+              </button>
+
+              <button className="quick-action">
+                <span className="quick-action-icon green">
+                  <i className="bi bi-file-earmark-arrow-down" />
+                </span>
+
+                <span>
+                  <strong>Exportar relatório</strong>
+                  <small>Baixar dados do período</small>
+                </span>
+
+                <i className="bi bi-chevron-right" />
+              </button>
+
+              <button className="quick-action">
+                <span className="quick-action-icon orange">
+                  <i className="bi bi-person-plus" />
+                </span>
+
+                <span>
+                  <strong>Ver usuários</strong>
+                  <small>Gerenciar clientes</small>
+                </span>
+
+                <i className="bi bi-chevron-right" />
+              </button>
+
+            </div>
+
+          </article>
+        </div>
+
+      </section>
+
+      {/* =====================================================
+          ORDERS + ACTIVITY
+      ===================================================== */}
+
+      <section className="row g-3 dashboard-bottom">
+
+        {/* Orders table */}
+        <div className="col-12 col-xl-8">
+          <article className="dashboard-card orders-card">
+
+            <div className="dashboard-card-header">
+
+              <div>
+                <span className="dashboard-card-label">
+                  Operação
+                </span>
+
+                <h2>
+                  Pedidos recentes
+                </h2>
+              </div>
+
+              <button className="view-all-button">
+                Ver todos
+                <i className="bi bi-arrow-right" />
+              </button>
+
+            </div>
+
+            <div className="table-responsive dashboard-table-wrapper">
+              <table className="table dashboard-table align-middle">
+
+                <thead>
+                  <tr>
+                    <th>Pedido</th>
+                    <th>Cliente</th>
+                    <th>Produto</th>
+                    <th>Data</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th />
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {orders.map((order) => (
+                    <tr key={order.id}>
+
+                      <td>
+                        <span className="order-id">
+                          {order.id}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span className="customer-name">
+                          {order.customer}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span className="product-name">
+                          {order.product}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span className="table-muted">
+                          {order.date}
+                        </span>
+                      </td>
+
+                      <td>
+                        <strong className="order-value">
+                          {order.value}
+                        </strong>
+                      </td>
+
+                      <td>
+                        <span
+                          className={`status-badge ${order.statusClass}`}
+                        >
+                          <span />
+                          {order.status}
+                        </span>
+                      </td>
+
+                      <td>
+                        <div className="dropdown">
+                          <button
+                            className="table-action"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                            aria-label={`Ações do pedido ${order.id}`}
+                          >
+                            <i className="bi bi-three-dots" />
+                          </button>
+
+                          <ul className="dropdown-menu dropdown-menu-end dashboard-dropdown">
+                            <li>
+                              <button className="dropdown-item">
+                                <i className="bi bi-eye" />
+                                Visualizar
+                              </button>
+                            </li>
+
+                            <li>
+                              <button className="dropdown-item">
+                                <i className="bi bi-pencil" />
+                                Editar
+                              </button>
+                            </li>
+
+                            <li>
+                              <hr className="dropdown-divider" />
+                            </li>
+
+                            <li>
+                              <button className="dropdown-item danger">
+                                <i className="bi bi-trash" />
+                                Excluir
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
+                      </td>
+
+                    </tr>
+                  ))}
+                </tbody>
+
+              </table>
+            </div>
+
+            <div className="table-footer">
+
+              <span>
+                Mostrando <strong>5</strong> de <strong>1284</strong> pedidos
+              </span>
+
+              <nav aria-label="Paginação de pedidos">
+                <ul className="pagination dashboard-pagination">
+
+                  <li className="page-item disabled">
+                    <button className="page-link">
+                      <i className="bi bi-chevron-left" />
+                    </button>
+                  </li>
+
+                  <li className="page-item active">
+                    <button className="page-link">
+                      1
+                    </button>
+                  </li>
+
+                  <li className="page-item">
+                    <button className="page-link">
+                      2
+                    </button>
+                  </li>
+
+                  <li className="page-item">
+                    <button className="page-link">
+                      3
+                    </button>
+                  </li>
+
+                  <li className="page-item">
+                    <button className="page-link">
+                      <i className="bi bi-chevron-right" />
+                    </button>
+                  </li>
+
+                </ul>
+              </nav>
+
+            </div>
+
+          </article>
+        </div>
+
+        {/* Activity */}
+        <div className="col-12 col-xl-4">
+          <article className="dashboard-card activity-card">
+
+            <div className="dashboard-card-header">
+
+              <div>
+                <span className="dashboard-card-label">
+                  Timeline
+                </span>
+
+                <h2>
+                  Atividades recentes
+                </h2>
+              </div>
+
+              <button
+                className="card-icon-button"
+                aria-label="Mais opções"
+              >
+                <i className="bi bi-three-dots" />
+              </button>
+
+            </div>
+
+            <div className="activity-list">
+
+              {activities.map((activity) => (
+                <div
+                  className="activity-item"
+                  key={`${activity.name}-${activity.time}`}
+                >
+                  <div className="activity-avatar">
+                    {activity.initials}
+                  </div>
+
+                  <div className="activity-content">
+                    <p>
+                      <strong>{activity.name}</strong>{' '}
+                      {activity.action}
+                    </p>
+
+                    <span>
+                      {activity.context}
+                    </span>
+
+                    <small>
+                      {activity.time}
+                    </small>
+                  </div>
+                </div>
+              ))}
+
+            </div>
+
+            <button className="activity-footer-button">
+              Ver todas as atividades
+              <i className="bi bi-arrow-right" />
+            </button>
+
+          </article>
+        </div>
+
+      </section>
+
+    </main>
   );
 }
