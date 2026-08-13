@@ -13,13 +13,9 @@ const navigation = [
         icon: 'bi-grid-1x2-fill',
         active: true,
       },
-      {
-        label: 'Analytics',
-        href: '/admin/analytics',
-        icon: 'bi-bar-chart-line',
-      },
     ],
   },
+
   {
     label: 'Gerenciamento',
     items: [
@@ -28,10 +24,16 @@ const navigation = [
         href: '/admin/pedidos',
         icon: 'bi-bag',
       },
+
       {
         label: 'Produtos',
         icon: 'bi-box-seam',
+
         dropdown: [
+          {
+            label: 'Produtos',
+            href: '/admin/produtos',
+          },
           {
             label: 'Tamanho',
             href: '/admin/tamanho',
@@ -54,15 +56,11 @@ const navigation = [
           },
         ],
       },
+
       {
         label: 'Usuários',
         href: '/admin/usuarios',
         icon: 'bi-people',
-      },
-      {
-        label: 'Relatórios',
-        href: '/admin/relatorios',
-        icon: 'bi-file-earmark-text',
       },
     ],
   },
@@ -74,6 +72,7 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
+
       <div className="sidebar-inner">
 
         {/* =====================================================
@@ -81,18 +80,22 @@ export default function Sidebar() {
         ===================================================== */}
 
         <div className="sidebar-brand">
+
           <a
             href="/admin/dashboard"
             className="sidebar-brand-link"
           >
+
             <span className="sidebar-brand-mark">
-              S
+              img
             </span>
 
             <span className="sidebar-brand-name">
-              SaaS<span>Flow</span>
+              EVE<span>RETT</span>
             </span>
+
           </a>
+
         </div>
 
         {/* =====================================================
@@ -103,11 +106,14 @@ export default function Sidebar() {
           className="sidebar-navigation"
           aria-label="Navegação principal"
         >
+
           {navigation.map((section) => (
+
             <div
               className="sidebar-section"
               key={section.label}
             >
+
               <span className="sidebar-section-title">
                 {section.label}
               </span>
@@ -115,6 +121,7 @@ export default function Sidebar() {
               <ul className="sidebar-menu">
 
                 {section.items.map((item) => (
+
                   <li
                     className="sidebar-menu-item"
                     key={item.label}
@@ -125,7 +132,9 @@ export default function Sidebar() {
                     ================================================= */}
 
                     {item.dropdown ? (
+
                       <>
+
                         <button
                           type="button"
                           className={`sidebar-link sidebar-dropdown-trigger ${
@@ -139,11 +148,14 @@ export default function Sidebar() {
                           aria-expanded={productsOpen}
                           aria-controls="products-submenu"
                         >
+
                           <span className="sidebar-link-icon">
+
                             <i
                               className={`bi ${item.icon}`}
                               aria-hidden="true"
                             />
+
                           </span>
 
                           <span className="sidebar-link-label">
@@ -156,8 +168,11 @@ export default function Sidebar() {
                             }`}
                             aria-hidden="true"
                           >
+
                             <i className="bi bi-chevron-down" />
+
                           </span>
+
                         </button>
 
                         {/* =================================================
@@ -170,28 +185,45 @@ export default function Sidebar() {
                             productsOpen ? 'open' : ''
                           }`}
                         >
+
                           <ul>
+
                             {item.dropdown.map(
-                              (subItem) => (
+                              (subItem, index) => (
+
                                 <li
                                   key={subItem.label}
+                                  className={
+                                    index === 0
+                                      ? 'sidebar-submenu-main-item'
+                                      : ''
+                                  }
                                 >
+
                                   <a
                                     href={subItem.href}
                                     className="sidebar-submenu-link"
                                   >
+
                                     <span className="sidebar-submenu-dot" />
 
                                     <span>
                                       {subItem.label}
                                     </span>
+
                                   </a>
+
                                 </li>
+
                               )
                             )}
+
                           </ul>
+
                         </div>
+
                       </>
+
                     ) : (
 
                       /* =================================================
@@ -209,11 +241,14 @@ export default function Sidebar() {
                             : undefined
                         }
                       >
+
                         <span className="sidebar-link-icon">
+
                           <i
                             className={`bi ${item.icon}`}
                             aria-hidden="true"
                           />
+
                         </span>
 
                         <span className="sidebar-link-label">
@@ -221,21 +256,28 @@ export default function Sidebar() {
                         </span>
 
                         {item.active && (
+
                           <span
                             className="sidebar-active-indicator"
                             aria-hidden="true"
                           />
+
                         )}
+
                       </a>
 
                     )}
 
                   </li>
+
                 ))}
 
               </ul>
+
             </div>
+
           ))}
+
         </nav>
 
         {/* =====================================================
@@ -246,58 +288,76 @@ export default function Sidebar() {
 
           <div className="sidebar-bottom-menu">
 
-            {/* Notificações */}
+            {/* =================================================
+                NOTIFICAÇÕES
+            ================================================= */}
 
             <a
               href="/admin/notificacoes"
               className="sidebar-link"
             >
+
               <span className="sidebar-link-icon">
+
                 <i
                   className="bi bi-bell"
                   aria-hidden="true"
                 />
+
               </span>
 
               <span className="sidebar-link-label">
                 Notificações
               </span>
+
             </a>
 
-            {/* Configurações */}
+            {/* =================================================
+                CONFIGURAÇÕES
+            ================================================= */}
 
             <a
               href="/admin/configuracoes"
               className="sidebar-link"
             >
+
               <span className="sidebar-link-icon">
+
                 <i
                   className="bi bi-gear"
                   aria-hidden="true"
                 />
+
               </span>
 
               <span className="sidebar-link-label">
                 Configurações
               </span>
+
             </a>
 
-            {/* Central de ajuda */}
+            {/* =================================================
+                CENTRAL DE AJUDA
+            ================================================= */}
 
             <a
               href="/admin/ajuda"
               className="sidebar-link"
             >
+
               <span className="sidebar-link-icon">
+
                 <i
                   className="bi bi-question-circle"
                   aria-hidden="true"
                 />
+
               </span>
 
               <span className="sidebar-link-label">
                 Central de ajuda
               </span>
+
             </a>
 
           </div>
@@ -308,7 +368,9 @@ export default function Sidebar() {
 
           <div className="sidebar-user">
 
-            {/* Avatar */}
+            {/* =================================================
+                AVATAR
+            ================================================= */}
 
             <div
               className="sidebar-user-avatar"
@@ -317,9 +379,12 @@ export default function Sidebar() {
               AM
             </div>
 
-            {/* Informações */}
+            {/* =================================================
+                INFORMAÇÕES
+            ================================================= */}
 
             <div className="sidebar-user-info">
+
               <strong>
                 AIMBOT
               </strong>
@@ -327,6 +392,7 @@ export default function Sidebar() {
               <span>
                 Administrador
               </span>
+
             </div>
 
             {/* =================================================
@@ -348,23 +414,29 @@ export default function Sidebar() {
                   )
                 }
               >
+
                 <i
                   className="bi bi-three-dots"
                   aria-hidden="true"
                 />
+
               </button>
 
-              {/* User Dropdown */}
+              {/* =================================================
+                  USER DROPDOWN
+              ================================================= */}
 
               <div
                 className={`sidebar-user-dropdown ${
                   userMenuOpen ? 'open' : ''
                 }`}
               >
+
                 <button
                   type="button"
                   className="sidebar-user-dropdown-item logout"
                 >
+
                   <i
                     className="bi bi-box-arrow-right"
                     aria-hidden="true"
@@ -373,7 +445,9 @@ export default function Sidebar() {
                   <span>
                     Sair
                   </span>
+
                 </button>
+
               </div>
 
             </div>
@@ -383,6 +457,7 @@ export default function Sidebar() {
         </div>
 
       </div>
+
     </aside>
   );
 }

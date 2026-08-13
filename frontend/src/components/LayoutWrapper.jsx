@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-
+import Footer from "./Footer";
 import Header from "@/components/Header";
 import Sidebar from "./Sidebar";
 
@@ -26,7 +26,7 @@ export default function LayoutWrapper({ children }) {
         }
       {!hideLayout && children}
 
-      {/*{!hideLayout && <Footer />}*/}
+      {!hideLayout && <Footer />}
     </>
   );
 }
