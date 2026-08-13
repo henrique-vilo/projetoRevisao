@@ -11,6 +11,7 @@ router.delete('/perfil/:id', authMiddleware, selfMiddleware, AuthController.excl
 
 // Rotas protegidas por admin
 router.get('/', authMiddleware, adminMiddleware, AuthController.listarUsuarios);
+router.get('/:id', authMiddleware, adminMiddleware, AuthController.buscarUsuario);
 router.post('/', authMiddleware, adminMiddleware, AuthController.criarUsuario);
 router.put('/:id', authMiddleware, adminMiddleware, AuthController.atualizarUsuario);
 router.delete('/:id', authMiddleware, adminMiddleware, AuthController.excluirUsuario);

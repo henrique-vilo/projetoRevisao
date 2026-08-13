@@ -8,9 +8,9 @@ export const logMiddleware = async (req, res, next) => {
     const logData = {
         rota: req.originalUrl,
         metodo: req.method,
-        ip_address: req.ip || req.connection.remoteAddress || req.socket.remoteAddress,
-        user_agent: req.get('User-Agent'),
-        dados_requisicao: JSON.stringify({
+        ipAddress: req.ip || req.connection.remoteAddress || req.socket.remoteAddress,
+        userAgent: req.get('User-Agent'),
+        dadosRequisicao: JSON.stringify({
             headers: {
                 'content-type': req.get('Content-Type'),
                 'authorization': req.get('Authorization') ? 'Bearer [REDACTED]' : null,
@@ -29,13 +29,13 @@ export const logMiddleware = async (req, res, next) => {
         // Capturar dados atualizados no momento da resposta (após todos os middlewares executarem)
         const finalLogData = {
             ...logData,
-            status_code: res.statusCode,
-            tempo_resposta_ms: Date.now() - startTime
+            statusCode: res.statusCode,
+            tempoResposta_ms: Date.now() - startTime
         };
         
         // Capturar usuário se autenticado (após authMiddleware ter executado)
         if (req.usuario && req.usuario.id) {
-            finalLogData.usuario_id = req.usuario.id;
+            finalLogData.idUsuario = req.usuario.id;
         }
         
         // Capturar dados da resposta (limitado para evitar logs muito grandes)
@@ -59,18 +59,18 @@ export const logMiddleware = async (req, res, next) => {
         // Capturar dados atualizados no momento da resposta (após todos os middlewares executarem)
         const finalLogData = {
             ...logData,
-            status_code: res.statusCode,
-            tempo_resposta_ms: Date.now() - startTime
+            statusCode: res.statusCode,
+            tempoResposta_ms: Date.now() - startTime
         };
         
         // Capturar usuário se autenticado (após authMiddleware ter executado)
         if (req.usuario && req.usuario.id) {
-            finalLogData.usuario_id = req.usuario.id;
+            finalLogData.idUsuario = req.usuario.id;
         }
         
         // Capturar dados da resposta (limitado para evitar logs muito grandes)
         if (res.statusCode >= 400) {
-            finalLogData.dados_resposta = {
+            finalLogData.dadosResposta = {
                 error: true,
                 status: res.statusCode,
                 message: typeof data === 'object' ? JSON.stringify(data).substring(0, 500) : data

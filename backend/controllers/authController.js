@@ -37,11 +37,12 @@ class AuthController {
                     mensagem: 'Email ou senha incorretos'
                 });
             }
+            const idDoUsuario = usuario.idUsuario || usuario.id;
 
             // Gerar token JWT
             const token = jwt.sign(
                 { 
-                    id: usuario.id, 
+                    id: idDoUsuario, // Agora o token terá o ID corretamente
                     email: usuario.email,
                     tipo: usuario.tipo 
                 },
@@ -55,7 +56,7 @@ class AuthController {
                 dados: {
                     token,
                     usuario: {
-                        id: usuario.id,
+                        id: idDoUsuario, // O Frontend agora recebe o ID de forma correta
                         nome: usuario.nome,
                         email: usuario.email,
                         tipo: usuario.tipo
@@ -282,7 +283,7 @@ class AuthController {
     // GET /auth/perfil - Obter perfil do usuário logado
     static async obterPerfil(req, res) {
         try {
-            const usuario = await UsuarioModel.buscarPorId(req.usuario.id);
+            const usuario = await UsuarioModel.buscarPorId(req.usuario.id); 
             
             if (!usuario) {
                 return res.status(404).json({
@@ -355,6 +356,35 @@ class AuthController {
                 sucesso: false,
                 erro: 'Erro interno do servidor',
                 mensagem: 'Não foi possível listar os usuários'
+            });
+        }
+    }
+
+    static async buscarUsuario(req, res) {
+        try {
+            const { id } = req.params;
+            
+            const resultado = await UsuarioModel.buscarPorId(id);
+            
+            if (!resultado) {
+                return res.status(404).json({
+                    sucesso: false,
+                    mensagem: 'Usuário não encontrado'
+                });
+            }
+            
+            const { senha, ...usuarioSemSenha } = resultado;
+
+            res.status(200).json({
+                sucesso: true,
+                dados: usuarioSemSenha,
+            });
+        } catch (error) {
+            console.error('Erro ao buscar usuário:', error);
+            res.status(500).json({
+                sucesso: false,
+                erro: 'Erro interno do servidor',
+                mensagem: 'Não foi possível buscar o usuário'
             });
         }
     }
@@ -569,7 +599,8 @@ class AuthController {
     // PUT /usuarios/:id - Atualizar usuário (apenas admin)
     static async atualizarUsuario(req, res) {
         try {
-            const { id } = req.params;
+            // CORREÇÃO: Alterado de { idUsuario } para { id } para bater com o req.params e as validações
+            const { id } = req.params; 
             const { nome, cpf, email, telefone, cep, senha, tipo } = req.body;
             
             // Validação do ID
@@ -768,8 +799,7 @@ class AuthController {
                 });
             }
 
-            // Verificar se o usuário existe
-            const usuarioExistente = await UsuarioModel.buscarPorId(id);
+            const usuarioExistente = await UsuarioModel.buscarPorId(id); 
             if (!usuarioExistente) {
                 return res.status(404).json({
                     sucesso: false,

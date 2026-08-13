@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 
 //importar rotas
 import authRotas from './routes/authRotas.js';
+import usuarioRotas from './routes/usuarioRotas.js';
 import produtoRotas from './routes/produtoRotas.js';
 import categoriaRotas from './routes/categoriaRotas.js';
 import subcategoriaRotas from './routes/subcategoriaRotas.js';
@@ -55,6 +56,7 @@ app.use(logMiddleware);
 
 //rotas api use 
 app.use('/api/auth', authRotas);
+app.use('/api/usuarios', usuarioRotas);
 app.use('/api/produtos', produtoRotas);
 app.use('/api/categorias', categoriaRotas);
 app.use('/api/subcategorias', subcategoriaRotas);

@@ -10,7 +10,7 @@ class UsuarioModel {
             // Buscar usuários com paginação (usando prepared statements para segurança)
             const connection = await getConnection();
             try {
-                const sql = 'SELECT * FROM usuarios ORDER BY id DESC LIMIT ? OFFSET ?';
+                const sql = 'SELECT * FROM usuarios ORDER BY idUsuario DESC LIMIT ? OFFSET ?';
                 const [usuarios] = await connection.query(sql, [limite, offset]);
                 
                 // Contar total de registros
@@ -36,7 +36,7 @@ class UsuarioModel {
     // Buscar usuário por ID
     static async buscarPorId(id) {
         try {
-            const rows = await read('usuarios', `id = ${id}`);
+            const rows = await read('usuarios', `idUsuario = ${id}`);
             return rows[0] || null;
         } catch (error) {
             console.error('Erro ao buscar usuário por ID:', error);
@@ -102,7 +102,7 @@ class UsuarioModel {
                 dadosUsuario.senha = await hashPassword(dadosUsuario.senha);
             }
             
-            return await update('usuarios', dadosUsuario, `id = ${id}`);
+            return await update('usuarios', dadosUsuario, `idUsuario = ${id}`);
         } catch (error) {
             console.error('Erro ao atualizar usuário:', error);
             throw error;
@@ -112,7 +112,7 @@ class UsuarioModel {
     // Excluir usuário
     static async excluir(id) {
         try {
-            return await deleteRecord('usuarios', `id = ${id}`);
+            return await deleteRecord('usuarios', `idUsuario = ${id}`);
         } catch (error) {
             console.error('Erro ao excluir usuário:', error);
             throw error;

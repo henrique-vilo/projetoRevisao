@@ -88,15 +88,15 @@ class ProdutoModel {
                 case 'antigo': orderClause = 'p.idProduto ASC'; break;
             }
 
-            // Consulta principal trazendo nomes legíveis das chaves estrangeiras
+            // Consulta principal corrigida para usar os nomes reais das colunas de cada tabela
             const sql = `
                 SELECT 
                     p.*,
-                    c.nome AS categoriaNome,
-                    s.nome AS subcategoriaNome,
-                    cr.nome AS corNome,
-                    t.nome AS tamanhoNome,
-                    m.nome AS modeloNome
+                    c.nomeCategoria AS categoriaNome,
+                    s.nomeSubcategoria AS subcategoriaNome,
+                    cr.nomeCor AS corNome,
+                    t.codigoTamanho AS tamanhoNome,
+                    m.nomeModelo AS modeloNome
                 FROM produtos p
                 LEFT JOIN categorias c ON p.idCategoria = c.idCategoria
                 LEFT JOIN subcategorias s ON p.idSubcategoria = s.idSubcategoria
@@ -130,9 +130,14 @@ class ProdutoModel {
     static async buscarPorId(id) {
         const connection = await getConnection();
         try {
+            // Consulta corrigida para usar os nomes reais das colunas de cada tabela
             const sql = `
-                SELECT p.*, c.nome AS categoriaNome, s.nome AS subcategoriaNome, 
-                       cr.nome AS corNome, t.nome AS tamanhoNome, m.nome AS modeloNome
+                SELECT p.*, 
+                       c.nomeCategoria AS categoriaNome, 
+                       s.nomeSubcategoria AS subcategoriaNome, 
+                       cr.nomeCor AS corNome, 
+                       t.codigoTamanho AS tamanhoNome, 
+                       m.nomeModelo AS modeloNome
                 FROM produtos p
                 LEFT JOIN categorias c ON p.idCategoria = c.idCategoria
                 LEFT JOIN subcategorias s ON p.idSubcategoria = s.idSubcategoria
