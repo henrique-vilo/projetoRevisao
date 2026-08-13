@@ -9,6 +9,7 @@ class ProdutoModel {
             pagina = 1,
             limite = 10,
             busca,
+            genero,
             idCategoria,
             idSubcategoria,
             idCor,
@@ -27,10 +28,16 @@ class ProdutoModel {
             const conditions = ['p.ativo = 1'];
             const queryParams = [];
 
-            // Filtro por texto (Nome ou Descrição)
+            // Filtro por texto (SKU, Nome, Nome Combinação ou Descrição)
             if (busca) {
-                conditions.push('(p.nome LIKE ? OR p.descricao LIKE ?)');
-                queryParams.push(`%${busca}%`, `%${busca}%`);
+                conditions.push('(p.nome LIKE ? OR p.nomeCombinacao LIKE ? OR p.descricao LIKE ? OR p.sku LIKE ?)');
+                queryParams.push(`%${busca}%`, `%${busca}%`, `%${busca}%`, `%${busca}%`);
+            }
+
+            // Filtro por Gênero
+            if (genero) {
+                conditions.push('p.genero = ?');
+                queryParams.push(genero);
             }
 
             // Filtros por IDs de tabelas relacionais
@@ -146,14 +153,14 @@ class ProdutoModel {
         try {
             const sql = `
                 INSERT INTO produtos 
-                (nome, descricao, preco, idCategoria, idSubcategoria, idCor, idTamanho, idModelo, imagem1, imagem2, imagem3, imagem4, estoque)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (sku, nome, nomeCombinacao, descricao, genero, preco, idCategoria, idSubcategoria, idCor, idTamanho, idModelo, imagem1, imagem2, imagem3, imagem4, estoque)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
             const valores = [
-                dados.nome, dados.descricao, dados.preco, dados.idCategoria,
-                dados.idSubcategoria, dados.idCor, dados.idTamanho, dados.idModelo,
-                dados.imagem1, dados.imagem2 || null, dados.imagem3 || null, dados.imagem4 || null,
-                dados.estoque
+                dados.sku, dados.nome, dados.nomeCombinacao, dados.descricao, dados.genero || 'Unissex', 
+                dados.preco, dados.idCategoria, dados.idSubcategoria, dados.idCor, 
+                dados.idTamanho, dados.idModelo, dados.imagem1, dados.imagem2 || null, 
+                dados.imagem3 || null, dados.imagem4 || null, dados.estoque
             ];
             const [result] = await connection.execute(sql, valores);
             return result.insertId;

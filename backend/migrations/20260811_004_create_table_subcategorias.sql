@@ -1,6 +1,6 @@
 USE Everett;
 
-CREATE TABLE subcategoias(
-idSubcategorias INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE subcategorias(
+idSubcategoria INT AUTO_INCREMENT PRIMARY KEY,
 nomeSubcategoria VARCHAR(255) NOT NULL
 );

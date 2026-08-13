@@ -1,6 +1,6 @@
 USE Everett;
 
-INSERT INTO modelo (nomeModelo) VALUES
+INSERT INTO modelos (nomeModelo) VALUES
 ('Slim Fit'),
 ('Oversized'),
 ('Reta / Tradicional'),

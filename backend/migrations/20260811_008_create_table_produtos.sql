@@ -1,9 +1,10 @@
-USE Everett;
-
 CREATE TABLE IF NOT EXISTS produtos (
     idProduto INT AUTO_INCREMENT PRIMARY KEY,
+    sku VARCHAR(50) UNIQUE NOT NULL,
     nome VARCHAR(255) NOT NULL,
+    nomeCombinacao VARCHAR(255) NOT NULL,
     descricao TEXT NOT NULL,
+    genero ENUM('Masculino', 'Feminino', 'Unissex', 'Infantil') DEFAULT 'Unissex',
     preco DECIMAL(10, 2) NOT NULL,
     idCategoria INT NOT NULL,
     idSubcategoria INT NOT NULL,
@@ -16,8 +17,8 @@ CREATE TABLE IF NOT EXISTS produtos (
     imagem4 VARCHAR(255) NULL,
     estoque INT NOT NULL DEFAULT 0,
     ativo TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_produto_categoria FOREIGN KEY (idCategoria) REFERENCES categorias(idCategoria),
     CONSTRAINT fk_produto_subcategoria FOREIGN KEY (idSubcategoria) REFERENCES subcategorias(idSubcategoria),

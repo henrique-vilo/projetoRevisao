@@ -14,8 +14,7 @@ const cpUpload = upload.fields([
 ]);
 
 // ------------------------------------------
-// Rotas Públicas (Naves/Filtro sem exigência de Login)
-// Exemplo: GET /produtos?idCategoria=1&idCor=2&precoMin=50&busca=camisa
+// Rotas Públicas (Filtro e Busca sem exigência de Login)
 // ------------------------------------------
 router.get('/', ProdutoController.listarOuFiltrar);
 router.get('/:id', ProdutoController.buscarPorId);
@@ -28,7 +27,7 @@ router.put('/:id', authMiddleware, adminMiddleware, cpUpload, ProdutoController.
 router.delete('/:id', authMiddleware, adminMiddleware, ProdutoController.excluir);
 
 // ------------------------------------------
-// CORS Preflight Handler para a Rota de Produtos
+// CORS Preflight Handler
 // ------------------------------------------
 router.options('*', (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
