@@ -153,14 +153,19 @@ export default function Header() {
             {/* Ações do Header */}
             <div className="header-actions">
 
-              {/* Perfil */}
+                 {/* NOTIFICACAO */}
               <a
                 href="#"
                 className="header-action"
-                title="Perfil"
+                title="Localização"
               >
-                <i className="bi bi-person-fill"></i>
+                <i className="bi bi-bell-fill"></i>
               </a>
+
+
+
+
+            
 
 
               {/* Carrinho */}
@@ -187,6 +192,15 @@ export default function Header() {
                 title="Localização"
               >
                 <i className="bi bi-geo-alt-fill"></i>
+              </a>
+
+                {/* Perfil */}
+              <a
+                href="#"
+                className="header-action"
+                title="Perfil"
+              >
+                <i className="bi bi-person-fill"></i>
               </a>
 
             </div>
