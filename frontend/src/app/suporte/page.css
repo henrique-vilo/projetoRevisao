@@ -1,0 +1,1342 @@
+/* =========================================
+   PÁGINA
+========================================= */
+
+.suporte-page {
+  min-height: 100vh;
+
+  background: #f5f8fc;
+
+  color: #102a43;
+}
+
+
+/* =========================================
+   CABEÇALHO
+========================================= */
+
+.suporte-header {
+  position: relative;
+
+  padding: 75px 0 85px;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      135deg,
+      #102a43,
+      #1769aa,
+      #00a9d4
+    );
+
+  color: #ffffff;
+}
+
+
+/* detalhe decorativo */
+
+.suporte-header::after {
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+
+  bottom: -35px;
+
+  width: 110px;
+
+  height: 70px;
+
+  transform: translateX(-50%) rotate(45deg);
+
+  background: #40ffdc;
+
+  opacity: 0.12;
+}
+
+
+/* =========================================
+   CONTEÚDO DO HEADER
+========================================= */
+
+.suporte-header-conteudo {
+  position: relative;
+
+  z-index: 2;
+
+  max-width: 750px;
+
+  margin: 0 auto;
+
+  text-align: center;
+}
+
+
+/* =========================================
+   SUBTÍTULO
+========================================= */
+
+.suporte-subtitulo {
+  margin: 0 0 10px;
+
+  color: #bceeff;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  letter-spacing: 3px;
+}
+
+
+/* =========================================
+   TÍTULO
+========================================= */
+
+.suporte-header h1 {
+  margin: 0;
+
+  color: #ffffff;
+
+  font-size: 42px;
+
+  font-weight: 800;
+}
+
+
+.suporte-header h1 span {
+  color: #40ffdc;
+}
+
+
+/* =========================================
+   DESCRIÇÃO
+========================================= */
+
+.suporte-descricao {
+  max-width: 600px;
+
+  margin: 17px auto 0;
+
+  color: #dff6ff;
+
+  font-size: 15px;
+
+  line-height: 1.7;
+}
+
+
+/* =========================================
+   SEÇÃO DE DÚVIDAS
+========================================= */
+
+.suporte-duvidas {
+  padding: 80px 0 60px;
+
+  background: #f5f8fc;
+}
+
+
+/* =========================================
+   TÍTULO DA SEÇÃO
+========================================= */
+
+.suporte-titulo-secao {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 25px;
+
+  margin-bottom: 50px;
+
+  text-align: center;
+}
+
+
+.suporte-titulo-secao > div {
+  min-width: 280px;
+}
+
+
+.suporte-linha {
+  width: 90px;
+
+  height: 2px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      #00a9d4
+    );
+}
+
+
+.suporte-linha:last-child {
+  background:
+    linear-gradient(
+      90deg,
+      #00a9d4,
+      transparent
+    );
+}
+
+
+/* =========================================
+   MINI TÍTULO
+========================================= */
+
+.suporte-mini-titulo {
+  margin: 0 0 6px;
+
+  color: #00a9d4;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  letter-spacing: 3px;
+}
+
+
+/* =========================================
+   TÍTULO
+========================================= */
+
+.suporte-titulo-secao h2 {
+  margin: 0;
+
+  color: #102a43;
+
+  font-size: 36px;
+
+  font-weight: 800;
+}
+
+
+.suporte-titulo-secao h2 span {
+  color: #00a9d4;
+}
+
+
+/* =========================================
+   LISTA DO ACORDEÃO
+========================================= */
+
+.suporte-lista {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 14px;
+}
+
+
+/* =========================================
+   ITEM
+========================================= */
+
+.suporte-item {
+  overflow: hidden;
+
+  background: #ffffff;
+
+  border: 1px solid #e1e8f0;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 7px 22px rgba(20, 70, 110, 0.06);
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+
+.suporte-item:hover {
+  transform: translateY(-2px);
+
+  border-color: #8bbce3;
+
+  box-shadow:
+    0 12px 30px rgba(20, 70, 110, 0.10);
+}
+
+
+/* =========================================
+   PERGUNTA
+========================================= */
+
+.suporte-pergunta {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  width: 100%;
+
+  padding: 20px 22px;
+
+  border: none;
+
+  background: #ffffff;
+
+  color: #102a43;
+
+  text-align: left;
+
+  font-size: 15px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
+}
+
+
+/* =========================================
+   TEXTO DA PERGUNTA
+========================================= */
+
+.pergunta-texto {
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+}
+
+
+/* =========================================
+   NÚMERO
+========================================= */
+
+.pergunta-numero {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  min-width: 36px;
+
+  height: 36px;
+
+  border-radius: 10px;
+
+  background: #dff6ff;
+
+  color: #1769aa;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.5px;
+
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
+}
+
+
+/* =========================================
+   ÍCONE
+========================================= */
+
+.pergunta-icone {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 34px;
+
+  height: 34px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #edf5fb;
+
+  color: #1769aa;
+
+  font-size: 18px;
+
+  transition:
+    transform 0.3s ease,
+    background 0.3s ease,
+    color 0.3s ease;
+}
+
+
+/* =========================================
+   ITEM ABERTO
+========================================= */
+
+.suporte-item.item-aberto {
+  border-color: #8bbce3;
+
+  box-shadow:
+    0 12px 30px rgba(0, 120, 170, 0.12);
+}
+
+
+.suporte-item.item-aberto .suporte-pergunta {
+  background:
+    linear-gradient(
+      90deg,
+      #1769aa,
+      #00a9d4
+    );
+
+  color: #ffffff;
+}
+
+
+.suporte-item.item-aberto .pergunta-numero {
+  background: rgba(255, 255, 255, 0.18);
+
+  color: #ffffff;
+}
+
+
+.suporte-item.item-aberto .pergunta-icone {
+  background: #40ffdc;
+
+  color: #102a43;
+
+  transform: rotate(180deg);
+}
+
+
+/* =========================================
+   RESPOSTA
+
+   IMPORTANTE:
+   Não usamos max-height.
+   O React só renderiza a resposta
+   quando ela está aberta.
+========================================= */
+
+.suporte-resposta {
+  background: #ffffff;
+
+  border-top: 1px solid #e1e8f0;
+
+  animation: abrirResposta 0.25s ease;
+}
+
+
+@keyframes abrirResposta {
+
+  from {
+    opacity: 0;
+
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0);
+  }
+
+}
+
+
+/* =========================================
+   CONTEÚDO DA RESPOSTA
+========================================= */
+
+.resposta-conteudo {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 14px;
+
+  padding: 22px 25px;
+}
+
+
+.resposta-conteudo p {
+  margin: 0;
+
+  color: #627d98;
+
+  font-size: 14px;
+
+  line-height: 1.75;
+}
+
+
+/* =========================================
+   ÍCONE DA RESPOSTA
+========================================= */
+
+.resposta-icone {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 34px;
+
+  height: 34px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #dff6ff;
+
+  color: #00a9d4;
+
+  font-size: 16px;
+}
+
+
+/* =========================================
+   CONTATO
+========================================= */
+
+.suporte-contato {
+  padding: 30px 0 85px;
+
+  background: #f5f8fc;
+}
+
+
+/* =========================================
+   CARD DE CONTATO
+========================================= */
+
+.contato-card {
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 25px;
+
+  padding: 35px 40px;
+
+  overflow: hidden;
+
+  background: #ffffff;
+
+  border: 1px solid #e1e8f0;
+
+  border-top: 4px solid #40c0cb;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 10px 30px rgba(20, 70, 110, 0.08);
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+
+.contato-card:hover {
+  transform: translateY(-5px);
+
+  box-shadow:
+    0 18px 40px rgba(20, 70, 110, 0.13);
+}
+
+
+/* =========================================
+   ÍCONE CONTATO
+========================================= */
+
+.contato-icone {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 60px;
+
+  height: 60px;
+
+  flex-shrink: 0;
+
+  border-radius: 15px;
+
+  background: #dff6ff;
+
+  color: #1769aa;
+
+  font-size: 25px;
+}
+
+
+/* =========================================
+   TEXTO CONTATO
+========================================= */
+
+.contato-texto {
+  flex: 1;
+}
+
+
+.contato-mini {
+  margin: 0 0 5px;
+
+  color: #00a9d4;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  letter-spacing: 2px;
+}
+
+
+.contato-texto h2 {
+  margin: 0 0 5px;
+
+  color: #102a43;
+
+  font-size: 22px;
+
+  font-weight: 800;
+}
+
+
+.contato-texto > p:last-child {
+  margin: 0;
+
+  color: #627d98;
+
+  font-size: 14px;
+}
+
+
+/* =========================================
+   BOTÃO SUPORTE
+========================================= */
+
+.btn-suporte {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 9px;
+
+  padding: 13px 22px;
+
+  flex-shrink: 0;
+
+  border: none;
+
+  border-radius: 9px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #1769aa,
+      #00a9d4
+    );
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+
+.btn-suporte:hover {
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 10px 25px rgba(0, 120, 170, 0.22);
+}
+
+
+.btn-suporte i {
+  transition:
+    transform 0.3s ease;
+}
+
+
+.btn-suporte:hover i {
+  transform: translateX(4px);
+}
+
+
+/* =========================================
+   MODAL
+========================================= */
+
+.suporte-modal {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 1060;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 20px;
+}
+
+
+/* =========================================
+   DIALOG
+========================================= */
+
+.modal-dialog-custom {
+  position: relative;
+
+  z-index: 1062;
+
+  width: 100%;
+
+  max-width: 560px;
+}
+
+
+/* =========================================
+   CONTEÚDO
+========================================= */
+
+.modal-content-custom {
+  overflow: hidden;
+
+  background: #ffffff;
+
+  border-radius: 18px;
+
+  border: 1px solid #e1e8f0;
+
+  border-top: 4px solid #40c0cb;
+
+  box-shadow:
+    0 25px 70px rgba(0, 30, 60, 0.25);
+
+  animation: abrirModal 0.25s ease;
+}
+
+
+@keyframes abrirModal {
+
+  from {
+    opacity: 0;
+
+    transform: translateY(20px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0) scale(1);
+  }
+
+}
+
+
+/* =========================================
+   HEADER MODAL
+========================================= */
+
+.modal-header-custom {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding: 25px 28px;
+
+  border-bottom: 1px solid #e1e8f0;
+}
+
+
+.modal-titulo-area {
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+}
+
+
+.modal-icone {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 45px;
+
+  height: 45px;
+
+  border-radius: 12px;
+
+  background: #dff6ff;
+
+  color: #1769aa;
+
+  font-size: 19px;
+}
+
+
+.modal-titulo-area p {
+  margin: 0 0 3px;
+
+  color: #00a9d4;
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+  letter-spacing: 2px;
+}
+
+
+.modal-titulo-area h2 {
+  margin: 0;
+
+  color: #102a43;
+
+  font-size: 20px;
+
+  font-weight: 800;
+}
+
+
+/* =========================================
+   BOTÃO FECHAR
+========================================= */
+
+.modal-fechar {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 36px;
+
+  height: 36px;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background: #edf5fb;
+
+  color: #627d98;
+
+  cursor: pointer;
+
+  transition:
+    background 0.25s ease,
+    color 0.25s ease;
+}
+
+
+.modal-fechar:hover {
+  background: #1769aa;
+
+  color: #ffffff;
+}
+
+
+/* =========================================
+   BODY MODAL
+========================================= */
+
+.modal-body-custom {
+  padding: 30px;
+}
+
+
+/* =========================================
+   LABEL
+========================================= */
+
+.modal-label {
+  display: block;
+
+  margin-bottom: 9px;
+
+  color: #102a43;
+
+  font-size: 14px;
+
+  font-weight: 700;
+}
+
+
+/* =========================================
+   TEXTAREA
+========================================= */
+
+.modal-textarea {
+  display: block;
+
+  width: 100%;
+
+  min-height: 130px;
+
+  padding: 14px;
+
+  resize: vertical;
+
+  border: 1px solid #d5e0ea;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  color: #102a43;
+
+  font-size: 14px;
+
+  line-height: 1.6;
+
+  outline: none;
+
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+
+.modal-textarea::placeholder {
+  color: #9aaec0;
+}
+
+
+.modal-textarea:focus {
+  border-color: #00a9d4;
+
+  box-shadow:
+    0 0 0 3px rgba(0, 169, 212, 0.12);
+}
+
+
+/* =========================================
+   BOTÕES MODAL
+========================================= */
+
+.modal-botoes {
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 22px;
+}
+
+
+.btn-cancelar {
+  padding: 11px 20px;
+
+  border: 1px solid #d5e0ea;
+
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #627d98;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.25s ease,
+    color 0.25s ease,
+    background 0.25s ease;
+}
+
+
+.btn-cancelar:hover {
+  border-color: #1769aa;
+
+  background: #edf5fb;
+
+  color: #1769aa;
+}
+
+
+/* =========================================
+   BOTÃO ENVIAR
+========================================= */
+
+.btn-enviar {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 11px 20px;
+
+  border: none;
+
+  border-radius: 9px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #1769aa,
+      #00a9d4
+    );
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    opacity 0.25s ease;
+}
+
+
+.btn-enviar:hover:not(:disabled) {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 20px rgba(0, 120, 170, 0.20);
+}
+
+
+.btn-enviar:disabled {
+  opacity: 0.45;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================
+   MENSAGEM DE SUCESSO
+========================================= */
+
+.mensagem-sucesso {
+  padding: 10px 10px 5px;
+
+  text-align: center;
+}
+
+
+.icone-sucesso {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 65px;
+
+  height: 65px;
+
+  margin: 0 auto 18px;
+
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      135deg,
+      #1769aa,
+      #00a9d4
+    );
+
+  color: #ffffff;
+
+  font-size: 27px;
+
+  box-shadow:
+    0 10px 25px rgba(0, 120, 170, 0.20);
+}
+
+
+.mensagem-sucesso h3 {
+  margin: 0 0 8px;
+
+  color: #102a43;
+
+  font-size: 22px;
+
+  font-weight: 800;
+}
+
+
+.mensagem-sucesso p {
+  max-width: 380px;
+
+  margin: 0 auto 22px;
+
+  color: #627d98;
+
+  font-size: 14px;
+
+  line-height: 1.6;
+}
+
+
+/* =========================================
+   BACKDROP
+========================================= */
+
+.suporte-backdrop {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 1055;
+
+  background: rgba(16, 42, 67, 0.70);
+
+  backdrop-filter: blur(3px);
+
+  animation: aparecerBackdrop 0.2s ease;
+}
+
+
+@keyframes aparecerBackdrop {
+
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+
+}
+
+
+/* =========================================
+   RESPONSIVIDADE
+========================================= */
+
+@media (max-width: 991px) {
+
+  .suporte-header {
+    padding: 65px 0 75px;
+  }
+
+  .suporte-header h1 {
+    font-size: 36px;
+  }
+
+  .suporte-duvidas {
+    padding: 65px 15px 50px;
+  }
+
+  .suporte-titulo-secao h2 {
+    font-size: 32px;
+  }
+
+  .contato-card {
+    padding: 30px;
+  }
+
+}
+
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 767px) {
+
+  .suporte-header {
+    padding: 55px 15px 65px;
+  }
+
+  .suporte-header h1 {
+    font-size: 31px;
+  }
+
+  .suporte-descricao {
+    font-size: 13px;
+  }
+
+  .suporte-duvidas {
+    padding: 55px 15px 40px;
+  }
+
+  .suporte-titulo-secao {
+    gap: 12px;
+  }
+
+  .suporte-linha {
+    width: 55px;
+  }
+
+  .suporte-titulo-secao h2 {
+    font-size: 28px;
+  }
+
+  .suporte-item {
+    border-radius: 12px;
+  }
+
+  .suporte-pergunta {
+    padding: 17px;
+  }
+
+  .pergunta-texto {
+    gap: 10px;
+
+    font-size: 14px;
+  }
+
+  .pergunta-numero {
+    min-width: 32px;
+
+    height: 32px;
+  }
+
+  .pergunta-icone {
+    width: 30px;
+
+    height: 30px;
+  }
+
+  .contato-card {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    padding: 30px 25px;
+  }
+
+  .btn-suporte {
+    width: 100%;
+  }
+
+}
+
+
+/* =========================================
+   CELULAR
+========================================= */
+
+@media (max-width: 575px) {
+
+  .suporte-header {
+    padding: 45px 15px 55px;
+  }
+
+  .suporte-header h1 {
+    font-size: 27px;
+  }
+
+  .suporte-subtitulo {
+    font-size: 10px;
+
+    letter-spacing: 2px;
+  }
+
+  .suporte-titulo-secao {
+    gap: 0;
+  }
+
+  .suporte-linha {
+    display: none;
+  }
+
+  .suporte-titulo-secao h2 {
+    font-size: 26px;
+  }
+
+  .suporte-mini-titulo {
+    font-size: 10px;
+  }
+
+  .pergunta-texto {
+    max-width: 85%;
+
+    align-items: flex-start;
+  }
+
+  .pergunta-numero {
+    margin-top: 1px;
+  }
+
+  .resposta-conteudo {
+    padding: 18px;
+
+    gap: 10px;
+  }
+
+  .resposta-conteudo p {
+    font-size: 13px;
+  }
+
+  .contato-texto h2 {
+    font-size: 20px;
+  }
+
+  .modal-header-custom {
+    padding: 20px;
+  }
+
+  .modal-body-custom {
+    padding: 22px;
+  }
+
+  .modal-titulo-area h2 {
+    font-size: 17px;
+  }
+
+  .modal-botoes {
+    flex-direction: column-reverse;
+  }
+
+  .btn-cancelar,
+  .btn-enviar {
+    width: 100%;
+  }
+
+}

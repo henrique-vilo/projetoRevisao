@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
+import "./page.css";
+
 export default function Cadastro() {
+  useEffect(() => {
+    import("bootstrap/dist/js/bootstrap.bundle.min.js");
+  }, []);
+
   const [form, setForm] = useState({
     nome: "",
     sobrenome: "",
@@ -45,278 +53,394 @@ export default function Cadastro() {
   }
 
   return (
-    <main
-      className="d-flex justify-content-center align-items-center py-5"
-      style={{
-        background: "#f5f3ef",
-        minHeight: "100vh",
-      }}
-    >
-      <div
-        className="card border-0 shadow-lg"
-        style={{
-          width: "100%",
-          maxWidth: "750px",
-          borderRadius: "22px",
-        }}
-      >
-        {/* TOPO */}
+    <main className="cadastro-page">
 
-        <div
-          className="text-center text-white p-5"
-          style={{
-            background:
-              "linear-gradient(135deg, #012458, #023f79, #1f6197, #028da5)",
-            borderTopLeftRadius: "22px",
-            borderTopRightRadius: "22px",
-          }}
-        >
-          <h1 className="fw-bold mb-2">Everett</h1>
+      {/* =========================
+          ÁREA PRINCIPAL
+      ========================== */}
 
-          <p className="mb-0">
-            Crie sua conta gratuitamente
-          </p>
-        </div>
+      <section className="cadastro-section">
 
-        {/* FORMULÁRIO */}
+        <div className="container">
 
-        <div className="card-body p-5">
-          <form onSubmit={cadastrar}>
-            <div className="row">
+          <div className="row justify-content-center">
 
-              {/* NOME */}
+            <div className="col-12 col-lg-9 col-xl-8">
 
-              <div className="col-md-6 mb-3">
-                <label className="form-label fw-semibold">
-                  Nome
-                </label>
+              <div className="cadastro-card">
 
-                <input
-                  type="text"
-                  className="form-control"
-                  name="nome"
-                  value={form.nome}
-                  onChange={alterarCampo}
-                  required
-                />
-              </div>
+                {/* =========================
+                    CABEÇALHO
+                ========================== */}
 
-              {/* SOBRENOME */}
+                <div className="cadastro-header">
 
-              <div className="col-md-6 mb-3">
-                <label className="form-label fw-semibold">
-                  Sobrenome
-                </label>
+                  <div className="cadastro-logo">
+                    EVERETT
+                  </div>
 
-                <input
-                  type="text"
-                  className="form-control"
-                  name="sobrenome"
-                  value={form.sobrenome}
-                  onChange={alterarCampo}
-                  required
-                />
-              </div>
+                  <p className="cadastro-subtitulo">
+                    CRIE SUA CONTA
+                  </p>
 
-              {/* CPF */}
+                  <h1>
+                    Faça parte da <span>Everett</span>
+                  </h1>
 
-              <div className="col-md-6 mb-3">
-                <label className="form-label fw-semibold">
-                  CPF
-                </label>
-
-                <input
-                  type="text"
-                  className="form-control"
-                  name="cpf"
-                  value={form.cpf}
-                  onChange={alterarCampo}
-                  placeholder="000.000.000-00"
-                  required
-                />
-              </div>
-
-              {/* DATA DE NASCIMENTO */}
-
-              <div className="col-md-6 mb-3">
-                <label className="form-label fw-semibold">
-                  Data de nascimento
-                </label>
-
-                <input
-                  type="date"
-                  className="form-control"
-                  name="nascimento"
-                  value={form.nascimento}
-                  onChange={alterarCampo}
-                  required
-                />
-              </div>
-
-              {/* EMAIL */}
-
-              <div className="col-md-6 mb-3">
-                <label className="form-label fw-semibold">
-                  Email
-                </label>
-
-                <input
-                  type="email"
-                  className="form-control"
-                  name="email"
-                  value={form.email}
-                  onChange={alterarCampo}
-                  required
-                />
-              </div>
-
-              {/* TELEFONE */}
-
-              <div className="col-md-6 mb-3">
-                <label className="form-label fw-semibold">
-                  Telefone
-                </label>
-
-                <input
-                  type="text"
-                  className="form-control"
-                  name="telefone"
-                  value={form.telefone}
-                  onChange={alterarCampo}
-                  placeholder="(11) 99999-9999"
-                  required
-                />
-              </div>
-
-              {/* SENHA */}
-
-              <div className="col-md-6 mb-3">
-                <label className="form-label fw-semibold">
-                  Senha
-                </label>
-
-                <input
-                  type="password"
-                  className="form-control"
-                  name="senha"
-                  value={form.senha}
-                  onChange={alterarCampo}
-                  required
-                />
-              </div>
-
-              {/* CONFIRMAR SENHA */}
-
-              <div className="col-md-6 mb-4">
-                <label className="form-label fw-semibold">
-                  Confirmar senha
-                </label>
-
-                <input
-                  type="password"
-                  className="form-control"
-                  name="confirmarSenha"
-                  value={form.confirmarSenha}
-                  onChange={alterarCampo}
-                  required
-                />
-              </div>
-
-              {/* TERMOS */}
-
-              <div className="col-12 mb-4">
-                <div className="form-check">
-
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    id="termos"
-                    checked={aceitouTermos}
-                    onChange={(e) =>
-                      setAceitouTermos(e.target.checked)
-                    }
-                  />
-
-                  <label
-                    className="form-check-label"
-                    htmlFor="termos"
-                  >
-                    Li e aceito os{" "}
-
-                    <a
-                      href="/documentos/termos-de-uso.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        color: "#1c3166",
-                        fontWeight: "600",
-                      }}
-                    >
-                      Termos de Uso
-                    </a>
-
-                    {" "}e a{" "}
-
-                    <a
-                      href="/documentos/politica-de-privacidade.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        color: "#1c3166",
-                        fontWeight: "600",
-                      }}
-                    >
-                      Política de Privacidade
-                    </a>
-
-                    .
-                  </label>
+                  <p className="cadastro-descricao">
+                    Crie sua conta gratuitamente e tenha uma experiência
+                    ainda melhor em nossa loja.
+                  </p>
 
                 </div>
+
+
+                {/* =========================
+                    FORMULÁRIO
+                ========================== */}
+
+                <div className="cadastro-body">
+
+                  <form onSubmit={cadastrar}>
+
+                    {/* DADOS PESSOAIS */}
+
+                    <div className="cadastro-titulo-secao">
+
+                      <i className="bi bi-person"></i>
+
+                      <div>
+                        <h2>Dados pessoais</h2>
+
+                        <p>
+                          Informe seus dados para criar sua conta.
+                        </p>
+                      </div>
+
+                    </div>
+
+
+                    <div className="row g-3">
+
+                      {/* NOME */}
+
+                      <div className="col-12 col-md-6">
+
+                        <label
+                          htmlFor="nome"
+                          className="form-label"
+                        >
+                          Nome
+                        </label>
+
+                        <input
+                          type="text"
+                          id="nome"
+                          name="nome"
+                          className="form-control"
+                          placeholder="Digite seu nome"
+                          value={form.nome}
+                          onChange={alterarCampo}
+                          required
+                        />
+
+                      </div>
+
+
+                      {/* SOBRENOME */}
+
+                      <div className="col-12 col-md-6">
+
+                        <label
+                          htmlFor="sobrenome"
+                          className="form-label"
+                        >
+                          Sobrenome
+                        </label>
+
+                        <input
+                          type="text"
+                          id="sobrenome"
+                          name="sobrenome"
+                          className="form-control"
+                          placeholder="Digite seu sobrenome"
+                          value={form.sobrenome}
+                          onChange={alterarCampo}
+                          required
+                        />
+
+                      </div>
+
+
+                      {/* CPF */}
+
+                      <div className="col-12 col-md-6">
+
+                        <label
+                          htmlFor="cpf"
+                          className="form-label"
+                        >
+                          CPF
+                        </label>
+
+                        <input
+                          type="text"
+                          id="cpf"
+                          name="cpf"
+                          className="form-control"
+                          placeholder="000.000.000-00"
+                          value={form.cpf}
+                          onChange={alterarCampo}
+                          required
+                        />
+
+                      </div>
+
+
+                      {/* DATA DE NASCIMENTO */}
+
+                      <div className="col-12 col-md-6">
+
+                        <label
+                          htmlFor="nascimento"
+                          className="form-label"
+                        >
+                          Data de nascimento
+                        </label>
+
+                        <input
+                          type="date"
+                          id="nascimento"
+                          name="nascimento"
+                          className="form-control"
+                          value={form.nascimento}
+                          onChange={alterarCampo}
+                          required
+                        />
+
+                      </div>
+
+
+                      {/* EMAIL */}
+
+                      <div className="col-12 col-md-6">
+
+                        <label
+                          htmlFor="email"
+                          className="form-label"
+                        >
+                          E-mail
+                        </label>
+
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          className="form-control"
+                          placeholder="seuemail@email.com"
+                          value={form.email}
+                          onChange={alterarCampo}
+                          required
+                        />
+
+                      </div>
+
+
+                      {/* TELEFONE */}
+
+                      <div className="col-12 col-md-6">
+
+                        <label
+                          htmlFor="telefone"
+                          className="form-label"
+                        >
+                          Telefone
+                        </label>
+
+                        <input
+                          type="tel"
+                          id="telefone"
+                          name="telefone"
+                          className="form-control"
+                          placeholder="(11) 99999-9999"
+                          value={form.telefone}
+                          onChange={alterarCampo}
+                          required
+                        />
+
+                      </div>
+
+                    </div>
+
+
+                    {/* SEPARADOR */}
+
+                    <hr className="cadastro-divider" />
+
+
+                    {/* SENHA */}
+
+                    <div className="cadastro-titulo-secao">
+
+                      <i className="bi bi-lock"></i>
+
+                      <div>
+
+                        <h2>Segurança da conta</h2>
+
+                        <p>
+                          Crie uma senha para proteger sua conta.
+                        </p>
+
+                      </div>
+
+                    </div>
+
+
+                    <div className="row g-3">
+
+                      {/* SENHA */}
+
+                      <div className="col-12 col-md-6">
+
+                        <label
+                          htmlFor="senha"
+                          className="form-label"
+                        >
+                          Senha
+                        </label>
+
+                        <input
+                          type="password"
+                          id="senha"
+                          name="senha"
+                          className="form-control"
+                          placeholder="Digite sua senha"
+                          value={form.senha}
+                          onChange={alterarCampo}
+                          required
+                        />
+
+                      </div>
+
+
+                      {/* CONFIRMAR SENHA */}
+
+                      <div className="col-12 col-md-6">
+
+                        <label
+                          htmlFor="confirmarSenha"
+                          className="form-label"
+                        >
+                          Confirmar senha
+                        </label>
+
+                        <input
+                          type="password"
+                          id="confirmarSenha"
+                          name="confirmarSenha"
+                          className="form-control"
+                          placeholder="Digite sua senha novamente"
+                          value={form.confirmarSenha}
+                          onChange={alterarCampo}
+                          required
+                        />
+
+                      </div>
+
+                    </div>
+
+
+                    {/* TERMOS */}
+
+                    <div className="cadastro-termos mt-4">
+
+                      <div className="form-check">
+
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id="termos"
+                          checked={aceitouTermos}
+                          onChange={(e) =>
+                            setAceitouTermos(e.target.checked)
+                          }
+                        />
+
+                        <label
+                          className="form-check-label"
+                          htmlFor="termos"
+                        >
+                          Li e aceito os{" "}
+
+                          <a
+                            href="/documentos/termos-de-uso.pdf"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Termos de Uso
+                          </a>
+
+                          {" "}e a{" "}
+
+                          <a
+                            href="/documentos/politica-de-privacidade.pdf"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Política de Privacidade
+                          </a>
+
+                          .
+                        </label>
+
+                      </div>
+
+                    </div>
+
+
+                    {/* BOTÃO */}
+
+                    <button
+                      type="submit"
+                      className="cadastro-botao w-100"
+                    >
+
+                      Criar minha conta
+
+                      <i className="bi bi-arrow-right ms-2"></i>
+
+                    </button>
+
+                  </form>
+
+
+                  {/* LOGIN */}
+
+                  <div className="cadastro-login">
+
+                    <span>
+                      Já possui uma conta?
+                    </span>
+
+                    <Link href="/login">
+                      Entrar
+                    </Link>
+
+                  </div>
+
+                </div>
+
               </div>
 
             </div>
 
-            {/* BOTÃO */}
-
-            <button
-              type="submit"
-              className="btn w-100 text-white fw-bold py-3"
-              style={{
-                background:
-                  "linear-gradient(90deg, #00758a, #3fbcc7)",
-                border: "none",
-                borderRadius: "10px",
-              }}
-            >
-              Criar Conta
-            </button>
-
-          </form>
-
-          <hr className="my-4" />
-
-          {/* LOGIN */}
-
-          <div className="text-center">
-            <span className="text-secondary">
-              Já possui uma conta?
-            </span>
-
-            <Link
-              href="/login"
-              className="ms-2 fw-bold"
-              style={{
-                color: "#1c3166",
-                textDecoration: "none",
-              }}
-            >
-              Entrar
-            </Link>
           </div>
 
         </div>
-      </div>
+
+      </section>
+
     </main>
   );
 }

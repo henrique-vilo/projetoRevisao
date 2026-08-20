@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
+import "./page.css";
+
 export default function Login() {
+  useEffect(() => {
+    import("bootstrap/dist/js/bootstrap.bundle.min.js");
+  }, []);
+
   const [form, setForm] = useState({
     email: "",
     senha: "",
@@ -25,124 +33,191 @@ export default function Login() {
   }
 
   return (
-    <main
-      className="d-flex justify-content-center align-items-center py-5"
-      style={{
-        background: "#f5f3ef",
-        minHeight: "100vh",
-      }}
-    >
-      <div
-        className="card border-0 shadow-lg"
-        style={{
-          width: "100%",
-          maxWidth: "750px",
-          borderRadius: "22px",
-        }}
-      >
-        {/* TOPO */}
+    <main className="login-page">
 
-        <div
-          className="text-center text-white p-5"
-          style={{
-            background:
-              "linear-gradient(135deg, #012458, #023f79, #1f6197, #028da5)",
-            borderTopLeftRadius: "22px",
-            borderTopRightRadius: "22px",
-          }}
-        >
-          <h1 className="fw-bold mb-2">
-            Everett
-          </h1>
+      {/* =========================
+          SEÇÃO PRINCIPAL
+      ========================== */}
 
-          <p className="mb-0">
-            Faça seu login
-          </p>
-        </div>
+      <section className="login-section">
 
-        {/* FORMULÁRIO */}
+        <div className="container">
 
-        <div className="card-body p-5">
-          <form onSubmit={realizarLogin}>
+          <div className="row justify-content-center">
 
-            <div className="row">
+            <div className="col-12 col-md-10 col-lg-7 col-xl-6">
 
-              {/* EMAIL */}
+              <div className="login-card">
 
-              <div className="col-12 mb-3">
-                <label className="form-label fw-semibold">
-                  Email
-                </label>
+                {/* =========================
+                    CABEÇALHO
+                ========================== */}
 
-                <input
-                  type="email"
-                  className="form-control"
-                  name="email"
-                  value={form.email}
-                  onChange={alterarCampo}
-                  required
-                />
-              </div>
+                <div className="login-header">
 
-              {/* SENHA */}
+                  <div className="login-logo">
+                    EVERETT
+                  </div>
 
-              <div className="col-12 mb-4">
-                <label className="form-label fw-semibold">
-                  Senha
-                </label>
+                  <p className="login-subtitulo">
+                    BEM-VINDO DE VOLTA
+                  </p>
 
-                <input
-                  type="password"
-                  className="form-control"
-                  name="senha"
-                  value={form.senha}
-                  onChange={alterarCampo}
-                  required
-                />
+                  <h1>
+                    Faça seu <span>login</span>
+                  </h1>
+
+                  <p className="login-descricao">
+                    Acesse sua conta para continuar sua experiência
+                    na Everett.
+                  </p>
+
+                </div>
+
+
+                {/* =========================
+                    FORMULÁRIO
+                ========================== */}
+
+                <div className="login-body">
+
+                  <form onSubmit={realizarLogin}>
+
+                    {/* =========================
+                        TÍTULO
+                    ========================== */}
+
+                    <div className="login-titulo-secao">
+
+                      <div className="login-icone">
+                        <i className="bi bi-person"></i>
+                      </div>
+
+                      <div>
+                        <h2>
+                          Acesse sua conta
+                        </h2>
+
+                        <p>
+                          Informe seus dados para entrar.
+                        </p>
+                      </div>
+
+                    </div>
+
+
+                    {/* =========================
+                        EMAIL
+                    ========================== */}
+
+                    <div className="mb-4">
+
+                      <label
+                        htmlFor="email"
+                        className="form-label"
+                      >
+                        E-mail
+                      </label>
+
+                      <div className="login-input-wrapper">
+
+                        <i className="bi bi-envelope"></i>
+
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          className="form-control"
+                          placeholder="seuemail@email.com"
+                          value={form.email}
+                          onChange={alterarCampo}
+                          required
+                        />
+
+                      </div>
+
+                    </div>
+
+
+                    {/* =========================
+                        SENHA
+                    ========================== */}
+
+                    <div className="mb-4">
+
+                      <label
+                        htmlFor="senha"
+                        className="form-label"
+                      >
+                        Senha
+                      </label>
+
+                      <div className="login-input-wrapper">
+
+                        <i className="bi bi-lock"></i>
+
+                        <input
+                          type="password"
+                          id="senha"
+                          name="senha"
+                          className="form-control"
+                          placeholder="Digite sua senha"
+                          value={form.senha}
+                          onChange={alterarCampo}
+                          required
+                        />
+
+                      </div>
+
+                    </div>
+
+
+                    {/* =========================
+                        BOTÃO
+                    ========================== */}
+
+                    <button
+                      type="submit"
+                      className="login-botao"
+                    >
+
+                      Entrar
+
+                      <i className="bi bi-arrow-right"></i>
+
+                    </button>
+
+                  </form>
+
+
+                  {/* =========================
+                      CADASTRO
+                  ========================== */}
+
+                  <div className="login-cadastro">
+
+                    <span>
+                      Ainda não possui uma conta?
+                    </span>
+
+                    <Link href="/cadastro">
+                      Criar conta
+                    </Link>
+
+                  </div>
+
+                </div>
+
               </div>
 
             </div>
 
-            {/* BOTÃO */}
-
-            <button
-              type="submit"
-              className="btn w-100 text-white fw-bold py-3"
-              style={{
-                background:
-                  "linear-gradient(90deg, #00758a, #3fbcc7)",
-                border: "none",
-                borderRadius: "10px",
-              }}
-            >
-              Entrar
-            </button>
-
-          </form>
-
-          <hr className="my-4" />
-
-          {/* CADASTRO */}
-
-          <div className="text-center">
-            <span className="text-secondary">
-              Ainda não possui uma conta?
-            </span>
-
-            <Link
-              href="/cadastro"
-              className="ms-2 fw-bold"
-              style={{
-                color: "#1c3166",
-                textDecoration: "none",
-              }}
-            >
-              Criar conta
-            </Link>
           </div>
 
         </div>
-      </div>
+
+      </section>
+
     </main>
   );
 }

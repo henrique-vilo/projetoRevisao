@@ -1,0 +1,701 @@
+/* =========================================
+   PÁGINA DE LOGIN
+========================================= */
+
+.login-page {
+  min-height: 100vh;
+
+  background: #f5f8fc;
+}
+
+
+/* =========================================
+   SEÇÃO PRINCIPAL
+========================================= */
+
+.login-section {
+  padding: 75px 0 90px;
+}
+
+
+/* =========================================
+   CARD
+========================================= */
+
+.login-card {
+  position: relative;
+
+  overflow: hidden;
+
+  background: #ffffff;
+
+  border: 1px solid #e1e8f0;
+
+  border-radius: 20px;
+
+  box-shadow:
+    0 10px 30px rgba(20, 70, 110, 0.10);
+
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+
+.login-card:hover {
+  border-color: #8bbce3;
+
+  box-shadow:
+    0 18px 40px rgba(20, 70, 110, 0.14);
+}
+
+
+/* =========================================
+   CABEÇALHO
+========================================= */
+
+.login-header {
+  position: relative;
+
+  padding: 50px 40px;
+
+  text-align: center;
+
+  background:
+    linear-gradient(
+      135deg,
+      #102a43,
+      #1769aa,
+      #00a9d4
+    );
+
+  color: #ffffff;
+}
+
+
+/* =========================================
+   LOGO
+========================================= */
+
+.login-logo {
+  margin-bottom: 18px;
+
+  color: #ffffff;
+
+  font-size: 17px;
+
+  font-weight: 800;
+
+  letter-spacing: 5px;
+}
+
+
+/* =========================================
+   SUBTÍTULO
+========================================= */
+
+.login-subtitulo {
+  margin: 0 0 7px;
+
+  color: #bceeff;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  letter-spacing: 3px;
+}
+
+
+/* =========================================
+   TÍTULO
+========================================= */
+
+.login-header h1 {
+  margin: 0;
+
+  color: #ffffff;
+
+  font-size: 38px;
+
+  font-weight: 800;
+}
+
+
+.login-header h1 span {
+  color: #40ffdc;
+}
+
+
+/* =========================================
+   DESCRIÇÃO
+========================================= */
+
+.login-descricao {
+  max-width: 480px;
+
+  margin: 15px auto 0;
+
+  color: #dff6ff;
+
+  font-size: 14px;
+
+  line-height: 1.6;
+}
+
+
+/* =========================================
+   DETALHE DO CABEÇALHO
+========================================= */
+
+.login-header::after {
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+
+  bottom: 0;
+
+  width: 90px;
+
+  height: 3px;
+
+  transform: translateX(-50%);
+
+  background: #40ffdc;
+}
+
+
+/* =========================================
+   CORPO
+========================================= */
+
+.login-body {
+  padding: 45px;
+}
+
+
+/* =========================================
+   TÍTULO DA SEÇÃO
+========================================= */
+
+.login-titulo-secao {
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  margin-bottom: 30px;
+}
+
+
+/* =========================================
+   ÍCONE DA SEÇÃO
+========================================= */
+
+.login-icone {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 44px;
+
+  height: 44px;
+
+  flex-shrink: 0;
+
+  border-radius: 12px;
+
+  background: #dff6ff;
+
+  color: #1769aa;
+
+  font-size: 19px;
+
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
+}
+
+
+.login-titulo-secao:hover .login-icone {
+  background: #1769aa;
+
+  color: #ffffff;
+}
+
+
+/* =========================================
+   TÍTULO
+========================================= */
+
+.login-titulo-secao h2 {
+  margin: 0;
+
+  color: #102a43;
+
+  font-size: 21px;
+
+  font-weight: 700;
+}
+
+
+/* =========================================
+   DESCRIÇÃO
+========================================= */
+
+.login-titulo-secao p {
+  margin: 4px 0 0;
+
+  color: #627d98;
+
+  font-size: 13px;
+}
+
+
+/* =========================================
+   LABEL
+========================================= */
+
+.login-body .form-label {
+  margin-bottom: 7px;
+
+  color: #102a43;
+
+  font-size: 14px;
+
+  font-weight: 700;
+}
+
+
+/* =========================================
+   ÁREA DO INPUT
+========================================= */
+
+.login-input-wrapper {
+  position: relative;
+}
+
+
+/* =========================================
+   ÍCONE DO INPUT
+========================================= */
+
+.login-input-wrapper > i {
+  position: absolute;
+
+  top: 50%;
+
+  left: 15px;
+
+  z-index: 2;
+
+  transform: translateY(-50%);
+
+  color: #627d98;
+
+  font-size: 16px;
+
+  pointer-events: none;
+
+  transition: color 0.25s ease;
+}
+
+
+/* =========================================
+   INPUT
+========================================= */
+
+.login-input-wrapper .form-control {
+  min-height: 50px;
+
+  padding:
+    10px
+    14px
+    10px
+    43px;
+
+  border: 1px solid #d5e0ea;
+
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #102a43;
+
+  font-size: 14px;
+
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+
+
+/* =========================================
+   PLACEHOLDER
+========================================= */
+
+.login-input-wrapper .form-control::placeholder {
+  color: #9aaec0;
+
+  font-size: 13px;
+}
+
+
+/* =========================================
+   HOVER
+========================================= */
+
+.login-input-wrapper .form-control:hover {
+  border-color: #8bbce3;
+}
+
+
+/* =========================================
+   FOCO
+========================================= */
+
+.login-input-wrapper .form-control:focus {
+  border-color: #00a9d4;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 3px rgba(0, 169, 212, 0.12);
+
+  outline: none;
+}
+
+
+/* =========================================
+   COR DO ÍCONE AO FOCAR
+========================================= */
+
+.login-input-wrapper:focus-within > i {
+  color: #00a9d4;
+}
+
+
+/* =========================================
+   OPÇÕES
+========================================= */
+
+.login-opcoes {
+  display: flex;
+
+  justify-content: flex-end;
+
+  margin-top: -10px;
+
+  margin-bottom: 24px;
+}
+
+
+.login-opcoes a {
+  color: #1769aa;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  text-decoration: none;
+
+  transition: color 0.25s ease;
+}
+
+
+.login-opcoes a:hover {
+  color: #00a9d4;
+
+  text-decoration: underline;
+}
+
+
+/* =========================================
+   BOTÃO
+========================================= */
+
+.login-botao {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 9px;
+
+  width: 100%;
+
+  padding: 14px 20px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #1769aa,
+      #00a9d4
+    );
+
+  color: #ffffff;
+
+  font-size: 15px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    background 0.3s ease;
+}
+
+
+/* =========================================
+   HOVER BOTÃO
+========================================= */
+
+.login-botao:hover {
+  transform: translateY(-3px);
+
+  background:
+    linear-gradient(
+      90deg,
+      #0d4f82,
+      #00a9d4
+    );
+
+  box-shadow:
+    0 12px 25px rgba(0, 120, 170, 0.22);
+}
+
+
+/* =========================================
+   ÍCONE BOTÃO
+========================================= */
+
+.login-botao i {
+  font-size: 16px;
+
+  transition:
+    transform 0.3s ease;
+}
+
+
+.login-botao:hover i {
+  transform: translateX(4px);
+}
+
+
+/* =========================================
+   ÁREA DE CADASTRO
+========================================= */
+
+.login-cadastro {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 7px;
+
+  margin-top: 27px;
+
+  padding-top: 25px;
+
+  border-top: 1px solid #e1e8f0;
+
+  font-size: 14px;
+}
+
+
+/* =========================================
+   TEXTO
+========================================= */
+
+.login-cadastro span {
+  color: #627d98;
+}
+
+
+/* =========================================
+   LINK
+========================================= */
+
+.login-cadastro a {
+  color: #1769aa;
+
+  font-weight: 700;
+
+  text-decoration: none;
+
+  transition: color 0.25s ease;
+}
+
+
+.login-cadastro a:hover {
+  color: #00a9d4;
+}
+
+
+/* =========================================
+   BORDA DECORATIVA
+========================================= */
+
+.login-card::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  border: 2px solid transparent;
+
+  border-radius: 20px;
+
+  pointer-events: none;
+
+  z-index: 3;
+
+  transition:
+    border-color 0.35s ease;
+}
+
+
+.login-card:hover::before {
+  border-color: rgba(64, 255, 220, 0.35);
+}
+
+
+/* =========================================
+   RESPONSIVIDADE
+========================================= */
+
+@media (max-width: 991px) {
+
+  .login-section {
+    padding: 65px 15px;
+  }
+
+  .login-header {
+    padding: 45px 35px;
+  }
+
+  .login-header h1 {
+    font-size: 34px;
+  }
+
+  .login-body {
+    padding: 40px;
+  }
+
+}
+
+
+/* =========================================
+   TABLETS
+========================================= */
+
+@media (max-width: 767px) {
+
+  .login-section {
+    padding: 55px 15px;
+  }
+
+  .login-header {
+    padding: 40px 25px;
+  }
+
+  .login-header h1 {
+    font-size: 30px;
+  }
+
+  .login-descricao {
+    font-size: 13px;
+  }
+
+  .login-body {
+    padding: 35px 25px;
+  }
+
+  .login-titulo-secao h2 {
+    font-size: 19px;
+  }
+
+}
+
+
+/* =========================================
+   CELULARES
+========================================= */
+
+@media (max-width: 575px) {
+
+  .login-section {
+    padding: 30px 10px;
+  }
+
+  .login-card {
+    border-radius: 16px;
+  }
+
+  .login-header {
+    padding: 35px 20px;
+  }
+
+  .login-header h1 {
+    font-size: 26px;
+  }
+
+  .login-logo {
+    font-size: 15px;
+
+    letter-spacing: 4px;
+  }
+
+  .login-subtitulo {
+    font-size: 10px;
+
+    letter-spacing: 2px;
+  }
+
+  .login-body {
+    padding: 30px 18px;
+  }
+
+  .login-titulo-secao {
+    gap: 10px;
+  }
+
+  .login-icone {
+    width: 40px;
+
+    height: 40px;
+
+    font-size: 17px;
+  }
+
+  .login-titulo-secao h2 {
+    font-size: 18px;
+  }
+
+  .login-titulo-secao p {
+    font-size: 12px;
+  }
+
+  .login-cadastro {
+    flex-direction: column;
+
+    gap: 3px;
+  }
+
+}

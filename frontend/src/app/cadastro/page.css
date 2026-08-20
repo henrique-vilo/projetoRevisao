@@ -1,0 +1,711 @@
+/* =========================================
+   PÁGINA DE CADASTRO
+========================================= */
+
+.cadastro-page {
+  min-height: 100vh;
+  background: #f5f8fc;
+}
+
+
+/* =========================================
+   SEÇÃO PRINCIPAL
+========================================= */
+
+.cadastro-section {
+  padding: 75px 0 90px;
+}
+
+
+/* =========================================
+   CARD PRINCIPAL
+========================================= */
+
+.cadastro-card {
+  position: relative;
+  overflow: hidden;
+
+  background: #ffffff;
+
+  border: 1px solid #e1e8f0;
+  border-radius: 20px;
+
+  box-shadow:
+    0 10px 30px rgba(20, 70, 110, 0.10);
+
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+
+.cadastro-card:hover {
+  border-color: #8bbce3;
+
+  box-shadow:
+    0 18px 40px rgba(20, 70, 110, 0.14);
+}
+
+
+/* =========================================
+   CABEÇALHO
+========================================= */
+
+.cadastro-header {
+  position: relative;
+
+  padding: 50px 40px;
+
+  text-align: center;
+
+  background:
+    linear-gradient(
+      135deg,
+      #102a43,
+      #1769aa,
+      #00a9d4
+    );
+
+  color: #ffffff;
+}
+
+
+/* =========================================
+   LOGO
+========================================= */
+
+.cadastro-logo {
+  margin-bottom: 18px;
+
+  color: #ffffff;
+
+  font-size: 17px;
+  font-weight: 800;
+
+  letter-spacing: 5px;
+}
+
+
+/* =========================================
+   SUBTÍTULO
+========================================= */
+
+.cadastro-subtitulo {
+  margin: 0 0 7px;
+
+  color: #bceeff;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  letter-spacing: 3px;
+}
+
+
+/* =========================================
+   TÍTULO
+========================================= */
+
+.cadastro-header h1 {
+  margin: 0;
+
+  color: #ffffff;
+
+  font-size: 38px;
+  font-weight: 800;
+}
+
+
+.cadastro-header h1 span {
+  color: #40ffdc;
+}
+
+
+/* =========================================
+   DESCRIÇÃO
+========================================= */
+
+.cadastro-descricao {
+  max-width: 550px;
+
+  margin: 15px auto 0;
+
+  color: #dff6ff;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+
+/* =========================================
+   DECORAÇÃO DO CABEÇALHO
+========================================= */
+
+.cadastro-header::after {
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+  bottom: 0;
+
+  width: 90px;
+  height: 3px;
+
+  transform: translateX(-50%);
+
+  background: #40ffdc;
+}
+
+
+/* =========================================
+   CORPO DO CADASTRO
+========================================= */
+
+.cadastro-body {
+  padding: 45px;
+}
+
+
+/* =========================================
+   TÍTULOS DAS SEÇÕES
+========================================= */
+
+.cadastro-titulo-secao {
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  margin-bottom: 25px;
+}
+
+
+/* =========================================
+   ÍCONE
+========================================= */
+
+.cadastro-titulo-secao i {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 44px;
+  height: 44px;
+
+  flex-shrink: 0;
+
+  border-radius: 12px;
+
+  background: #dff6ff;
+
+  color: #1769aa;
+
+  font-size: 19px;
+
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
+}
+
+
+.cadastro-titulo-secao:hover i {
+  background: #1769aa;
+
+  color: #ffffff;
+}
+
+
+/* =========================================
+   TÍTULO
+========================================= */
+
+.cadastro-titulo-secao h2 {
+  margin: 0;
+
+  color: #102a43;
+
+  font-size: 21px;
+  font-weight: 700;
+}
+
+
+/* =========================================
+   DESCRIÇÃO DA SEÇÃO
+========================================= */
+
+.cadastro-titulo-secao p {
+  margin: 4px 0 0;
+
+  color: #627d98;
+
+  font-size: 13px;
+}
+
+
+/* =========================================
+   LABELS
+========================================= */
+
+.cadastro-body .form-label {
+  margin-bottom: 7px;
+
+  color: #102a43;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+
+/* =========================================
+   CAMPOS
+========================================= */
+
+.cadastro-body .form-control {
+  min-height: 49px;
+
+  padding: 10px 14px;
+
+  border: 1px solid #d5e0ea;
+
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #102a43;
+
+  font-size: 14px;
+
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+
+
+/* =========================================
+   PLACEHOLDER
+========================================= */
+
+.cadastro-body .form-control::placeholder {
+  color: #9aaec0;
+
+  font-size: 13px;
+}
+
+
+/* =========================================
+   FOCO NOS CAMPOS
+========================================= */
+
+.cadastro-body .form-control:focus {
+  border-color: #00a9d4;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 3px rgba(0, 169, 212, 0.12);
+
+  outline: none;
+}
+
+
+/* =========================================
+   HOVER NOS CAMPOS
+========================================= */
+
+.cadastro-body .form-control:hover {
+  border-color: #8bbce3;
+}
+
+
+/* =========================================
+   DIVISOR
+========================================= */
+
+.cadastro-divider {
+  margin: 38px 0;
+
+  border: 0;
+
+  border-top: 1px solid #e1e8f0;
+
+  opacity: 1;
+}
+
+
+/* =========================================
+   TERMOS
+========================================= */
+
+.cadastro-termos {
+  padding: 16px 18px;
+
+  border: 1px solid #e1e8f0;
+
+  border-radius: 10px;
+
+  background: #f7fbff;
+}
+
+
+/* =========================================
+   CHECKBOX
+========================================= */
+
+.cadastro-termos .form-check {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 4px;
+}
+
+
+.cadastro-termos .form-check-input {
+  margin-top: 4px;
+
+  cursor: pointer;
+
+  border-color: #8bbce3;
+}
+
+
+.cadastro-termos .form-check-input:checked {
+  border-color: #1769aa;
+
+  background-color: #1769aa;
+}
+
+
+.cadastro-termos .form-check-input:focus {
+  border-color: #00a9d4;
+
+  box-shadow:
+    0 0 0 3px rgba(0, 169, 212, 0.12);
+}
+
+
+/* =========================================
+   TEXTO DOS TERMOS
+========================================= */
+
+.cadastro-termos .form-check-label {
+  color: #627d98;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+
+/* =========================================
+   LINKS DOS TERMOS
+========================================= */
+
+.cadastro-termos a {
+  color: #1769aa;
+
+  font-weight: 700;
+
+  text-decoration: none;
+
+  transition: color 0.25s ease;
+}
+
+
+.cadastro-termos a:hover {
+  color: #00a9d4;
+
+  text-decoration: underline;
+}
+
+
+/* =========================================
+   BOTÃO
+========================================= */
+
+.cadastro-botao {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  width: 100%;
+
+  margin-top: 25px;
+
+  padding: 14px 20px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #1769aa,
+      #00a9d4
+    );
+
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    background 0.3s ease;
+}
+
+
+/* =========================================
+   HOVER DO BOTÃO
+========================================= */
+
+.cadastro-botao:hover {
+  transform: translateY(-3px);
+
+  background:
+    linear-gradient(
+      90deg,
+      #0d4f82,
+      #00a9d4
+    );
+
+  box-shadow:
+    0 12px 25px rgba(0, 120, 170, 0.22);
+}
+
+
+/* =========================================
+   ÍCONE DO BOTÃO
+========================================= */
+
+.cadastro-botao i {
+  font-size: 16px;
+
+  transition:
+    transform 0.3s ease;
+}
+
+
+.cadastro-botao:hover i {
+  transform: translateX(4px);
+}
+
+
+/* =========================================
+   LOGIN
+========================================= */
+
+.cadastro-login {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  margin-top: 27px;
+  padding-top: 25px;
+
+  border-top: 1px solid #e1e8f0;
+
+  font-size: 14px;
+}
+
+
+/* =========================================
+   TEXTO LOGIN
+========================================= */
+
+.cadastro-login span {
+  color: #627d98;
+}
+
+
+/* =========================================
+   LINK LOGIN
+========================================= */
+
+.cadastro-login a {
+  color: #1769aa;
+
+  font-weight: 700;
+
+  text-decoration: none;
+
+  transition:
+    color 0.25s ease;
+}
+
+
+.cadastro-login a:hover {
+  color: #00a9d4;
+}
+
+
+/* =========================================
+   EFEITO DE BORDA
+========================================= */
+
+.cadastro-card::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  border: 2px solid transparent;
+
+  border-radius: 20px;
+
+  pointer-events: none;
+
+  z-index: 3;
+
+  transition:
+    border-color 0.35s ease;
+}
+
+
+.cadastro-card:hover::before {
+  border-color: rgba(64, 255, 220, 0.35);
+}
+
+
+/* =========================================
+   RESPONSIVIDADE
+========================================= */
+
+@media (max-width: 991px) {
+
+  .cadastro-section {
+    padding: 65px 15px;
+  }
+
+  .cadastro-header {
+    padding: 45px 35px;
+  }
+
+  .cadastro-header h1 {
+    font-size: 34px;
+  }
+
+  .cadastro-body {
+    padding: 40px;
+  }
+
+}
+
+
+/* =========================================
+   TABLETS
+========================================= */
+
+@media (max-width: 767px) {
+
+  .cadastro-section {
+    padding: 55px 15px;
+  }
+
+  .cadastro-header {
+    padding: 40px 25px;
+  }
+
+  .cadastro-header h1 {
+    font-size: 30px;
+  }
+
+  .cadastro-descricao {
+    font-size: 13px;
+  }
+
+  .cadastro-body {
+    padding: 35px 25px;
+  }
+
+  .cadastro-titulo-secao h2 {
+    font-size: 19px;
+  }
+
+}
+
+
+/* =========================================
+   CELULARES
+========================================= */
+
+@media (max-width: 575px) {
+
+  .cadastro-section {
+    padding: 30px 10px;
+  }
+
+  .cadastro-card {
+    border-radius: 16px;
+  }
+
+  .cadastro-header {
+    padding: 35px 20px;
+  }
+
+  .cadastro-header h1 {
+    font-size: 26px;
+  }
+
+  .cadastro-logo {
+    font-size: 15px;
+
+    letter-spacing: 4px;
+  }
+
+  .cadastro-subtitulo {
+    font-size: 10px;
+
+    letter-spacing: 2px;
+  }
+
+  .cadastro-body {
+    padding: 30px 18px;
+  }
+
+  .cadastro-titulo-secao {
+    gap: 10px;
+  }
+
+  .cadastro-titulo-secao i {
+    width: 40px;
+    height: 40px;
+
+    font-size: 17px;
+  }
+
+  .cadastro-titulo-secao h2 {
+    font-size: 18px;
+  }
+
+  .cadastro-titulo-secao p {
+    font-size: 12px;
+  }
+
+  .cadastro-termos {
+    padding: 14px;
+  }
+
+  .cadastro-login {
+    flex-direction: column;
+
+    gap: 3px;
+  }
+
+}

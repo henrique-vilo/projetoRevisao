@@ -37,7 +37,7 @@ export default function Footer() {
               </li>
 
               <li>
-                <a href="/contato" className="text-decoration-none">
+                <a href="/suporte" className="text-decoration-none">
                   Suporte
                 </a>
               </li>
