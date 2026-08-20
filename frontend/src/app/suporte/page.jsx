@@ -267,7 +267,50 @@ export default function Suporte() {
           FALE COM O SUPORTE
       ========================================== */}
 
-      
+      <section className="suporte-contato">
+
+        <div className="container">
+
+          <div className="contato-card">
+
+            <div className="contato-icone">
+
+              <i className="bi bi-chat-dots"></i>
+
+            </div>
+
+            <div className="contato-texto">
+
+              <p className="contato-mini">
+                PRECISA DE AJUDA?
+              </p>
+
+              <h2>
+                Não encontrou sua dúvida?
+              </h2>
+
+              <p>
+                Nossa equipe está pronta para ajudar você.
+              </p>
+
+            </div>
+
+            <button
+              type="button"
+              className="btn-suporte"
+              onClick={abrirModal}
+            >
+              Falar com o suporte
+
+              <i className="bi bi-arrow-right"></i>
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
 
 
       {/* =========================================
