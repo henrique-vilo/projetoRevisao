@@ -18,7 +18,7 @@ export default function Page() {
         setErro(null);
 
         const response = await fetch(
-          `${API_URL}/produtos?pagina=1&limite=100`,
+          `${API_URL}/api/produtos?pagina=1&limite=100`,
           {
             method: 'GET',
             headers: {
