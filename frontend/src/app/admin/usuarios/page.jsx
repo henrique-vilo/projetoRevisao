@@ -3,6 +3,8 @@
 import '../tables.css';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 
+const API_BASE = 'http://localhost:3001/api/users';
+
 const emptyForm = {
   name: '',
   email: '',
@@ -47,7 +49,7 @@ export default function UsersPage() {
 
   /*
    * =====================================================
-   * FETCH DATA
+   * FETCH DATA (GET)
    * =====================================================
    */
 
@@ -55,7 +57,7 @@ export default function UsersPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/users');
+      const response = await fetch(API_BASE);
 
       if (!response.ok) {
         throw new Error('Falha ao carregar a lista de usuários.');
@@ -167,7 +169,7 @@ export default function UsersPage() {
 
   /*
    * =====================================================
-   * CREATE / EDIT
+   * CREATE / EDIT (POST / PUT)
    * =====================================================
    */
 
@@ -181,7 +183,7 @@ export default function UsersPage() {
 
     try {
       if (modal === 'create') {
-        const response = await fetch('/api/users', {
+        const response = await fetch(API_BASE, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -200,7 +202,7 @@ export default function UsersPage() {
       }
 
       if (modal === 'edit' && selectedUser) {
-        const response = await fetch(`/api/users/${selectedUser.id}`, {
+        const response = await fetch(`${API_BASE}/${selectedUser.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -237,7 +239,7 @@ export default function UsersPage() {
     if (!selectedUser) return;
 
     try {
-      const response = await fetch(`/api/users/${selectedUser.id}`, {
+      const response = await fetch(`${API_BASE}/${selectedUser.id}`, {
         method: 'DELETE',
       });
 
