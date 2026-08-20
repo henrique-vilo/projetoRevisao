@@ -656,3 +656,281 @@
 
 }
 
+
+/* =========================================
+   PAINÉIS DOS BOTÕES DO HEADER
+========================================= */
+
+.header-panel {
+  position: fixed;
+  top: 82px;
+  right: 25px;
+  width: 360px;
+  background: #ffffff;
+  border: 1px solid #d9e0e5;
+  border-radius: 8px;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  color: #1c3166;
+}
+
+/* Cabeçalho */
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 18px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1c3166;
+}
+
+.panel-header h3 i {
+  margin-right: 8px;
+  color: #00a9d4;
+}
+
+.panel-header span {
+  display: block;
+  margin-top: 5px;
+  font-size: 13px;
+  color: #777;
+}
+
+.panel-header > button {
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  color: #666;
+  cursor: pointer;
+}
+
+.panel-header > button:hover {
+  color: #1c3166;
+}
+
+
+/* =========================================
+   NOTIFICAÇÕES
+========================================= */
+
+.notification-list {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: flex;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.notification-item:hover {
+  background: #f7fafb;
+}
+
+.notification-icon {
+  min-width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e8f8fb;
+  color: #00a9d4;
+}
+
+.notification-item strong {
+  display: block;
+  font-size: 14px;
+}
+
+.notification-item p {
+  margin: 3px 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.notification-item small {
+  color: #999;
+  font-size: 11px;
+}
+
+.notification-empty {
+  text-align: center;
+  padding: 30px 15px;
+  color: #777;
+}
+
+.notification-empty i {
+  font-size: 30px;
+  color: #aaa;
+}
+
+.notification-empty p {
+  margin-bottom: 0;
+}
+
+
+/* Preferências */
+
+.notification-settings {
+  padding: 15px 18px;
+  border-top: 1px solid #eeeeee;
+}
+
+.notification-settings h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #1c3166;
+}
+
+.notification-settings label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  font-size: 13px;
+  color: #555;
+}
+
+.notification-settings input {
+  cursor: pointer;
+}
+
+.panel-secondary-button {
+  width: calc(100% - 36px);
+  margin: 0 18px 18px;
+  padding: 9px;
+  border: 1px solid #d5dce0;
+  background: #f8f8f8;
+  border-radius: 5px;
+  color: #555;
+  cursor: pointer;
+}
+
+.panel-secondary-button:hover {
+  background: #eeeeee;
+}
+
+
+/* =========================================
+   LOCALIZAÇÃO E PERFIL
+========================================= */
+
+.location-panel,
+.profile-panel {
+  padding-bottom: 18px;
+}
+
+.location-panel form,
+.profile-panel form {
+  padding: 18px;
+}
+
+.panel-field {
+  margin-bottom: 14px;
+}
+
+.panel-field label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+.panel-field input {
+  width: 100%;
+  height: 38px;
+  padding: 7px 10px;
+  border: 1px solid #ccd4d9;
+  border-radius: 5px;
+  outline: none;
+  font-size: 14px;
+  color: #333;
+  background: #fff;
+}
+
+.panel-field input:focus {
+  border-color: #00a9d4;
+}
+
+.panel-row {
+  display: flex;
+  gap: 10px;
+}
+
+.panel-row .panel-field {
+  flex: 1;
+}
+
+
+/* Botão salvar */
+
+.panel-save-button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background: #00a9d4;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.panel-save-button:hover {
+  background: #008eb5;
+}
+
+.panel-save-button i {
+  margin-right: 6px;
+}
+
+
+/* =========================================
+   BADGE DE NOTIFICAÇÃO
+========================================= */
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+
+  min-width: 17px;
+  height: 17px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 4px;
+
+  border-radius: 50%;
+
+  background: #e63946;
+  color: white;
+
+  font-size: 10px;
+  font-weight: bold;
+
+  border: 2px solid white;
+}
+
+
+/* Garante que o botão possa receber o badge */
+
+.header-action {
+  position: relative;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+

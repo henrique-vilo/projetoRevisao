@@ -1,244 +1,384 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import Image from "next/image";
+
 import "bootstrap/dist/css/bootstrap.min.css";
+
 import "bootstrap-icons/font/bootstrap-icons.css";
+
 import "./page.css";
 
-const produtos = [
-  {
-    id: 1,
-    nome: "Camiseta Oversized Essential",
-    categoria: "Camisetas",
-    preco: "R$ 89,90",
-    imagem: "/produtos/camiseta-oversized.jpg",
-  },
-  {
-    id: 2,
-    nome: "Calça Cargo Urban",
-    categoria: "Calças",
-    preco: "R$ 159,90",
-    imagem: "/produtos/calca-cargo.jpg",
-  },
-  {
-    id: 3,
-    nome: "Jaqueta Street Premium",
-    categoria: "Jaquetas",
-    preco: "R$ 249,90",
-    imagem: "/produtos/jaqueta.jpg",
-  },
-  {
-    id: 4,
-    nome: "Moletom Classic",
-    categoria: "Moletons",
-    preco: "R$ 179,90",
-    imagem: "/produtos/moletom.jpg",
-  },
-  {
-    id: 5,
-    nome: "Camiseta Basic Blue",
-    categoria: "Camisetas",
-    preco: "R$ 79,90",
-    imagem: "/produtos/camiseta-blue.jpg",
-  },
-  {
-    id: 6,
-    nome: "Bermuda Cargo Black",
-    categoria: "Bermudas",
-    preco: "R$ 119,90",
-    imagem: "/produtos/bermuda.jpg",
-  },
-  {
-    id: 7,
-    nome: "Camisa Social Slim",
-    categoria: "Camisas",
-    preco: "R$ 139,90",
-    imagem: "/produtos/camisa-social.jpg",
-  },
-  {
-    id: 8,
-    nome: "Calça Jeans Straight",
-    categoria: "Calças",
-    preco: "R$ 189,90",
-    imagem: "/produtos/calca-jeans.jpg",
-  },
-];
-
 export default function Masculino() {
-  return (
-    <main className="masculino-page">
+    const [produtos, setProdutos] = useState([]);
+    const [categorias, setCategorias] = useState([]);
+    const [tamanhos, setTamanhos] = useState([]);
+    const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
+    const [tamanhoSelecionado, setTamanhoSelecionado] = useState("");
+    const [carregando, setCarregando] = useState(false);
 
-      {/* CABEÇALHO */}
-      <section className="masculino-header">
-        <div className="container">
+    useEffect(() => {
+        buscarCategorias();
+        buscarTamanhos();
+    }, []);
 
-          <span className="section-label">
-            COLEÇÃO MASCULINA
-          </span>
+    useEffect(() => {
+        buscarProdutos();
+    }, [categoriaSelecionada, tamanhoSelecionado]);
 
-          <h1>
-            Moda <span>Masculina</span>
-          </h1>
+    async function buscarCategorias() {
+        try {
+            const resposta = await fetch(
+                "http://localhost:3000/categorias"
+            );
 
-          <p>
-            Encontre peças que combinam com seu estilo.
-          </p>
+            if (!resposta.ok) {
+                throw new Error("Erro ao buscar categorias");
+            }
 
-        </div>
-      </section>
+            const dados = await resposta.json();
 
-      {/* FILTROS */}
-      <section className="filters-section">
-        <div className="container">
+            console.log("Categorias recebidas:", dados);
 
-          <div className="filters-top">
+            setCategorias(dados.dados || dados);
+        } catch (erro) {
+            console.error("Erro ao carregar categorias:", erro);
+        }
+    }
 
-            <div className="filter-title">
-              <i className="bi bi-sliders"></i>
-              <span>Filtros</span>
-            </div>
+    async function buscarTamanhos() {
+        try {
+            const resposta = await fetch(
+                "http://localhost:3000/tamanhos"
+            );
 
-            <button className="clear-filters">
-              Limpar filtros
-            </button>
+            if (!resposta.ok) {
+                throw new Error("Erro ao buscar tamanhos");
+            }
 
-          </div>
+            const dados = await resposta.json();
 
-          <div className="filters">
+            console.log("Tamanhos recebidos:", dados);
 
-            <div className="filter-group">
-              <label>Categoria</label>
+            setTamanhos(dados.dados || dados);
+        } catch (erro) {
+            console.error("Erro ao carregar tamanhos:", erro);
+        }
+    }
 
-              <select>
-                <option>Todas</option>
-                <option>Camisetas</option>
-                <option>Camisas</option>
-                <option>Calças</option>
-                <option>Bermudas</option>
-                <option>Jaquetas</option>
-                <option>Moletons</option>
-              </select>
-            </div>
+    async function buscarProdutos() {
+        try {
+            setCarregando(true);
 
-            <div className="filter-group">
-              <label>Tamanho</label>
+            const params = new URLSearchParams();
 
-              <select>
-                <option>Todos</option>
-                <option>PP</option>
-                <option>P</option>
-                <option>M</option>
-                <option>G</option>
-                <option>GG</option>
-              </select>
-            </div>
+            if (categoriaSelecionada) {
+                params.append("idCategoria", categoriaSelecionada);
+            }
 
-            <div className="filter-group">
-              <label>Cor</label>
+            if (tamanhoSelecionado) {
+                params.append("idTamanho", tamanhoSelecionado);
+            }
 
-              <select>
-                <option>Todas</option>
-                <option>Preto</option>
-                <option>Branco</option>
-                <option>Azul</option>
-                <option>Cinza</option>
-                <option>Verde</option>
-              </select>
-            </div>
+            const url = `http://localhost:3000/produtos?${params.toString()}`;
 
-            <div className="filter-group">
-              <label>Preço</label>
+            console.log("Buscando produtos:", url);
 
-              <select>
-                <option>Todos</option>
-                <option>Até R$ 100</option>
-                <option>R$ 100 - R$ 200</option>
-                <option>R$ 200 - R$ 300</option>
-                <option>Acima de R$ 300</option>
-              </select>
-            </div>
+            const resposta = await fetch(url);
 
-            <div className="filter-group">
-              <label>Ordenar por</label>
+            if (!resposta.ok) {
+                throw new Error("Erro ao buscar produtos");
+            }
 
-              <select>
-                <option>Mais recentes</option>
-                <option>Menor preço</option>
-                <option>Maior preço</option>
-                <option>Mais vendidos</option>
-              </select>
-            </div>
+            const dados = await resposta.json();
 
-          </div>
-        </div>
-      </section>
+            console.log("Produtos recebidos:", dados);
 
-      {/* PRODUTOS */}
-      <section className="products-section">
-        <div className="container">
+            setProdutos(dados.dados || dados);
+        } catch (erro) {
+            console.error("Erro ao carregar produtos:", erro);
 
-          <div className="products-heading">
-            <div>
-              <h2>Produtos masculinos</h2>
-              <p>{produtos.length} produtos encontrados</p>
-            </div>
-          </div>
+            setProdutos([]);
+        } finally {
+            setCarregando(false);
+        }
+    }
 
-          <div className="products-grid">
+    function limparFiltros() {
+        setCategoriaSelecionada("");
+        setTamanhoSelecionado("");
+    }
 
-            {produtos.map((produto) => (
-              <article className="product-card" key={produto.id}>
+    return (
+        <main className="masculino-page">
 
-                <div className="product-image">
+            {/* CABEÇALHO */}
 
-                  <Image
-                    src={produto.imagem}
-                    alt={produto.nome}
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                  />
+            <section className="masculino-header">
 
-                  <button
-                    className="favorite-button"
-                    aria-label="Adicionar aos favoritos"
-                  >
-                    <i className="bi bi-heart"></i>
-                  </button>
+                <div className="container">
 
-                  <span className="product-tag">
-                    NOVO
-                  </span>
+                    <span className="section-label">
+                        COLEÇÃO MASCULINA
+                    </span>
+
+                    <h1>
+                        Moda <span>Masculina</span>
+                    </h1>
+
+                    <p>
+                        Encontre peças que combinam com seu estilo.
+                    </p>
 
                 </div>
 
-                <div className="product-info">
+            </section>
 
-                  <span className="product-category">
-                    {produto.categoria}
-                  </span>
+            {/* FILTROS */}
 
-                  <h3>{produto.nome}</h3>
+            <section className="filters-section">
 
-                  <div className="product-bottom">
+                <div className="container">
 
-                    <strong>{produto.preco}</strong>
+                    <div className="filters-top">
 
-                    <button className="add-button">
-                      <i className="bi bi-bag-plus"></i>
-                    </button>
+                        <div className="filter-title">
 
-                  </div>
+                            <i className="bi bi-sliders"></i>
+
+                            <span>Filtros</span>
+
+                        </div>
+
+                        <button
+                            className="clear-filters"
+                            onClick={limparFiltros}
+                        >
+                            Limpar filtros
+                        </button>
+
+                    </div>
+
+                    <div className="filters">
+
+                        <div className="filter-group">
+
+                            <label>Categoria</label>
+
+                            <select
+                                value={categoriaSelecionada}
+                                onChange={(e) =>
+                                    setCategoriaSelecionada(e.target.value)
+                                }
+                            >
+
+                                <option value="">
+                                    Todas as categorias
+                                </option>
+
+                                {categorias.map((categoria) => (
+
+                                    <option
+                                        key={categoria.idCategoria}
+                                        value={categoria.idCategoria}
+                                    >
+                                        {categoria.nomeCategoria}
+                                    </option>
+
+                                ))}
+
+                            </select>
+
+                        </div>
+
+                        <div className="filter-group">
+
+                            <label>Tamanho</label>
+
+                            <select
+                                value={tamanhoSelecionado}
+                                onChange={(e) =>
+                                    setTamanhoSelecionado(e.target.value)
+                                }
+                            >
+
+                                <option value="">
+                                    Todos
+                                </option>
+
+                                {tamanhos.map((tamanho) => (
+
+                                    <option
+                                        key={tamanho.idTamanho}
+                                        value={tamanho.idTamanho}
+                                    >
+                                        {tamanho.codigoTamanho}
+                                    </option>
+
+                                ))}
+
+                            </select>
+
+                        </div>
+
+                        <div className="filter-group">
+
+                            <label>Cor</label>
+
+                            <select>
+
+                                <option>Todas</option>
+
+                                <option>Preto</option>
+
+                                <option>Branco</option>
+
+                                <option>Azul</option>
+
+                                <option>Cinza</option>
+
+                                <option>Verde</option>
+
+                            </select>
+
+                        </div>
+
+                        <div className="filter-group">
+
+                            <label>Preço</label>
+
+                            <select>
+
+                                <option>Todos</option>
+
+                                <option>Até R$ 100</option>
+
+                                <option>R$ 100 - R$ 200</option>
+
+                                <option>R$ 200 - R$ 300</option>
+
+                                <option>Acima de R$ 300</option>
+
+                            </select>
+
+                        </div>
+
+                        <div className="filter-group">
+
+                            <label>Ordenar por</label>
+
+                            <select>
+
+                                <option>Mais recentes</option>
+
+                                <option>Menor preço</option>
+
+                                <option>Maior preço</option>
+
+                                <option>Mais vendidos</option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
-              </article>
-            ))}
+            </section>
 
-          </div>
+            {/* PRODUTOS */}
 
-        </div>
-      </section>
+            <section className="products-section">
 
-    </main>
-  );
+                <div className="container">
+
+                    <div className="products-heading">
+
+                        <div>
+
+                            <h2>Produtos masculinos</h2>
+
+                            <p>
+                                {carregando
+                                    ? "Carregando produtos..."
+                                    : `${produtos.length} produtos encontrados`}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div className="products-grid">
+
+                        {produtos.map((produto) => (
+
+                            <article
+                                className="product-card"
+                                key={produto.id}
+                            >
+
+                                <div className="product-image">
+
+                                    <Image
+                                        src={produto.imagem}
+                                        alt={produto.nome}
+                                        fill
+                                        sizes="(max-width: 768px) 50vw, 25vw"
+                                    />
+
+                                    <button
+                                        className="favorite-button"
+                                        aria-label="Adicionar aos favoritos"
+                                    >
+
+                                        <i className="bi bi-heart"></i>
+
+                                    </button>
+
+                                    <span className="product-tag">
+                                        NOVO
+                                    </span>
+
+                                </div>
+
+                                <div className="product-info">
+
+                                    <span className="product-category">
+                                        {produto.categoria}
+                                    </span>
+
+                                    <h3>
+                                        {produto.nome}
+                                    </h3>
+
+                                    <div className="product-bottom">
+
+                                        <strong>
+                                            {produto.preco}
+                                        </strong>
+
+                                        <button className="add-button">
+
+                                            <i className="bi bi-bag-plus"></i>
+
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+                            </article>
+
+                        ))}
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+    );
 }
