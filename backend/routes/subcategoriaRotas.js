@@ -1,5 +1,5 @@
 import express from 'express';
-import SubController from '../controllers/SubController.js';
+import SubController from '../controllers/Subcontroller.js';
 import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();

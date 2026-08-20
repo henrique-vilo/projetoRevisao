@@ -24,14 +24,21 @@ class ProdutoModel {
         const connection = await getConnection();
 
         try {
-            const offset = (pagina - 1) * limite;
+            // Prevenção contra ataques de negação de serviço (DoS) via limite alto
+            let limiteNum = parseInt(limite) || 10;
+            if (limiteNum > 100) limiteNum = 100; // Trava o máximo em 100 registros por página
+
+            const paginaNum = parseInt(pagina) || 1;
+            const offsetNum = (paginaNum - 1) * limiteNum;
+            
             const conditions = ['p.ativo = 1'];
             const queryParams = [];
 
-            // Filtro por texto (SKU, Nome, Nome Combinação ou Descrição)
+            // OTIMIZAÇÃO: Filtro por texto usando FULLTEXT em vez de múltiplos LIKEs
             if (busca) {
-                conditions.push('(p.nome LIKE ? OR p.nomeCombinacao LIKE ? OR p.descricao LIKE ? OR p.sku LIKE ?)');
-                queryParams.push(`%${busca}%`, `%${busca}%`, `%${busca}%`, `%${busca}%`);
+                conditions.push('MATCH(p.nome, p.nomeCombinacao, p.descricao, p.sku) AGAINST(? IN BOOLEAN MODE)');
+                // O asterisco (*) no final atua como curinga para o texto digitado
+                queryParams.push(`${busca}*`);
             }
 
             // Filtro por Gênero
@@ -79,7 +86,7 @@ class ProdutoModel {
 
             const whereClause = conditions.join(' AND ');
 
-            // Ordenação segura
+            // Ordenação segura (sem risco de SQL Injection)
             let orderClause = 'p.idProduto DESC';
             switch (ordenarPor) {
                 case 'preco_asc': orderClause = 'p.preco ASC'; break;
@@ -88,7 +95,7 @@ class ProdutoModel {
                 case 'antigo': orderClause = 'p.idProduto ASC'; break;
             }
 
-            // Consulta principal corrigida para usar os nomes reais das colunas de cada tabela
+            // Consulta principal
             const sql = `
                 SELECT 
                     p.*,
@@ -108,7 +115,8 @@ class ProdutoModel {
                 LIMIT ? OFFSET ?
             `;
 
-            const [produtos] = await connection.query(sql, [...queryParams, parseInt(limite), parseInt(offset)]);
+            // Garante que limite e offset são Numbers inteiros puros para evitar erros do mysql2
+            const [produtos] = await connection.query(sql, [...queryParams, limiteNum, offsetNum]);
 
             // Contagem total para paginação
             const countSql = `SELECT COUNT(*) as total FROM produtos p WHERE ${whereClause}`;
@@ -118,9 +126,9 @@ class ProdutoModel {
             return {
                 produtos,
                 total,
-                pagina: parseInt(pagina),
-                limite: parseInt(limite),
-                totalPaginas: Math.ceil(total / limite)
+                pagina: paginaNum,
+                limite: limiteNum,
+                totalPaginas: Math.ceil(total / limiteNum)
             };
         } finally {
             connection.release();
@@ -130,7 +138,6 @@ class ProdutoModel {
     static async buscarPorId(id) {
         const connection = await getConnection();
         try {
-            // Consulta corrigida para usar os nomes reais das colunas de cada tabela
             const sql = `
                 SELECT p.*, 
                        c.nomeCategoria AS categoriaNome, 
