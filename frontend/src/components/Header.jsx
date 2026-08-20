@@ -7,36 +7,179 @@ import Link from "next/link";
 export default function Header() {
   const [carrinhoAberto, setCarrinhoAberto] = useState(false);
 
-  // Produtos temporários apenas para testar o carrinho
-  const produtosCarrinho = [
+  // Estados dos painéis
+  const [notificacoesAberto, setNotificacoesAberto] = useState(false);
+  const [localizacaoAberto, setLocalizacaoAberto] = useState(false);
+  const [perfilAberto, setPerfilAberto] = useState(false);
+
+  // Carrinho
+  const [produtosCarrinho, setProdutosCarrinho] = useState([]);
+
+  // Localização
+  const [localizacao, setLocalizacao] = useState({
+    rua: "Rua das Flores",
+    numero: "125",
+    cidade: "Santo André",
+    estado: "SP",
+    cep: "09000-000",
+  });
+
+  // Perfil
+  const [perfil, setPerfil] = useState({
+    nome: "Seu Nome",
+    email: "seuemail@email.com",
+    telefone: "(11) 99999-9999",
+  });
+
+  // Notificações
+  const [configNotificacoes, setConfigNotificacoes] = useState({
+    pedidos: true,
+    promocoes: true,
+    novidades: false,
+  });
+
+  const [notificacoes, setNotificacoes] = useState([
     {
       id: 1,
-      nome: "Jaqueta de Inverno",
-      tamanho: "M",
-      preco: 189.9,
-      quantidade: 1,
-      imagem: "/jaqueta.jpg",
+      titulo: "Pedido confirmado",
+      mensagem: "Seu pedido foi confirmado com sucesso.",
+      tempo: "Há 10 minutos",
     },
     {
       id: 2,
-      nome: "Moletom Azul",
-      tamanho: "G",
-      preco: 129.9,
-      quantidade: 2,
-      imagem: "/moletom.jpg",
+      titulo: "Nova coleção",
+      mensagem: "Confira as novidades da coleção de inverno.",
+      tempo: "Há 2 horas",
     },
-  ];
+  ]);
+
+  // =========================
+  // CARRINHO
+  // =========================
+
+  function removerProduto(id) {
+    setProdutosCarrinho((produtos) =>
+      produtos.filter((produto) => produto.id !== id)
+    );
+  }
+
+  function aumentarQuantidade(id) {
+    setProdutosCarrinho((produtos) =>
+      produtos.map((produto) =>
+        produto.id === id
+          ? {
+              ...produto,
+              quantidade: produto.quantidade + 1,
+            }
+          : produto
+      )
+    );
+  }
+
+  function diminuirQuantidade(id) {
+    setProdutosCarrinho((produtos) =>
+      produtos
+        .map((produto) =>
+          produto.id === id
+            ? {
+                ...produto,
+                quantidade: produto.quantidade - 1,
+              }
+            : produto
+        )
+        .filter((produto) => produto.quantidade > 0)
+    );
+  }
 
   const total = produtosCarrinho.reduce(
-    (soma, produto) =>
-      soma + produto.preco * produto.quantidade,
+    (soma, produto) => soma + produto.preco * produto.quantidade,
     0
   );
 
+  // =========================
+  // ABRIR PAINÉIS
+  // =========================
+
+  function abrirNotificacoes() {
+    setNotificacoesAberto(!notificacoesAberto);
+    setLocalizacaoAberto(false);
+    setPerfilAberto(false);
+  }
+
+  function abrirLocalizacao() {
+    setLocalizacaoAberto(!localizacaoAberto);
+    setNotificacoesAberto(false);
+    setPerfilAberto(false);
+  }
+
+  function abrirPerfil() {
+    setPerfilAberto(!perfilAberto);
+    setNotificacoesAberto(false);
+    setLocalizacaoAberto(false);
+  }
+
+  // =========================
+  // ALTERAR LOCALIZAÇÃO
+  // =========================
+
+  function alterarLocalizacao(e) {
+    const { name, value } = e.target;
+
+    setLocalizacao((anterior) => ({
+      ...anterior,
+      [name]: value,
+    }));
+  }
+
+  function salvarLocalizacao(e) {
+    e.preventDefault();
+
+    alert("Localização atualizada com sucesso!");
+    setLocalizacaoAberto(false);
+  }
+
+  // =========================
+  // ALTERAR PERFIL
+  // =========================
+
+  function alterarPerfil(e) {
+    const { name, value } = e.target;
+
+    setPerfil((anterior) => ({
+      ...anterior,
+      [name]: value,
+    }));
+  }
+
+  function salvarPerfil(e) {
+    e.preventDefault();
+
+    alert("Informações pessoais atualizadas!");
+    setPerfilAberto(false);
+  }
+
+  // =========================
+  // NOTIFICAÇÕES
+  // =========================
+
+  function alterarNotificacao(tipo) {
+    setConfigNotificacoes((anterior) => ({
+      ...anterior,
+      [tipo]: !anterior[tipo],
+    }));
+  }
+
+  function limparNotificacoes() {
+    setNotificacoes([]);
+  }
+
   return (
     <>
-      <nav className="navbar navbar-expand-lg navbar-custom">
+      {/* =====================================
+          NAVBAR
+      ====================================== */}
 
+      <nav className="navbar navbar-expand-lg navbar-custom">
         <div className="container-fluid">
 
           {/* Logo */}
@@ -67,11 +210,14 @@ export default function Header() {
             id="navbarSupportedContent"
           >
 
-            {/* Menu */}
+            {/* =====================================
+                MENU
+            ====================================== */}
+
             <ul className="navbar-nav">
 
+              {/* Categorias */}
               <li className="nav-item dropdown">
-
                 <a
                   className="nav-link dropdown-toggle"
                   href="#"
@@ -107,9 +253,9 @@ export default function Header() {
                   </li>
 
                 </ul>
-
               </li>
 
+              {/* Masculino */}
               <li className="nav-item">
                 <Link
                   className="nav-link"
@@ -119,6 +265,7 @@ export default function Header() {
                 </Link>
               </li>
 
+              {/* Feminino */}
               <li className="nav-item">
                 <Link
                   className="nav-link"
@@ -131,7 +278,10 @@ export default function Header() {
             </ul>
 
 
-            {/* Barra de pesquisa */}
+            {/* =====================================
+                BARRA DE PESQUISA
+            ====================================== */}
+
             <form
               className="search-form mx-auto"
               role="search"
@@ -150,30 +300,46 @@ export default function Header() {
             </form>
 
 
-            {/* Ações do Header */}
+            {/* =====================================
+                AÇÕES DO HEADER
+            ====================================== */}
+
             <div className="header-actions">
 
-                 {/* NOTIFICACAO */}
-              <a
-                href="#"
+              {/* ==============================
+                  NOTIFICAÇÕES
+              =============================== */}
+
+              <button
+                type="button"
                 className="header-action"
-                title="Localização"
+                title="Notificações"
+                onClick={abrirNotificacoes}
               >
                 <i className="bi bi-bell-fill"></i>
-              </a>
+
+                {notificacoes.length > 0 && (
+                  <span className="notification-badge">
+                    {notificacoes.length}
+                  </span>
+                )}
+              </button>
 
 
+              {/* ==============================
+                  CARRINHO
+              =============================== */}
 
-
-            
-
-
-              {/* Carrinho */}
               <button
                 type="button"
                 className="header-action cart-header-button"
                 title="Carrinho"
-                onClick={() => setCarrinhoAberto(true)}
+                onClick={() => {
+                  setCarrinhoAberto(true);
+                  setNotificacoesAberto(false);
+                  setLocalizacaoAberto(false);
+                  setPerfilAberto(false);
+                }}
               >
                 <i className="bi bi-cart"></i>
 
@@ -185,29 +351,407 @@ export default function Header() {
               </button>
 
 
-              {/* Localização */}
-              <a
-                href="#"
+              {/* ==============================
+                  LOCALIZAÇÃO
+              =============================== */}
+
+              <button
+                type="button"
                 className="header-action"
                 title="Localização"
+                onClick={abrirLocalizacao}
               >
                 <i className="bi bi-geo-alt-fill"></i>
-              </a>
+              </button>
 
-                {/* Perfil */}
-              <a
-                href="#"
+
+              {/* ==============================
+                  PERFIL
+              =============================== */}
+
+              <button
+                type="button"
                 className="header-action"
-                title="Perfil"
+                title="Informações pessoais"
+                onClick={abrirPerfil}
               >
                 <i className="bi bi-person-fill"></i>
-              </a>
+              </button>
 
             </div>
 
           </div>
         </div>
       </nav>
+
+
+      {/* =====================================
+          PAINEL DE NOTIFICAÇÕES
+      ====================================== */}
+
+      {notificacoesAberto && (
+        <div className="header-panel notification-panel">
+
+          <div className="panel-header">
+            <div>
+              <h3>
+                <i className="bi bi-bell-fill"></i>
+                Notificações
+              </h3>
+
+              <span>
+                {notificacoes.length} notificações
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setNotificacoesAberto(false)}
+            >
+              <i className="bi bi-x"></i>
+            </button>
+          </div>
+
+
+          {/* Lista de notificações */}
+
+          <div className="notification-list">
+
+            {notificacoes.length === 0 ? (
+
+              <div className="notification-empty">
+                <i className="bi bi-bell-slash"></i>
+
+                <p>
+                  Você não possui novas notificações.
+                </p>
+              </div>
+
+            ) : (
+
+              notificacoes.map((notificacao) => (
+
+                <div
+                  className="notification-item"
+                  key={notificacao.id}
+                >
+                  <div className="notification-icon">
+                    <i className="bi bi-info-circle"></i>
+                  </div>
+
+                  <div>
+                    <strong>
+                      {notificacao.titulo}
+                    </strong>
+
+                    <p>
+                      {notificacao.mensagem}
+                    </p>
+
+                    <small>
+                      {notificacao.tempo}
+                    </small>
+                  </div>
+                </div>
+
+              ))
+
+            )}
+
+          </div>
+
+
+          {/* Configurações */}
+
+          <div className="notification-settings">
+
+            <h4>
+              Preferências
+            </h4>
+
+            <label>
+              <span>
+                Avisos sobre pedidos
+              </span>
+
+              <input
+                type="checkbox"
+                checked={configNotificacoes.pedidos}
+                onChange={() =>
+                  alterarNotificacao("pedidos")
+                }
+              />
+            </label>
+
+            <label>
+              <span>
+                Promoções
+              </span>
+
+              <input
+                type="checkbox"
+                checked={configNotificacoes.promocoes}
+                onChange={() =>
+                  alterarNotificacao("promocoes")
+                }
+              />
+            </label>
+
+            <label>
+              <span>
+                Novidades da loja
+              </span>
+
+              <input
+                type="checkbox"
+                checked={configNotificacoes.novidades}
+                onChange={() =>
+                  alterarNotificacao("novidades")
+                }
+              />
+            </label>
+
+          </div>
+
+
+          {notificacoes.length > 0 && (
+            <button
+              type="button"
+              className="panel-secondary-button"
+              onClick={limparNotificacoes}
+            >
+              Marcar todas como lidas
+            </button>
+          )}
+
+        </div>
+      )}
+
+
+      {/* =====================================
+          PAINEL DE LOCALIZAÇÃO
+      ====================================== */}
+
+      {localizacaoAberto && (
+        <div className="header-panel location-panel">
+
+          <div className="panel-header">
+
+            <div>
+              <h3>
+                <i className="bi bi-geo-alt-fill"></i>
+                Minha localização
+              </h3>
+
+              <span>
+                Endereço para entrega
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setLocalizacaoAberto(false)}
+            >
+              <i className="bi bi-x"></i>
+            </button>
+
+          </div>
+
+
+          <form onSubmit={salvarLocalizacao}>
+
+            <div className="panel-field">
+
+              <label>
+                Rua
+              </label>
+
+              <input
+                type="text"
+                name="rua"
+                value={localizacao.rua}
+                onChange={alterarLocalizacao}
+              />
+
+            </div>
+
+
+            <div className="panel-row">
+
+              <div className="panel-field">
+
+                <label>
+                  Número
+                </label>
+
+                <input
+                  type="text"
+                  name="numero"
+                  value={localizacao.numero}
+                  onChange={alterarLocalizacao}
+                />
+
+              </div>
+
+              <div className="panel-field">
+
+                <label>
+                  CEP
+                </label>
+
+                <input
+                  type="text"
+                  name="cep"
+                  value={localizacao.cep}
+                  onChange={alterarLocalizacao}
+                />
+
+              </div>
+
+            </div>
+
+
+            <div className="panel-row">
+
+              <div className="panel-field">
+
+                <label>
+                  Cidade
+                </label>
+
+                <input
+                  type="text"
+                  name="cidade"
+                  value={localizacao.cidade}
+                  onChange={alterarLocalizacao}
+                />
+
+              </div>
+
+              <div className="panel-field">
+
+                <label>
+                  Estado
+                </label>
+
+                <input
+                  type="text"
+                  name="estado"
+                  value={localizacao.estado}
+                  onChange={alterarLocalizacao}
+                />
+
+              </div>
+
+            </div>
+
+
+            <button
+              type="submit"
+              className="panel-save-button"
+            >
+              <i className="bi bi-check-lg"></i>
+              Salvar localização
+            </button>
+
+          </form>
+
+        </div>
+      )}
+
+
+      {/* =====================================
+          PAINEL DE PERFIL
+      ====================================== */}
+
+      {perfilAberto && (
+        <div className="header-panel profile-panel">
+
+          <div className="panel-header">
+
+            <div>
+              <h3>
+                <i className="bi bi-person-fill"></i>
+                Informações pessoais
+              </h3>
+
+              <span>
+                Atualize seus dados pessoais
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setPerfilAberto(false)}
+            >
+              <i className="bi bi-x"></i>
+            </button>
+
+          </div>
+
+
+          <form onSubmit={salvarPerfil}>
+
+            <div className="panel-field">
+
+              <label>
+                Nome completo
+              </label>
+
+              <input
+                type="text"
+                name="nome"
+                value={perfil.nome}
+                onChange={alterarPerfil}
+              />
+
+            </div>
+
+
+            <div className="panel-field">
+
+              <label>
+                E-mail
+              </label>
+
+              <input
+                type="email"
+                name="email"
+                value={perfil.email}
+                onChange={alterarPerfil}
+              />
+
+            </div>
+
+
+            <div className="panel-field">
+
+              <label>
+                Telefone
+              </label>
+
+              <input
+                type="text"
+                name="telefone"
+                value={perfil.telefone}
+                onChange={alterarPerfil}
+              />
+
+            </div>
+
+
+            <button
+              type="submit"
+              className="panel-save-button"
+            >
+              <i className="bi bi-check-lg"></i>
+              Salvar informações
+            </button>
+
+          </form>
+
+        </div>
+      )}
 
 
       {/* =====================================
@@ -232,10 +776,10 @@ export default function Header() {
         }`}
       >
 
-        {/* Cabeçalho */}
         <div className="cart-header">
 
           <div>
+
             <h2>
               <i className="bi bi-cart3"></i>
               Meu carrinho
@@ -244,6 +788,7 @@ export default function Header() {
             <span>
               {produtosCarrinho.length} produtos
             </span>
+
           </div>
 
           <button
@@ -257,7 +802,6 @@ export default function Header() {
         </div>
 
 
-        {/* Produtos */}
         <div className="cart-products">
 
           {produtosCarrinho.length === 0 ? (
@@ -285,7 +829,6 @@ export default function Header() {
                 key={produto.id}
               >
 
-                {/* Imagem */}
                 <div className="cart-product-image">
 
                   <img
@@ -296,7 +839,6 @@ export default function Header() {
                 </div>
 
 
-                {/* Informações */}
                 <div className="cart-product-info">
 
                   <h3>
@@ -307,13 +849,16 @@ export default function Header() {
                     Tamanho: {produto.tamanho}
                   </span>
 
-
                   <div className="cart-product-bottom">
 
-                    {/* Quantidade */}
                     <div className="cart-quantity">
 
-                      <button type="button">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          diminuirQuantidade(produto.id)
+                        }
+                      >
                         −
                       </button>
 
@@ -321,17 +866,23 @@ export default function Header() {
                         {produto.quantidade}
                       </span>
 
-                      <button type="button">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          aumentarQuantidade(produto.id)
+                        }
+                      >
                         +
                       </button>
 
                     </div>
 
-
-                    {/* Preço */}
                     <strong>
                       R${" "}
-                      {(produto.preco * produto.quantidade)
+                      {(
+                        produto.preco *
+                        produto.quantidade
+                      )
                         .toFixed(2)
                         .replace(".", ",")}
                     </strong>
@@ -341,11 +892,13 @@ export default function Header() {
                 </div>
 
 
-                {/* Remover */}
                 <button
                   type="button"
                   className="cart-remove"
                   title="Remover"
+                  onClick={() =>
+                    removerProduto(produto.id)
+                  }
                 >
                   <i className="bi bi-trash3"></i>
                 </button>
@@ -359,7 +912,6 @@ export default function Header() {
         </div>
 
 
-        {/* Rodapé */}
         {produtosCarrinho.length > 0 && (
 
           <div className="cart-footer">
@@ -379,7 +931,6 @@ export default function Header() {
 
             </div>
 
-
             <button
               type="button"
               className="cart-checkout"
@@ -389,11 +940,12 @@ export default function Header() {
               <i className="bi bi-arrow-right"></i>
             </button>
 
-
             <button
               type="button"
               className="cart-continue"
-              onClick={() => setCarrinhoAberto(false)}
+              onClick={() =>
+                setCarrinhoAberto(false)
+              }
             >
               Continuar comprando
             </button>
