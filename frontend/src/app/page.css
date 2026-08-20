@@ -1,11 +1,12 @@
 .carousel-item {
   transition: transform 1s ease-in-out;
 }
+
 .carousel-item img {
   width: 100%;
   height: 800px;
   object-fit: cover;
-  object-position: center top;
+  object-position: center center;
 }
 
 /* ============================= */
@@ -41,9 +42,7 @@
 
 .destaque-subtitulo {
   margin: 0 0 6px;
-
   color: #1769aa;
-
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 3px;
@@ -51,9 +50,7 @@
 
 .destaque-header h2 {
   margin: 0;
-
   color: #102a43;
-
   font-size: 38px;
   font-weight: 700;
 }
@@ -62,17 +59,14 @@
   color: #1769aa;
 }
 
-
 /* ============================= */
 /* CARD                          */
 /* ============================= */
 
 .produto-card {
   position: relative;
-
   height: 100%;
   overflow: hidden;
-
   background: #ffffff;
 
   border: 1px solid #e1e8f0;
@@ -95,9 +89,8 @@
     0 18px 40px rgba(20, 70, 110, 0.15);
 }
 
-
 /* ============================= */
-/* IMAGEM                        */
+/* IMAGEM DOS PRODUTOS           */
 /* ============================= */
 
 .produto-imagem {
@@ -119,6 +112,7 @@
   height: 85%;
 
   object-fit: contain;
+  object-position: center center;
 
   transition: transform 0.4s ease;
 }
@@ -126,7 +120,6 @@
 .produto-card:hover .produto-imagem img {
   transform: scale(1.06);
 }
-
 
 /* ============================= */
 /* CATEGORIA                     */
@@ -152,6 +145,16 @@
   letter-spacing: 0.5px;
 }
 
+.carousel-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.carousel-link img {
+  cursor: pointer;
+}
 
 /* ============================= */
 /* CONTEÚDO                      */
@@ -180,7 +183,6 @@
   font-size: 14px;
   line-height: 1.6;
 }
-
 
 /* ============================= */
 /* BOTÃO                         */
@@ -227,6 +229,7 @@
 }
 
 /* Título da seção */
+
 .categorias-section .destaque-header {
   display: flex;
   align-items: center;
@@ -238,6 +241,7 @@
 .categorias-section .destaque-linha {
   width: 100px;
   height: 2px;
+
   background: linear-gradient(
     90deg,
     transparent,
@@ -255,18 +259,25 @@
 
 .destaque-subtitulo {
   margin: 0 0 6px;
+
   text-align: center;
+
   font-size: 13px;
   font-weight: 700;
+
   letter-spacing: 3px;
+
   color: #00a9d4;
 }
 
 .categorias-section h2 {
   margin: 0;
+
   text-align: center;
+
   font-size: 36px;
   font-weight: 800;
+
   color: #102a43;
 }
 
@@ -274,17 +285,21 @@
   color: #00a9d4;
 }
 
-
 /* =========================================
    CARD
 ========================================= */
 
 .categoria-card {
   position: relative;
+
   height: 380px;
+
   overflow: hidden;
+
   border-radius: 20px;
+
   background: #dff6ff;
+
   cursor: pointer;
 
   box-shadow:
@@ -295,7 +310,6 @@
     box-shadow 0.35s ease;
 }
 
-
 /* =========================================
    IMAGEM
 ========================================= */
@@ -303,14 +317,16 @@
 .categoria-card img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+
   display: block;
+
+  object-fit: cover;
+  object-position: center center;
 
   transition:
     transform 0.6s ease,
     filter 0.5s ease;
 }
-
 
 /* =========================================
    OVERLAY
@@ -318,6 +334,7 @@
 
 .categoria-card::after {
   content: "";
+
   position: absolute;
   inset: 0;
 
@@ -334,13 +351,13 @@
     background 0.4s ease;
 }
 
-
 /* =========================================
    CONTEÚDO DO CARD
 ========================================= */
 
 .categoria-overlay {
   position: absolute;
+
   left: 0;
   right: 0;
   bottom: 0;
@@ -368,7 +385,9 @@
 
 .categoria-overlay span {
   display: inline-flex;
+
   align-items: center;
+
   gap: 8px;
 
   font-size: 14px;
@@ -384,7 +403,6 @@
 .categoria-overlay i {
   font-size: 15px;
 }
-
 
 /* =========================================
    HOVER
@@ -421,7 +439,6 @@
   color: #ffffff;
 }
 
-
 /* =========================================
    EFEITO DE BORDA AZUL
 ========================================= */
@@ -447,7 +464,6 @@
   border-color: rgba(64, 255, 220, 0.7);
 }
 
-
 /* =========================================
    RESPONSIVIDADE
 ========================================= */
@@ -466,7 +482,6 @@
     font-size: 32px;
   }
 }
-
 
 @media (max-width: 767px) {
 
@@ -503,7 +518,6 @@
     font-size: 24px;
   }
 }
-
 
 @media (max-width: 575px) {
 
