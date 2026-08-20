@@ -2,71 +2,139 @@
 
 import '../tables.css';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-const initialModels = [
-  {
-    id: 1,
-    name: 'Slim',
-    description: 'Modelagem ajustada ao corpo.',
-    status: 'Ativo',
-  },
-  {
-    id: 2,
-    name: 'Regular',
-    description: 'Modelagem tradicional.',
-    status: 'Ativo',
-  },
-  {
-    id: 3,
-    name: 'Oversized',
-    description: 'Modelagem ampla e confortável.',
-    status: 'Ativo',
-  },
-  {
-    id: 4,
-    name: 'Cropped',
-    description: 'Modelo com comprimento reduzido.',
-    status: 'Ativo',
-  },
-  {
-    id: 5,
-    name: 'Long',
-    description: 'Modelo com comprimento alongado.',
-    status: 'Inativo',
-  },
-];
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+const MODELOS_ENDPOINT = `${API_URL}/modelos`;
 
 const emptyForm = {
-  name: '',
-  description: '',
-  status: 'Ativo',
+  nomeModelo: '',
 };
 
-function getStatusClass(status) {
-  return status === 'Ativo' ? 'success' : 'danger';
-}
-
 export default function ModelosPage() {
-  const [models, setModels] = useState(initialModels);
+  const [models, setModels] = useState([]);
 
   const [search, setSearch] = useState('');
 
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [totalModels, setTotalModels] = useState(0);
+
+  const [loading, setLoading] = useState(true);
+
+  const [saving, setSaving] = useState(false);
+
+  const [deleting, setDeleting] = useState(false);
+
+  const [error, setError] = useState('');
+
   const [modal, setModal] = useState(null);
 
-  const [selectedModel, setSelectedModel] =
-    useState(null);
+  const [selectedModel, setSelectedModel] = useState(null);
 
   const [form, setForm] = useState(emptyForm);
 
-  const modelsPerPage = 5;
+  const modelsPerPage = 10;
+
+  /*
+   * =====================================================
+   * TOKEN
+   * =====================================================
+   */
+
+  const getToken = () => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    return (
+      localStorage.getItem('token') ||
+      localStorage.getItem('accessToken') ||
+      sessionStorage.getItem('token') ||
+      sessionStorage.getItem('accessToken')
+    );
+  };
+
+  /*
+   * =====================================================
+   * BUSCAR MODELOS
+   * =====================================================
+   */
+
+  const fetchModels = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const params = new URLSearchParams({
+        pagina: String(currentPage),
+        limite: String(modelsPerPage),
+      });
+
+      const response = await fetch(
+        `${MODELOS_ENDPOINT}?${params.toString()}`,
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
+          cache: 'no-store',
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.sucesso) {
+        throw new Error(
+          result.mensagem || 'Não foi possível carregar os modelos.'
+        );
+      }
+
+      setModels(Array.isArray(result.dados) ? result.dados : []);
+
+      setTotalModels(result.paginacao?.total || 0);
+
+      setTotalPages(
+        Math.max(1, result.paginacao?.totalPaginas || 1)
+      );
+    } catch (requestError) {
+      console.error('Erro ao carregar modelos:', requestError);
+
+      setModels([]);
+      setTotalModels(0);
+      setTotalPages(1);
+
+      setError(
+        requestError.message ||
+          'Não foi possível carregar os modelos.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage]);
+
+  /*
+   * =====================================================
+   * CARREGAR AO ABRIR / TROCAR PÁGINA
+   * =====================================================
+   */
+
+  useEffect(() => {
+    fetchModels();
+  }, [fetchModels]);
 
   /*
    * =====================================================
    * FILTRO
    * =====================================================
+   *
+   * A API atualmente não possui endpoint de busca por nome
+   * integrado ao listarTodos, então a busca é feita sobre
+   * os modelos carregados na página atual.
    */
 
   const filteredModels = useMemo(() => {
@@ -77,41 +145,11 @@ export default function ModelosPage() {
     }
 
     return models.filter((model) =>
-      [
-        model.name,
-        model.description,
-        model.status,
-      ].some((value) =>
-        value.toLowerCase().includes(term)
-      )
+      String(model.nomeModelo || '')
+        .toLowerCase()
+        .includes(term)
     );
   }, [models, search]);
-
-  /*
-   * =====================================================
-   * PAGINAÇÃO
-   * =====================================================
-   */
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(
-      filteredModels.length / modelsPerPage
-    )
-  );
-
-  const safeCurrentPage = Math.min(
-    currentPage,
-    totalPages
-  );
-
-  const startIndex =
-    (safeCurrentPage - 1) * modelsPerPage;
-
-  const currentModels = filteredModels.slice(
-    startIndex,
-    startIndex + modelsPerPage
-  );
 
   /*
    * =====================================================
@@ -123,11 +161,13 @@ export default function ModelosPage() {
     setModal(null);
     setSelectedModel(null);
     setForm(emptyForm);
+    setError('');
   };
 
   const openCreateModal = () => {
     setSelectedModel(null);
     setForm(emptyForm);
+    setError('');
     setModal('create');
   };
 
@@ -135,16 +175,16 @@ export default function ModelosPage() {
     setSelectedModel(model);
 
     setForm({
-      name: model.name,
-      description: model.description,
-      status: model.status,
+      nomeModelo: model.nomeModelo || '',
     });
 
+    setError('');
     setModal('edit');
   };
 
   const openDeleteModal = (model) => {
     setSelectedModel(model);
+    setError('');
     setModal('delete');
   };
 
@@ -169,70 +209,84 @@ export default function ModelosPage() {
    * =====================================================
    */
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const name = form.name.trim();
+    const nomeModelo = form.nomeModelo.trim();
 
-    const description =
-      form.description.trim();
-
-    if (!name) {
+    if (!nomeModelo) {
+      setError('O nome do modelo é obrigatório.');
       return;
     }
 
-    /*
-     * CREATE
-     */
-
-    if (modal === 'create') {
-      const newModel = {
-        id:
-          Math.max(
-            ...models.map(
-              (model) => model.id
-            ),
-            0
-          ) + 1,
-
-        name,
-
-        description,
-
-        status: form.status,
-      };
-
-      setModels((previous) => [
-        ...previous,
-        newModel,
-      ]);
-
-      setCurrentPage(1);
-    }
-
-    /*
-     * EDIT
-     */
-
-    if (
-      modal === 'edit' &&
-      selectedModel
-    ) {
-      setModels((previous) =>
-        previous.map((model) =>
-          model.id === selectedModel.id
-            ? {
-                ...model,
-                name,
-                description,
-                status: form.status,
-              }
-            : model
-        )
+    if (nomeModelo.length < 2 || nomeModelo.length > 100) {
+      setError(
+        'O nome do modelo deve ter entre 2 e 100 caracteres.'
       );
+      return;
     }
 
-    closeModal();
+    const token = getToken();
+
+    if (!token) {
+      setError(
+        'Não foi possível encontrar o token de autenticação. Faça login novamente.'
+      );
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError('');
+
+      const isEditing =
+        modal === 'edit' && selectedModel;
+
+      const url = isEditing
+        ? `${MODELOS_ENDPOINT}/${selectedModel.idModelo}`
+        : MODELOS_ENDPOINT;
+
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          nomeModelo,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.sucesso) {
+        throw new Error(
+          result.mensagem ||
+            `Não foi possível ${
+              isEditing ? 'atualizar' : 'criar'
+            } o modelo.`
+        );
+      }
+
+      closeModal();
+
+      await fetchModels();
+    } catch (requestError) {
+      console.error(
+        'Erro ao salvar modelo:',
+        requestError
+      );
+
+      setError(
+        requestError.message ||
+          'Não foi possível salvar o modelo.'
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   /*
@@ -241,19 +295,73 @@ export default function ModelosPage() {
    * =====================================================
    */
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedModel) {
       return;
     }
 
-    setModels((previous) =>
-      previous.filter(
-        (model) =>
-          model.id !== selectedModel.id
-      )
-    );
+    const token = getToken();
 
-    closeModal();
+    if (!token) {
+      setError(
+        'Não foi possível encontrar o token de autenticação. Faça login novamente.'
+      );
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setError('');
+
+      const response = await fetch(
+        `${MODELOS_ENDPOINT}/${selectedModel.idModelo}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.sucesso) {
+        throw new Error(
+          result.mensagem ||
+            'Não foi possível excluir o modelo.'
+        );
+      }
+
+      closeModal();
+
+      /*
+       * Se apagarmos o último item da página atual,
+       * voltamos uma página quando necessário.
+       */
+      if (
+        models.length === 1 &&
+        currentPage > 1
+      ) {
+        setCurrentPage((page) =>
+          Math.max(1, page - 1)
+        );
+      } else {
+        await fetchModels();
+      }
+    } catch (requestError) {
+      console.error(
+        'Erro ao excluir modelo:',
+        requestError
+      );
+
+      setError(
+        requestError.message ||
+          'Não foi possível excluir o modelo.'
+      );
+    } finally {
+      setDeleting(false);
+    }
   };
 
   /*
@@ -264,7 +372,31 @@ export default function ModelosPage() {
 
   const handleSearch = (event) => {
     setSearch(event.target.value);
-    setCurrentPage(1);
+  };
+
+  /*
+   * =====================================================
+   * ATUALIZAR
+   * =====================================================
+   */
+
+  const handleRefresh = async () => {
+    setSearch('');
+    await fetchModels();
+  };
+
+  /*
+   * =====================================================
+   * PAGINAÇÃO
+   * =====================================================
+   */
+
+  const goToPage = (page) => {
+    if (page < 1 || page > totalPages) {
+      return;
+    }
+
+    setCurrentPage(page);
   };
 
   /*
@@ -282,35 +414,30 @@ export default function ModelosPage() {
         ================================================= */}
 
         <section className="users-heading">
-
           <div>
-
             <span className="users-eyebrow">
               Catálogo
             </span>
 
-            <h1>
-              Modelos
-            </h1>
+            <h1>Modelos</h1>
 
             <p>
               Gerencie os modelos disponíveis no catálogo.
             </p>
-
           </div>
 
           <div className="users-heading-actions">
-
             <button
               type="button"
               className="users-btn users-btn-secondary"
-              onClick={() => {
-                setSearch('');
-                setCurrentPage(1);
-              }}
+              onClick={handleRefresh}
+              disabled={loading}
             >
               <i className="bi bi-arrow-clockwise" />
-              Atualizar
+
+              {loading
+                ? 'Atualizando...'
+                : 'Atualizar'}
             </button>
 
             <button
@@ -319,12 +446,33 @@ export default function ModelosPage() {
               onClick={openCreateModal}
             >
               <i className="bi bi-plus-lg" />
+
               Novo modelo
             </button>
-
           </div>
-
         </section>
+
+        {/* =================================================
+            ERROR
+        ================================================= */}
+
+        {error && !modal && (
+          <div
+            className="alert alert-danger d-flex align-items-center gap-2 mb-4"
+            role="alert"
+          >
+            <i className="bi bi-exclamation-triangle" />
+
+            <span>{error}</span>
+
+            <button
+              type="button"
+              className="btn-close ms-auto"
+              aria-label="Fechar"
+              onClick={() => setError('')}
+            />
+          </div>
+        )}
 
         {/* =================================================
             TABLE CARD
@@ -333,23 +481,16 @@ export default function ModelosPage() {
         <section className="users-card">
 
           <div className="users-card-header">
-
             <div>
-
               <span className="users-card-label">
                 Gerenciamento
               </span>
 
-              <h2>
-                Modelos cadastrados
-              </h2>
-
+              <h2>Modelos cadastrados</h2>
             </div>
 
             <div className="users-card-header-right">
-
               <div className="users-search">
-
                 <i className="bi bi-search" />
 
                 <input
@@ -361,25 +502,19 @@ export default function ModelosPage() {
                 />
 
                 {search && (
-
                   <button
                     type="button"
                     className="users-search-clear"
-                    onClick={() => {
-                      setSearch('');
-                      setCurrentPage(1);
-                    }}
+                    onClick={() =>
+                      setSearch('')
+                    }
                     aria-label="Limpar busca"
                   >
                     <i className="bi bi-x" />
                   </button>
-
                 )}
-
               </div>
-
             </div>
-
           </div>
 
           {/* =================================================
@@ -387,32 +522,51 @@ export default function ModelosPage() {
           ================================================= */}
 
           <div className="table-responsive users-table-wrapper">
-
             <table className="table users-table align-middle">
 
               <thead>
-
                 <tr>
                   <th>Modelo</th>
-                  <th>Descrição</th>
-                  <th>Status</th>
+                  <th>ID</th>
                   <th>Ações</th>
                 </tr>
-
               </thead>
 
               <tbody>
 
-                {currentModels.length > 0 ? (
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan="3"
+                      className="users-empty"
+                    >
+                      <div className="users-empty-content">
 
-                  currentModels.map((model) => (
+                        <div className="users-empty-icon">
+                          <i className="bi bi-arrow-repeat" />
+                        </div>
 
-                    <tr key={model.id}>
+                        <strong>
+                          Carregando modelos...
+                        </strong>
+
+                        <span>
+                          Aguarde enquanto buscamos os
+                          modelos cadastrados.
+                        </span>
+
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredModels.length > 0 ? (
+                  filteredModels.map((model) => (
+                    <tr
+                      key={model.idModelo}
+                    >
 
                       {/* MODEL */}
 
                       <td>
-
                         <div className="user-cell">
 
                           <div className="user-avatar">
@@ -422,64 +576,40 @@ export default function ModelosPage() {
                           <div className="user-information">
 
                             <span className="user-name">
-                              {model.name}
+                              {model.nomeModelo}
                             </span>
 
                             <span className="user-id">
-                              ID #{model.id}
+                              Modelo cadastrado
                             </span>
 
                           </div>
 
                         </div>
-
                       </td>
 
-                      {/* DESCRIPTION */}
+                      {/* ID */}
 
                       <td>
-
                         <span className="table-muted">
-                          {model.description ||
-                            'Sem descrição'}
+                          #{model.idModelo}
                         </span>
-
-                      </td>
-
-                      {/* STATUS */}
-
-                      <td>
-
-                        <span
-                          className={`user-status ${getStatusClass(
-                            model.status
-                          )}`}
-                        >
-
-                          <span />
-
-                          {model.status}
-
-                        </span>
-
                       </td>
 
                       {/* ACTIONS */}
 
                       <td>
-
                         <div className="user-actions">
 
                           <button
                             type="button"
                             className="user-action edit"
                             onClick={() =>
-                              openEditModal(
-                                model
-                              )
+                              openEditModal(model)
                             }
                           >
                             <i className="bi bi-pencil" />
+
                             Editar
                           </button>
 
@@ -487,32 +617,25 @@ export default function ModelosPage() {
                             type="button"
                             className="user-action delete"
                             onClick={() =>
-                              openDeleteModal(
-                                model
-                              )
+                              openDeleteModal(model)
                             }
                           >
                             <i className="bi bi-trash" />
+
                             Excluir
                           </button>
 
                         </div>
-
                       </td>
 
                     </tr>
-
                   ))
-
                 ) : (
-
                   <tr>
-
                     <td
-                      colSpan="4"
+                      colSpan="3"
                       className="users-empty"
                     >
-
                       <div className="users-empty-content">
 
                         <div className="users-empty-icon">
@@ -524,21 +647,19 @@ export default function ModelosPage() {
                         </strong>
 
                         <span>
-                          Tente buscar por outro modelo.
+                          {search
+                            ? 'Tente buscar por outro modelo.'
+                            : 'Ainda não existem modelos cadastrados.'}
                         </span>
 
                       </div>
-
                     </td>
-
                   </tr>
-
                 )}
 
               </tbody>
 
             </table>
-
           </div>
 
           {/* =================================================
@@ -549,13 +670,17 @@ export default function ModelosPage() {
 
             <span>
               Mostrando{' '}
-              <strong>
-                {currentModels.length}
-              </strong>{' '}
-              de{' '}
+
               <strong>
                 {filteredModels.length}
               </strong>{' '}
+
+              de{' '}
+
+              <strong>
+                {totalModels}
+              </strong>{' '}
+
               modelos
             </span>
 
@@ -563,34 +688,33 @@ export default function ModelosPage() {
 
               <ul className="pagination users-pagination">
 
+                {/* PREVIOUS */}
+
                 <li
                   className={`page-item ${
-                    safeCurrentPage === 1
+                    currentPage === 1
                       ? 'disabled'
                       : ''
                   }`}
                 >
-
                   <button
                     type="button"
                     className="page-link"
                     disabled={
-                      safeCurrentPage === 1
+                      currentPage === 1 ||
+                      loading
                     }
                     onClick={() =>
-                      setCurrentPage(
-                        (page) =>
-                          Math.max(
-                            1,
-                            page - 1
-                          )
+                      goToPage(
+                        currentPage - 1
                       )
                     }
                   >
                     <i className="bi bi-chevron-left" />
                   </button>
-
                 </li>
+
+                {/* PAGES */}
 
                 {Array.from(
                   {
@@ -599,70 +723,59 @@ export default function ModelosPage() {
                   (_, index) =>
                     index + 1
                 ).map((page) => (
-
                   <li
                     key={page}
                     className={`page-item ${
-                      page ===
-                      safeCurrentPage
+                      page === currentPage
                         ? 'active'
                         : ''
                     }`}
                   >
-
                     <button
                       type="button"
                       className="page-link"
+                      disabled={loading}
                       onClick={() =>
-                        setCurrentPage(page)
+                        goToPage(page)
                       }
                     >
                       {page}
                     </button>
-
                   </li>
-
                 ))}
+
+                {/* NEXT */}
 
                 <li
                   className={`page-item ${
-                    safeCurrentPage ===
-                    totalPages
+                    currentPage === totalPages
                       ? 'disabled'
                       : ''
                   }`}
                 >
-
                   <button
                     type="button"
                     className="page-link"
                     disabled={
-                      safeCurrentPage ===
-                      totalPages
+                      currentPage === totalPages ||
+                      loading
                     }
                     onClick={() =>
-                      setCurrentPage(
-                        (page) =>
-                          Math.min(
-                            totalPages,
-                            page + 1
-                          )
+                      goToPage(
+                        currentPage + 1
                       )
                     }
                   >
                     <i className="bi bi-chevron-right" />
                   </button>
-
                 </li>
 
               </ul>
 
             </nav>
-
           </div>
 
         </section>
-
       </main>
 
       {/* ===================================================
@@ -671,7 +784,6 @@ export default function ModelosPage() {
 
       {(modal === 'create' ||
         modal === 'edit') && (
-
         <div
           className="users-modal-backdrop"
           onMouseDown={(event) => {
@@ -691,10 +803,11 @@ export default function ModelosPage() {
             aria-labelledby="model-modal-title"
           >
 
+            {/* HEADER */}
+
             <div className="users-modal-header">
 
               <div>
-
                 <span className="users-modal-label">
                   {modal === 'create'
                     ? 'Novo modelo'
@@ -706,7 +819,6 @@ export default function ModelosPage() {
                     ? 'Criar modelo'
                     : 'Editar modelo'}
                 </h2>
-
               </div>
 
               <button
@@ -714,15 +826,29 @@ export default function ModelosPage() {
                 className="users-modal-close"
                 onClick={closeModal}
                 aria-label="Fechar modal"
+                disabled={saving}
               >
                 <i className="bi bi-x-lg" />
               </button>
 
             </div>
 
+            {/* FORM */}
+
             <form onSubmit={handleSubmit}>
 
               <div className="users-modal-body">
+
+                {error && (
+                  <div
+                    className="alert alert-danger d-flex align-items-center gap-2"
+                    role="alert"
+                  >
+                    <i className="bi bi-exclamation-triangle" />
+
+                    <span>{error}</span>
+                  </div>
+                )}
 
                 <div className="order-modal-icon">
                   <i className="bi bi-box-seam" />
@@ -732,10 +858,10 @@ export default function ModelosPage() {
 
                   {/* NAME */}
 
-                  <div className="user-form-field">
+                  <div className="user-form-field full">
 
                     <label htmlFor="model-name">
-                      Modelo
+                      Nome do modelo
                     </label>
 
                     <div className="user-input-wrapper">
@@ -744,83 +870,26 @@ export default function ModelosPage() {
 
                       <input
                         id="model-name"
-                        name="name"
+                        name="nomeModelo"
                         type="text"
-                        value={form.name}
+                        value={
+                          form.nomeModelo
+                        }
                         onChange={
                           handleFormChange
                         }
                         placeholder="Ex.: Slim"
-                        maxLength={80}
+                        maxLength={100}
                         required
+                        disabled={saving}
                       />
 
                     </div>
 
-                  </div>
-
-                  {/* STATUS */}
-
-                  <div className="user-form-field">
-
-                    <label htmlFor="model-status">
-                      Status
-                    </label>
-
-                    <div className="user-input-wrapper">
-
-                      <i className="bi bi-circle-half" />
-
-                      <select
-                        id="model-status"
-                        name="status"
-                        value={form.status}
-                        onChange={
-                          handleFormChange
-                        }
-                      >
-
-                        <option value="Ativo">
-                          Ativo
-                        </option>
-
-                        <option value="Inativo">
-                          Inativo
-                        </option>
-
-                      </select>
-
-                    </div>
-
-                  </div>
-
-                  {/* DESCRIPTION */}
-
-                  <div className="user-form-field full">
-
-                    <label htmlFor="model-description">
-                      Descrição
-                    </label>
-
-                    <div className="user-input-wrapper textarea-wrapper">
-
-                      <i className="bi bi-card-text" />
-
-                      <textarea
-                        id="model-description"
-                        name="description"
-                        value={
-                          form.description
-                        }
-                        onChange={
-                          handleFormChange
-                        }
-                        placeholder="Descreva este modelo..."
-                        rows={4}
-                        maxLength={255}
-                      />
-
-                    </div>
+                    <small className="text-muted mt-2 d-block">
+                      Informe um nome entre 2 e
+                      100 caracteres.
+                    </small>
 
                   </div>
 
@@ -828,12 +897,15 @@ export default function ModelosPage() {
 
               </div>
 
+              {/* FOOTER */}
+
               <div className="users-modal-footer">
 
                 <button
                   type="button"
                   className="users-modal-btn secondary"
                   onClick={closeModal}
+                  disabled={saving}
                 >
                   Cancelar
                 </button>
@@ -841,17 +913,22 @@ export default function ModelosPage() {
                 <button
                   type="submit"
                   className="users-modal-btn primary"
+                  disabled={saving}
                 >
 
                   <i
                     className={
-                      modal === 'create'
+                      saving
+                        ? 'bi bi-arrow-repeat'
+                        : modal === 'create'
                         ? 'bi bi-plus-lg'
                         : 'bi bi-check-lg'
                     }
                   />
 
-                  {modal === 'create'
+                  {saving
+                    ? 'Salvando...'
+                    : modal === 'create'
                     ? 'Criar modelo'
                     : 'Salvar alterações'}
 
@@ -864,7 +941,6 @@ export default function ModelosPage() {
           </div>
 
         </div>
-
       )}
 
       {/* ===================================================
@@ -873,7 +949,6 @@ export default function ModelosPage() {
 
       {modal === 'delete' &&
         selectedModel && (
-
           <div
             className="users-modal-backdrop"
             onMouseDown={(event) => {
@@ -910,12 +985,24 @@ export default function ModelosPage() {
                 <p>
                   Você está prestes a excluir o
                   modelo{' '}
+
                   <strong>
-                    {selectedModel.name}
+                    {selectedModel.nomeModelo}
                   </strong>
+
                   . Essa ação não poderá ser
                   desfeita.
                 </p>
+
+                {error && (
+                  <div
+                    className="alert alert-danger mt-3"
+                    role="alert"
+                  >
+                    <i className="bi bi-exclamation-triangle me-2" />
+                    {error}
+                  </div>
+                )}
 
               </div>
 
@@ -925,6 +1012,7 @@ export default function ModelosPage() {
                   type="button"
                   className="users-modal-btn secondary"
                   onClick={closeModal}
+                  disabled={deleting}
                 >
                   Cancelar
                 </button>
@@ -933,9 +1021,21 @@ export default function ModelosPage() {
                   type="button"
                   className="users-modal-btn danger"
                   onClick={handleDelete}
+                  disabled={deleting}
                 >
-                  <i className="bi bi-trash" />
-                  Excluir modelo
+
+                  <i
+                    className={
+                      deleting
+                        ? 'bi bi-arrow-repeat'
+                        : 'bi bi-trash'
+                    }
+                  />
+
+                  {deleting
+                    ? 'Excluindo...'
+                    : 'Excluir modelo'}
+
                 </button>
 
               </div>
@@ -943,7 +1043,6 @@ export default function ModelosPage() {
             </div>
 
           </div>
-
         )}
 
     </>

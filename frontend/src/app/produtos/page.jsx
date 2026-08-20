@@ -1,191 +1,194 @@
 'use client';
 
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 
-export const products = [
-  {
-    id: 1,
-    title: 'Jaqueta PU Camurçada com Zíper Frontal',
-    price: '399,90',
-    installments: '7x de R$ 57,13*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 2,
-    title: 'Jaqueta com Detalhes em Recorte e Barra com Elástico',
-    price: '299,90',
-    installments: '7x de R$ 42,84*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 3,
-    title: 'Jaqueta com Detalhes em Recorte e Barra com Elástico',
-    price: '299,90',
-    installments: '7x de R$ 42,84*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 4,
-    title: 'Jaqueta Trucker Pesada em Polivelour Mesclado com Bolsos',
-    price: '359,90',
-    installments: '7x de R$ 51,41*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 5,
-    title: 'Calça Cargo Masculina em Sarja com Bolsos Laterais',
-    price: '189,90',
-    installments: '4x de R$ 47,47*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 6,
-    title: 'Camiseta Oversized Algodão Premium Minimalista',
-    price: '89,90',
-    installments: '2x de R$ 44,95*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 7,
-    title: 'Tênis Casual Court Sintético com Recortes Sola Reta',
-    price: '249,90',
-    installments: '5x de R$ 49,98*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 8,
-    title: 'Moletom Canguru Fechado com Capuz e Bolso Frontal',
-    price: '219,90',
-    installments: '4x de R$ 54,97*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 9,
-    title: 'Camisa Social Manga Longa Slim Fit de Linho',
-    price: '149,90',
-    installments: '3x de R$ 49,96*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 10,
-    title: 'Bermuda de Moletom Conforto com Cordão Ajustável',
-    price: '79,90',
-    installments: '2x de R$ 39,95*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 11,
-    title: 'Blazer de Alfaiataria Premium Estruturado',
-    price: '499,90',
-    installments: '10x de R$ 49,99*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 12,
-    title: 'Vestido Canelado Midi com Gola Alta e Fenda',
-    price: '129,90',
-    installments: '3x de R$ 43,30*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 13,
-    title: 'Saia Plissada de Cintura Alta Estilo Elegante',
-    price: '159,90',
-    installments: '3x de R$ 53,30*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 14,
-    title: 'Óculos de Sol Estilo Aviador Clássico UV400',
-    price: '199,90',
-    installments: '4x de R$ 49,97*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 15,
-    title: 'Relógio Analógico Minimalista com Pulseira de Couro',
-    price: '299,90',
-    installments: '6x de R$ 49,98*',
-    imageUrl: '/akin.webp',
-  },
-  {
-    id: 16,
-    title: 'Mochila Urbana Resistente à Água com Compartimento',
-    price: '259,90',
-    installments: '5x de R$ 51,98*',
-    imageUrl: '/akin.webp',
-  },
-];
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function Page() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
+
+  useEffect(() => {
+    const buscarProdutos = async () => {
+      try {
+        setLoading(true);
+        setErro(null);
+
+        const response = await fetch(
+          `${API_URL}/produtos?pagina=1&limite=100`,
+          {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json',
+            },
+            cache: 'no-store',
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Não foi possível carregar os produtos.');
+        }
+
+        const data = await response.json();
+
+        if (!data.sucesso) {
+          throw new Error(
+            data.erro || 'Não foi possível carregar os produtos.'
+          );
+        }
+
+        setProducts(data.dados || []);
+      } catch (error) {
+        console.error('Erro ao buscar produtos:', error);
+        setErro(error.message || 'Erro ao carregar produtos.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    buscarProdutos();
+  }, []);
+
   return (
     <div className="container py-5 bg-white">
-      <div className="row g-4 justify-content-center">
-        {products.map((product) => (
-          <div 
-            key={product.id} 
-            className="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center"
-          >
-            <div 
-              className="d-flex flex-column w-100 product-card" 
-              style={{ maxWidth: '256px', cursor: 'pointer' }}
+      {loading ? (
+        <div className="row g-4 justify-content-center">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <div
+              key={index}
+              className="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center"
             >
-              {/* Box de Imagem com Arredondamento */}
-              <div 
-                className="position-relative w-100 bg-light overflow-hidden mb-3 rounded-3" 
-                style={{ height: '320px' }}
+              <div
+                className="d-flex flex-column w-100 product-card"
+                style={{ maxWidth: '256px' }}
               >
-                {product.imageUrl ? (
-                  <Image
-                    src={product.imageUrl}
-                    alt={product.title}
-                    fill
-                    sizes="256px"
-                    className="object-fit-cover product-image"
-                  />
-                ) : (
-                  <span className="d-flex align-items-center justify-content-center h-100 small text-secondary">
-                    Foto do Produto
-                  </span>
-                )}
-              </div>
-
-              {/* Container de Informações Centralizadas */}
-              <div className="d-flex flex-column flex-grow-1 text-center px-1">
-                
-                {/* Título com Altura Fixa */}
-                <div 
-                  className="d-flex align-items-start justify-content-center" 
-                  style={{ height: '2.5rem' }}
+                <div
+                  className="position-relative w-100 bg-light overflow-hidden mb-3 rounded-3 placeholder-glow"
+                  style={{ height: '320px' }}
                 >
-                  <h3 className="fs-6 fw-normal text-secondary lh-sm m-0 product-title">
-                    {product.title}
-                  </h3>
+                  <span className="placeholder w-100 h-100" />
                 </div>
 
-                {/* Bloco de Preço + Parcelamento */}
-                <div className="mt-3 d-flex flex-column gap-1">
-                  <p className="fs-6 fw-bold text-dark mb-0">
-                    R$ {product.price}
-                  </p>
-                  <p className="small text-secondary mb-0">
-                    {product.installments}
-                  </p>
-                </div>
+                <div className="d-flex flex-column flex-grow-1 text-center px-1">
+                  <div
+                    className="d-flex align-items-start justify-content-center"
+                    style={{ height: '2.5rem' }}
+                  >
+                    <span className="placeholder col-10" />
+                  </div>
 
+                  <div className="mt-3 d-flex flex-column gap-1">
+                    <span className="placeholder col-5 mx-auto" />
+                    <span className="placeholder col-7 mx-auto" />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : erro ? (
+        <div className="text-center py-5">
+          <p className="text-secondary mb-2">
+            Não foi possível carregar os produtos.
+          </p>
+
+          <small className="text-danger">{erro}</small>
+        </div>
+      ) : products.length === 0 ? (
+        <div className="text-center py-5">
+          <p className="text-secondary mb-0">
+            Nenhum produto encontrado.
+          </p>
+        </div>
+      ) : (
+        <div className="row g-4 justify-content-center">
+          {products.map((product) => {
+            const preco = Number(product.preco || 0);
+
+            const precoFormatado = preco.toLocaleString('pt-BR', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
+
+            const imageUrl = product.imagem1
+              ? `${API_URL}/uploads/${product.imagem1}`
+              : null;
+
+            return (
+              <div
+                key={product.idProduto}
+                className="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center"
+              >
+                <div
+                  className="d-flex flex-column w-100 product-card"
+                  style={{
+                    maxWidth: '256px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {/* Box de Imagem com Arredondamento */}
+                  <div
+                    className="position-relative w-100 bg-light overflow-hidden mb-3 rounded-3"
+                    style={{ height: '320px' }}
+                  >
+                    {imageUrl ? (
+                      <Image
+                        src={imageUrl}
+                        alt={product.nome || 'Produto'}
+                        fill
+                        sizes="256px"
+                        unoptimized
+                        className="object-fit-cover product-image"
+                      />
+                    ) : (
+                      <span className="d-flex align-items-center justify-content-center h-100 small text-secondary">
+                        Foto do Produto
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Container de Informações Centralizadas */}
+                  <div className="d-flex flex-column flex-grow-1 text-center px-1">
+                    {/* Título com Altura Fixa */}
+                    <div
+                      className="d-flex align-items-start justify-content-center"
+                      style={{ height: '2.5rem' }}
+                    >
+                      <h3 className="fs-6 fw-normal text-secondary lh-sm m-0 product-title">
+                        {product.nome}
+                      </h3>
+                    </div>
+
+                    {/* Bloco de Preço + Parcelamento */}
+                    <div className="mt-3 d-flex flex-column gap-1">
+                      <p className="fs-6 fw-bold text-dark mb-0">
+                        R$ {precoFormatado}
+                      </p>
+
+                      <p className="small text-secondary mb-0">
+                        Consulte as condições de parcelamento
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <style jsx>{`
         .product-image {
           transition: transform 0.5s ease-in-out;
         }
+
         .product-card:hover .product-image {
           transform: scale(1.1);
         }
+
         .product-title {
           display: -webkit-box;
           -webkit-line-clamp: 2;

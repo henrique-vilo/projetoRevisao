@@ -2,55 +2,26 @@
 
 import '../tables.css';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-const initialCategories = [
-  {
-    id: 1,
-    name: 'Camisetas',
-    description: 'Camisetas e peças similares.',
-    status: 'Ativo',
-  },
-  {
-    id: 2,
-    name: 'Calças',
-    description: 'Calças, jeans e peças inferiores.',
-    status: 'Ativo',
-  },
-  {
-    id: 3,
-    name: 'Jaquetas',
-    description: 'Jaquetas e peças para sobreposição.',
-    status: 'Ativo',
-  },
-  {
-    id: 4,
-    name: 'Vestidos',
-    description: 'Vestidos casuais e sociais.',
-    status: 'Ativo',
-  },
-  {
-    id: 5,
-    name: 'Acessórios',
-    description: 'Bolsas, bonés e outros acessórios.',
-    status: 'Inativo',
-  },
-];
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+).replace(/\/$/, '');
+
+const CATEGORIAS_ENDPOINT = `${API_URL}/api/categorias`;
 
 const emptyForm = {
-  name: '',
-  description: '',
-  status: 'Ativo',
+  nomeCategoria: '',
 };
 
-function getStatusClass(status) {
-  return status === 'Ativo' ? 'success' : 'danger';
-}
-
 export default function CategoriasPage() {
-  const [categories, setCategories] = useState(
-    initialCategories
-  );
+  /*
+   * =====================================================
+   * STATES
+   * =====================================================
+   */
+
+  const [categories, setCategories] = useState([]);
 
   const [search, setSearch] = useState('');
 
@@ -63,7 +34,151 @@ export default function CategoriasPage() {
 
   const [form, setForm] = useState(emptyForm);
 
+  const [loading, setLoading] = useState(true);
+
+  const [saving, setSaving] = useState(false);
+
+  const [deleting, setDeleting] = useState(false);
+
+  const [error, setError] = useState('');
+
+  const [successMessage, setSuccessMessage] =
+    useState('');
+
   const categoriesPerPage = 5;
+
+  /*
+   * =====================================================
+   * TOKEN
+   * =====================================================
+   */
+
+  const getToken = () => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    return (
+      localStorage.getItem('token') ||
+      localStorage.getItem('authToken') ||
+      localStorage.getItem('accessToken') ||
+      localStorage.getItem('jwt')
+    );
+  };
+
+  /*
+   * =====================================================
+   * HEADERS
+   * =====================================================
+   */
+
+  const getAuthHeaders = () => {
+    const token = getToken();
+
+    return {
+      'Content-Type': 'application/json',
+      ...(token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : {}),
+    };
+  };
+
+  /*
+   * =====================================================
+   * TRATAMENTO DE ERROS
+   * =====================================================
+   */
+
+  const getApiErrorMessage = async (response) => {
+    try {
+      const data = await response.json();
+
+      return (
+        data?.mensagem ||
+        data?.erro ||
+        'Ocorreu um erro ao processar a solicitação.'
+      );
+    } catch {
+      return 'Ocorreu um erro ao processar a solicitação.';
+    }
+  };
+
+  /*
+   * =====================================================
+   * CARREGAR CATEGORIAS
+   * =====================================================
+   */
+
+  const loadCategories = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      /*
+       * O controller recebe:
+       *
+       * ?pagina=1&limite=100
+       *
+       * Como o backend não possui busca por nome
+       * exposta no controller, carregamos as categorias
+       * e fazemos o filtro localmente.
+       */
+
+      const response = await fetch(
+        `${CATEGORIAS_ENDPOINT}?pagina=1&limite=100`,
+        {
+          method: 'GET',
+          cache: 'no-store',
+        }
+      );
+
+      if (!response.ok) {
+        const message =
+          await getApiErrorMessage(response);
+
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+
+      if (!data?.sucesso) {
+        throw new Error(
+          data?.mensagem ||
+            'Não foi possível carregar as categorias.'
+        );
+      }
+
+      setCategories(
+        Array.isArray(data.dados) ? data.dados : []
+      );
+    } catch (requestError) {
+      console.error(
+        'Erro ao carregar categorias:',
+        requestError
+      );
+
+      setError(
+        requestError.message ||
+          'Não foi possível carregar as categorias.'
+      );
+
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /*
+   * =====================================================
+   * INITIAL LOAD
+   * =====================================================
+   */
+
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
 
   /*
    * =====================================================
@@ -79,13 +194,9 @@ export default function CategoriasPage() {
     }
 
     return categories.filter((category) =>
-      [
-        category.name,
-        category.description,
-        category.status,
-      ].some((value) =>
-        value.toLowerCase().includes(term)
-      )
+      String(category.nomeCategoria || '')
+        .toLowerCase()
+        .includes(term)
     );
   }, [categories, search]);
 
@@ -98,8 +209,7 @@ export default function CategoriasPage() {
   const totalPages = Math.max(
     1,
     Math.ceil(
-      filteredCategories.length /
-        categoriesPerPage
+      filteredCategories.length / categoriesPerPage
     )
   );
 
@@ -109,8 +219,7 @@ export default function CategoriasPage() {
   );
 
   const startIndex =
-    (safeCurrentPage - 1) *
-    categoriesPerPage;
+    (safeCurrentPage - 1) * categoriesPerPage;
 
   const currentCategories =
     filteredCategories.slice(
@@ -133,6 +242,7 @@ export default function CategoriasPage() {
   const openCreateModal = () => {
     setSelectedCategory(null);
     setForm(emptyForm);
+    setError('');
     setModal('create');
   };
 
@@ -140,16 +250,16 @@ export default function CategoriasPage() {
     setSelectedCategory(category);
 
     setForm({
-      name: category.name,
-      description: category.description,
-      status: category.status,
+      nomeCategoria: category.nomeCategoria || '',
     });
 
+    setError('');
     setModal('edit');
   };
 
   const openDeleteModal = (category) => {
     setSelectedCategory(category);
+    setError('');
     setModal('delete');
   };
 
@@ -174,62 +284,154 @@ export default function CategoriasPage() {
    * =====================================================
    */
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const name = form.name.trim();
-    const description =
-      form.description.trim();
+    const nomeCategoria =
+      form.nomeCategoria.trim();
 
-    if (!name) {
+    if (!nomeCategoria) {
+      setError(
+        'O nome da categoria é obrigatório.'
+      );
+
       return;
     }
 
-    if (modal === 'create') {
-      const newCategory = {
-        id:
-          Math.max(
-            ...categories.map(
-              (category) => category.id
-            ),
-            0
-          ) + 1,
-
-        name,
-
-        description,
-
-        status: form.status,
-      };
-
-      setCategories((previous) => [
-        ...previous,
-        newCategory,
-      ]);
-
-      setCurrentPage(1);
-    }
-
     if (
-      modal === 'edit' &&
-      selectedCategory
+      nomeCategoria.length < 2 ||
+      nomeCategoria.length > 255
     ) {
-      setCategories((previous) =>
-        previous.map((category) =>
-          category.id ===
-          selectedCategory.id
-            ? {
-                ...category,
-                name,
-                description,
-                status: form.status,
-              }
-            : category
-        )
+      setError(
+        'O nome da categoria deve ter entre 2 e 255 caracteres.'
       );
+
+      return;
     }
 
-    closeModal();
+    const token = getToken();
+
+    if (!token) {
+      setError(
+        'É necessário estar autenticado para realizar esta operação.'
+      );
+
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError('');
+      setSuccessMessage('');
+
+      /*
+       * =================================================
+       * CREATE
+       * POST /api/categorias
+       * =================================================
+       */
+
+      if (modal === 'create') {
+        const response = await fetch(
+          CATEGORIAS_ENDPOINT,
+          {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              nomeCategoria,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const message =
+            await getApiErrorMessage(response);
+
+          throw new Error(message);
+        }
+
+        const data = await response.json();
+
+        if (!data?.sucesso) {
+          throw new Error(
+            data?.mensagem ||
+              'Não foi possível criar a categoria.'
+          );
+        }
+
+        closeModal();
+
+        setSearch('');
+        setCurrentPage(1);
+
+        setSuccessMessage(
+          'Categoria criada com sucesso.'
+        );
+
+        await loadCategories();
+
+        return;
+      }
+
+      /*
+       * =================================================
+       * EDIT
+       * PUT /api/categorias/:id
+       * =================================================
+       */
+
+      if (
+        modal === 'edit' &&
+        selectedCategory
+      ) {
+        const response = await fetch(
+          `${CATEGORIAS_ENDPOINT}/${selectedCategory.idCategoria}`,
+          {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              nomeCategoria,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const message =
+            await getApiErrorMessage(response);
+
+          throw new Error(message);
+        }
+
+        const data = await response.json();
+
+        if (!data?.sucesso) {
+          throw new Error(
+            data?.mensagem ||
+              'Não foi possível atualizar a categoria.'
+          );
+        }
+
+        closeModal();
+
+        setSuccessMessage(
+          'Categoria atualizada com sucesso.'
+        );
+
+        await loadCategories();
+      }
+    } catch (requestError) {
+      console.error(
+        'Erro ao salvar categoria:',
+        requestError
+      );
+
+      setError(
+        requestError.message ||
+          'Não foi possível salvar a categoria.'
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   /*
@@ -238,20 +440,82 @@ export default function CategoriasPage() {
    * =====================================================
    */
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedCategory) {
       return;
     }
 
-    setCategories((previous) =>
-      previous.filter(
-        (category) =>
-          category.id !==
-          selectedCategory.id
-      )
-    );
+    const token = getToken();
 
-    closeModal();
+    if (!token) {
+      setError(
+        'É necessário estar autenticado para excluir uma categoria.'
+      );
+
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setError('');
+      setSuccessMessage('');
+
+      const response = await fetch(
+        `${CATEGORIAS_ENDPOINT}/${selectedCategory.idCategoria}`,
+        {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        const message =
+          await getApiErrorMessage(response);
+
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+
+      if (!data?.sucesso) {
+        throw new Error(
+          data?.mensagem ||
+            'Não foi possível excluir a categoria.'
+        );
+      }
+
+      closeModal();
+
+      setSuccessMessage(
+        'Categoria excluída com sucesso.'
+      );
+
+      /*
+       * Se a exclusão deixar a página atual
+       * sem registros, voltamos para a anterior.
+       */
+
+      setCurrentPage((page) =>
+        page > 1 &&
+        currentCategories.length === 1
+          ? page - 1
+          : page
+      );
+
+      await loadCategories();
+    } catch (requestError) {
+      console.error(
+        'Erro ao excluir categoria:',
+        requestError
+      );
+
+      setError(
+        requestError.message ||
+          'Não foi possível excluir a categoria.'
+      );
+    } finally {
+      setDeleting(false);
+    }
   };
 
   /*
@@ -263,6 +527,22 @@ export default function CategoriasPage() {
   const handleSearch = (event) => {
     setSearch(event.target.value);
     setCurrentPage(1);
+    setError('');
+  };
+
+  /*
+   * =====================================================
+   * ATUALIZAR
+   * =====================================================
+   */
+
+  const handleRefresh = async () => {
+    setSearch('');
+    setCurrentPage(1);
+    setError('');
+    setSuccessMessage('');
+
+    await loadCategories();
   };
 
   /*
@@ -274,42 +554,36 @@ export default function CategoriasPage() {
   return (
     <>
       <main className="users-page">
-
         {/* =================================================
             PAGE HEADER
         ================================================= */}
 
         <section className="users-heading">
-
           <div>
-
             <span className="users-eyebrow">
               Catálogo
             </span>
 
-            <h1>
-              Categorias
-            </h1>
+            <h1>Categorias</h1>
 
             <p>
               Gerencie as categorias disponíveis
               no catálogo.
             </p>
-
           </div>
 
           <div className="users-heading-actions">
-
             <button
               type="button"
               className="users-btn users-btn-secondary"
-              onClick={() => {
-                setSearch('');
-                setCurrentPage(1);
-              }}
+              onClick={handleRefresh}
+              disabled={loading}
             >
               <i className="bi bi-arrow-clockwise" />
-              Atualizar
+
+              {loading
+                ? 'Atualizando...'
+                : 'Atualizar'}
             </button>
 
             <button
@@ -318,37 +592,70 @@ export default function CategoriasPage() {
               onClick={openCreateModal}
             >
               <i className="bi bi-plus-lg" />
+
               Nova categoria
             </button>
-
           </div>
-
         </section>
+
+        {/* =================================================
+            ALERTS
+        ================================================= */}
+
+        {error && (
+          <div
+            className="alert alert-danger d-flex align-items-center gap-2 mb-3"
+            role="alert"
+          >
+            <i className="bi bi-exclamation-triangle-fill" />
+
+            <span>{error}</span>
+
+            <button
+              type="button"
+              className="btn-close ms-auto"
+              aria-label="Fechar"
+              onClick={() => setError('')}
+            />
+          </div>
+        )}
+
+        {successMessage && (
+          <div
+            className="alert alert-success d-flex align-items-center gap-2 mb-3"
+            role="alert"
+          >
+            <i className="bi bi-check-circle-fill" />
+
+            <span>{successMessage}</span>
+
+            <button
+              type="button"
+              className="btn-close ms-auto"
+              aria-label="Fechar"
+              onClick={() =>
+                setSuccessMessage('')
+              }
+            />
+          </div>
+        )}
 
         {/* =================================================
             TABLE CARD
         ================================================= */}
 
         <section className="users-card">
-
           <div className="users-card-header">
-
             <div>
-
               <span className="users-card-label">
                 Gerenciamento
               </span>
 
-              <h2>
-                Categorias cadastradas
-              </h2>
-
+              <h2>Categorias cadastradas</h2>
             </div>
 
             <div className="users-card-header-right">
-
               <div className="users-search">
-
                 <i className="bi bi-search" />
 
                 <input
@@ -360,7 +667,6 @@ export default function CategoriasPage() {
                 />
 
                 {search && (
-
                   <button
                     type="button"
                     className="users-search-clear"
@@ -372,13 +678,9 @@ export default function CategoriasPage() {
                   >
                     <i className="bi bi-x" />
                   </button>
-
                 )}
-
               </div>
-
             </div>
-
           </div>
 
           {/* =================================================
@@ -386,90 +688,74 @@ export default function CategoriasPage() {
           ================================================= */}
 
           <div className="table-responsive users-table-wrapper">
-
             <table className="table users-table align-middle">
-
               <thead>
-
                 <tr>
                   <th>Categoria</th>
-                  <th>Descrição</th>
-                  <th>Status</th>
                   <th>Ações</th>
                 </tr>
-
               </thead>
 
               <tbody>
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan="2"
+                      className="users-empty"
+                    >
+                      <div className="users-empty-content">
+                        <div className="users-empty-icon">
+                          <i className="bi bi-arrow-repeat" />
+                        </div>
 
-                {currentCategories.length > 0 ? (
+                        <strong>
+                          Carregando categorias...
+                        </strong>
 
+                        <span>
+                          Aguarde enquanto buscamos os
+                          dados.
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : currentCategories.length > 0 ? (
                   currentCategories.map(
                     (category) => (
-
-                      <tr key={category.id}>
-
+                      <tr
+                        key={
+                          category.idCategoria
+                        }
+                      >
                         {/* CATEGORY */}
 
                         <td>
-
                           <div className="user-cell">
-
                             <div className="user-avatar">
                               <i className="bi bi-grid" />
                             </div>
 
                             <div className="user-information">
-
                               <span className="user-name">
-                                {category.name}
+                                {
+                                  category.nomeCategoria
+                                }
                               </span>
 
                               <span className="user-id">
-                                ID #{category.id}
+                                ID #
+                                {
+                                  category.idCategoria
+                                }
                               </span>
-
                             </div>
-
                           </div>
-
-                        </td>
-
-                        {/* DESCRIPTION */}
-
-                        <td>
-
-                          <span className="table-muted">
-                            {category.description ||
-                              'Sem descrição'}
-                          </span>
-
-                        </td>
-
-                        {/* STATUS */}
-
-                        <td>
-
-                          <span
-                            className={`user-status ${getStatusClass(
-                              category.status
-                            )}`}
-                          >
-
-                            <span />
-
-                            {category.status}
-
-                          </span>
-
                         </td>
 
                         {/* ACTIONS */}
 
                         <td>
-
                           <div className="user-actions">
-
                             <button
                               type="button"
                               className="user-action edit"
@@ -480,6 +766,7 @@ export default function CategoriasPage() {
                               }
                             >
                               <i className="bi bi-pencil" />
+
                               Editar
                             </button>
 
@@ -493,29 +780,21 @@ export default function CategoriasPage() {
                               }
                             >
                               <i className="bi bi-trash" />
+
                               Excluir
                             </button>
-
                           </div>
-
                         </td>
-
                       </tr>
-
                     )
                   )
-
                 ) : (
-
                   <tr>
-
                     <td
-                      colSpan="4"
+                      colSpan="2"
                       className="users-empty"
                     >
-
                       <div className="users-empty-content">
-
                         <div className="users-empty-icon">
                           <i className="bi bi-grid" />
                         </div>
@@ -525,22 +804,16 @@ export default function CategoriasPage() {
                         </strong>
 
                         <span>
-                          Tente buscar por outra
-                          categoria.
+                          {search
+                            ? 'Tente buscar por outra categoria.'
+                            : 'Ainda não existem categorias cadastradas.'}
                         </span>
-
                       </div>
-
                     </td>
-
                   </tr>
-
                 )}
-
               </tbody>
-
             </table>
-
           </div>
 
           {/* =================================================
@@ -548,7 +821,6 @@ export default function CategoriasPage() {
           ================================================= */}
 
           <div className="users-table-footer">
-
             <span>
               Mostrando{' '}
               <strong>
@@ -561,9 +833,11 @@ export default function CategoriasPage() {
               categorias
             </span>
 
-            <nav aria-label="Paginação de categorias">
-
+            <nav
+              aria-label="Paginação de categorias"
+            >
               <ul className="pagination users-pagination">
+                {/* PREVIOUS */}
 
                 <li
                   className={`page-item ${
@@ -572,7 +846,6 @@ export default function CategoriasPage() {
                       : ''
                   }`}
                 >
-
                   <button
                     type="button"
                     className="page-link"
@@ -591,17 +864,16 @@ export default function CategoriasPage() {
                   >
                     <i className="bi bi-chevron-left" />
                   </button>
-
                 </li>
+
+                {/* PAGES */}
 
                 {Array.from(
                   {
                     length: totalPages,
                   },
-                  (_, index) =>
-                    index + 1
+                  (_, index) => index + 1
                 ).map((page) => (
-
                   <li
                     key={page}
                     className={`page-item ${
@@ -611,7 +883,6 @@ export default function CategoriasPage() {
                         : ''
                     }`}
                   >
-
                     <button
                       type="button"
                       className="page-link"
@@ -621,10 +892,10 @@ export default function CategoriasPage() {
                     >
                       {page}
                     </button>
-
                   </li>
-
                 ))}
+
+                {/* NEXT */}
 
                 <li
                   className={`page-item ${
@@ -634,7 +905,6 @@ export default function CategoriasPage() {
                       : ''
                   }`}
                 >
-
                   <button
                     type="button"
                     className="page-link"
@@ -654,17 +924,11 @@ export default function CategoriasPage() {
                   >
                     <i className="bi bi-chevron-right" />
                   </button>
-
                 </li>
-
               </ul>
-
             </nav>
-
           </div>
-
         </section>
-
       </main>
 
       {/* ===================================================
@@ -673,7 +937,6 @@ export default function CategoriasPage() {
 
       {(modal === 'create' ||
         modal === 'edit') && (
-
         <div
           className="users-modal-backdrop"
           onMouseDown={(event) => {
@@ -685,18 +948,16 @@ export default function CategoriasPage() {
             }
           }}
         >
-
           <div
             className="users-modal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="category-modal-title"
           >
+            {/* HEADER */}
 
             <div className="users-modal-header">
-
               <div>
-
                 <span className="users-modal-label">
                   {modal === 'create'
                     ? 'Nova categoria'
@@ -708,7 +969,6 @@ export default function CategoriasPage() {
                     ? 'Criar categoria'
                     : 'Editar categoria'}
                 </h2>
-
               </div>
 
               <button
@@ -716,126 +976,60 @@ export default function CategoriasPage() {
                 className="users-modal-close"
                 onClick={closeModal}
                 aria-label="Fechar modal"
+                disabled={saving}
               >
                 <i className="bi bi-x-lg" />
               </button>
-
             </div>
 
+            {/* FORM */}
+
             <form onSubmit={handleSubmit}>
-
               <div className="users-modal-body">
-
                 <div className="order-modal-icon">
                   <i className="bi bi-grid" />
                 </div>
 
                 <div className="user-form-grid">
-
                   {/* NAME */}
 
-                  <div className="user-form-field">
-
+                  <div className="user-form-field full">
                     <label htmlFor="category-name">
                       Categoria
                     </label>
 
                     <div className="user-input-wrapper">
-
                       <i className="bi bi-grid" />
 
                       <input
                         id="category-name"
-                        name="name"
+                        name="nomeCategoria"
                         type="text"
-                        value={form.name}
+                        value={
+                          form.nomeCategoria
+                        }
                         onChange={
                           handleFormChange
                         }
                         placeholder="Ex.: Camisetas"
-                        maxLength={80}
-                        required
-                      />
-
-                    </div>
-
-                  </div>
-
-                  {/* STATUS */}
-
-                  <div className="user-form-field">
-
-                    <label htmlFor="category-status">
-                      Status
-                    </label>
-
-                    <div className="user-input-wrapper">
-
-                      <i className="bi bi-circle-half" />
-
-                      <select
-                        id="category-status"
-                        name="status"
-                        value={form.status}
-                        onChange={
-                          handleFormChange
-                        }
-                      >
-
-                        <option value="Ativo">
-                          Ativo
-                        </option>
-
-                        <option value="Inativo">
-                          Inativo
-                        </option>
-
-                      </select>
-
-                    </div>
-
-                  </div>
-
-                  {/* DESCRIPTION */}
-
-                  <div className="user-form-field full">
-
-                    <label htmlFor="category-description">
-                      Descrição
-                    </label>
-
-                    <div className="user-input-wrapper textarea-wrapper">
-
-                      <i className="bi bi-card-text" />
-
-                      <textarea
-                        id="category-description"
-                        name="description"
-                        value={
-                          form.description
-                        }
-                        onChange={
-                          handleFormChange
-                        }
-                        placeholder="Descreva esta categoria..."
-                        rows={4}
                         maxLength={255}
+                        required
+                        autoFocus
+                        disabled={saving}
                       />
-
                     </div>
-
                   </div>
-
                 </div>
-
               </div>
 
-              <div className="users-modal-footer">
+              {/* FOOTER */}
 
+              <div className="users-modal-footer">
                 <button
                   type="button"
                   className="users-modal-btn secondary"
                   onClick={closeModal}
+                  disabled={saving}
                 >
                   Cancelar
                 </button>
@@ -843,30 +1037,39 @@ export default function CategoriasPage() {
                 <button
                   type="submit"
                   className="users-modal-btn primary"
+                  disabled={saving}
                 >
+                  {saving ? (
+                    <>
+                      <span
+                        className="spinner-border spinner-border-sm"
+                        aria-hidden="true"
+                      />
 
-                  <i
-                    className={
-                      modal === 'create'
-                        ? 'bi bi-plus-lg'
-                        : 'bi bi-check-lg'
-                    }
-                  />
+                      {modal === 'create'
+                        ? 'Criando...'
+                        : 'Salvando...'}
+                    </>
+                  ) : (
+                    <>
+                      <i
+                        className={
+                          modal === 'create'
+                            ? 'bi bi-plus-lg'
+                            : 'bi bi-check-lg'
+                        }
+                      />
 
-                  {modal === 'create'
-                    ? 'Criar categoria'
-                    : 'Salvar alterações'}
-
+                      {modal === 'create'
+                        ? 'Criar categoria'
+                        : 'Salvar alterações'}
+                    </>
+                  )}
                 </button>
-
               </div>
-
             </form>
-
           </div>
-
         </div>
-
       )}
 
       {/* ===================================================
@@ -875,7 +1078,6 @@ export default function CategoriasPage() {
 
       {modal === 'delete' &&
         selectedCategory && (
-
           <div
             className="users-modal-backdrop"
             onMouseDown={(event) => {
@@ -887,16 +1089,13 @@ export default function CategoriasPage() {
               }
             }}
           >
-
             <div
               className="users-modal users-delete-modal"
               role="dialog"
               aria-modal="true"
               aria-labelledby="delete-category-title"
             >
-
               <div className="users-delete-content">
-
                 <div className="users-delete-icon">
                   <i className="bi bi-trash3" />
                 </div>
@@ -913,20 +1112,21 @@ export default function CategoriasPage() {
                   Você está prestes a excluir a
                   categoria{' '}
                   <strong>
-                    {selectedCategory.name}
+                    {
+                      selectedCategory.nomeCategoria
+                    }
                   </strong>
                   . Essa ação não poderá ser
                   desfeita.
                 </p>
-
               </div>
 
               <div className="users-modal-footer">
-
                 <button
                   type="button"
                   className="users-modal-btn secondary"
                   onClick={closeModal}
+                  disabled={deleting}
                 >
                   Cancelar
                 </button>
@@ -935,19 +1135,29 @@ export default function CategoriasPage() {
                   type="button"
                   className="users-modal-btn danger"
                   onClick={handleDelete}
+                  disabled={deleting}
                 >
-                  <i className="bi bi-trash" />
-                  Excluir categoria
+                  {deleting ? (
+                    <>
+                      <span
+                        className="spinner-border spinner-border-sm"
+                        aria-hidden="true"
+                      />
+
+                      Excluindo...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-trash" />
+
+                      Excluir categoria
+                    </>
+                  )}
                 </button>
-
               </div>
-
             </div>
-
           </div>
-
         )}
-
     </>
   );
 }

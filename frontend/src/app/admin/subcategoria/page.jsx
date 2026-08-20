@@ -2,73 +2,27 @@
 
 import '../tables.css';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-const initialSubcategories = [
-  {
-    id: 1,
-    name: 'Camiseta Básica',
-    category: 'Camisetas',
-    description: 'Camisetas básicas para uso diário.',
-    status: 'Ativo',
-  },
-  {
-    id: 2,
-    name: 'Camiseta Estampada',
-    category: 'Camisetas',
-    description: 'Camisetas com estampas variadas.',
-    status: 'Ativo',
-  },
-  {
-    id: 3,
-    name: 'Jeans',
-    category: 'Calças',
-    description: 'Calças confeccionadas em denim.',
-    status: 'Ativo',
-  },
-  {
-    id: 4,
-    name: 'Cargo',
-    category: 'Calças',
-    description: 'Calças com bolsos laterais.',
-    status: 'Ativo',
-  },
-  {
-    id: 5,
-    name: 'Jaqueta Jeans',
-    category: 'Jaquetas',
-    description: 'Jaquetas confeccionadas em denim.',
-    status: 'Inativo',
-  },
-];
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-const categories = [
-  'Camisetas',
-  'Calças',
-  'Jaquetas',
-  'Vestidos',
-  'Acessórios',
-];
+const API_ENDPOINT = `${API_URL}/subcategorias`;
 
 const emptyForm = {
-  name: '',
-  category: '',
-  description: '',
-  status: 'Ativo',
+  nomeSubcategoria: '',
 };
 
-function getStatusClass(status) {
-  return status === 'Ativo' ? 'success' : 'danger';
-}
-
 export default function SubcategoriasPage() {
-  const [subcategories, setSubcategories] = useState(
-    initialSubcategories
-  );
+  const [subcategories, setSubcategories] = useState([]);
 
   const [search, setSearch] = useState('');
 
   const [currentPage, setCurrentPage] = useState(1);
+
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [total, setTotal] = useState(0);
 
   const [modal, setModal] = useState(null);
 
@@ -77,7 +31,139 @@ export default function SubcategoriasPage() {
 
   const [form, setForm] = useState(emptyForm);
 
+  const [loading, setLoading] = useState(true);
+
+  const [submitting, setSubmitting] = useState(false);
+
+  const [error, setError] = useState('');
+
+  const [success, setSuccess] = useState('');
+
   const subcategoriesPerPage = 5;
+
+  /*
+   * =====================================================
+   * TOKEN
+   * =====================================================
+   */
+
+  const getToken = () => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    return (
+      localStorage.getItem('token') ||
+      localStorage.getItem('accessToken') ||
+      localStorage.getItem('authToken')
+    );
+  };
+
+  /*
+   * =====================================================
+   * HEADERS
+   * =====================================================
+   */
+
+  const getHeaders = (includeContentType = false) => {
+    const token = getToken();
+
+    const headers = {
+      Accept: 'application/json',
+    };
+
+    if (includeContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    return headers;
+  };
+
+  /*
+   * =====================================================
+   * CARREGAR SUBCATEGORIAS
+   * =====================================================
+   */
+
+  const loadSubcategories = useCallback(
+    async (page = currentPage) => {
+      try {
+        setLoading(true);
+        setError('');
+
+        const response = await fetch(
+          `${API_ENDPOINT}?pagina=${page}&limite=${subcategoriesPerPage}`,
+          {
+            method: 'GET',
+            headers: getHeaders(),
+            cache: 'no-store',
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data?.mensagem ||
+              'Não foi possível carregar as subcategorias.'
+          );
+        }
+
+        if (!data?.sucesso) {
+          throw new Error(
+            data?.mensagem ||
+              'Não foi possível carregar as subcategorias.'
+          );
+        }
+
+        setSubcategories(
+          Array.isArray(data.dados) ? data.dados : []
+        );
+
+        setTotal(data?.paginacao?.total || 0);
+
+        setTotalPages(
+          Math.max(
+            1,
+            data?.paginacao?.totalPaginas || 1
+          )
+        );
+
+        if (data?.paginacao?.pagina) {
+          setCurrentPage(data.paginacao.pagina);
+        }
+      } catch (requestError) {
+        console.error(
+          'Erro ao carregar subcategorias:',
+          requestError
+        );
+
+        setError(
+          requestError.message ||
+            'Erro ao carregar subcategorias.'
+        );
+
+        setSubcategories([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [currentPage]
+  );
+
+  /*
+   * =====================================================
+   * PRIMEIRO CARREGAMENTO
+   * =====================================================
+   */
+
+  useEffect(() => {
+    loadSubcategories(currentPage);
+  }, [currentPage, loadSubcategories]);
 
   /*
    * =====================================================
@@ -93,45 +179,13 @@ export default function SubcategoriasPage() {
     }
 
     return subcategories.filter((subcategory) =>
-      [
-        subcategory.name,
-        subcategory.category,
-        subcategory.description,
-        subcategory.status,
-      ].some((value) =>
-        value.toLowerCase().includes(term)
+      String(
+        subcategory.nomeSubcategoria || ''
       )
+        .toLowerCase()
+        .includes(term)
     );
   }, [subcategories, search]);
-
-  /*
-   * =====================================================
-   * PAGINAÇÃO
-   * =====================================================
-   */
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(
-      filteredSubcategories.length /
-        subcategoriesPerPage
-    )
-  );
-
-  const safeCurrentPage = Math.min(
-    currentPage,
-    totalPages
-  );
-
-  const startIndex =
-    (safeCurrentPage - 1) *
-    subcategoriesPerPage;
-
-  const currentSubcategories =
-    filteredSubcategories.slice(
-      startIndex,
-      startIndex + subcategoriesPerPage
-    );
 
   /*
    * =====================================================
@@ -140,6 +194,10 @@ export default function SubcategoriasPage() {
    */
 
   const closeModal = () => {
+    if (submitting) {
+      return;
+    }
+
     setModal(null);
     setSelectedSubcategory(null);
     setForm(emptyForm);
@@ -147,12 +205,9 @@ export default function SubcategoriasPage() {
 
   const openCreateModal = () => {
     setSelectedSubcategory(null);
-
-    setForm({
-      ...emptyForm,
-      category: categories[0],
-    });
-
+    setForm(emptyForm);
+    setError('');
+    setSuccess('');
     setModal('create');
   };
 
@@ -160,17 +215,20 @@ export default function SubcategoriasPage() {
     setSelectedSubcategory(subcategory);
 
     setForm({
-      name: subcategory.name,
-      category: subcategory.category,
-      description: subcategory.description,
-      status: subcategory.status,
+      nomeSubcategoria:
+        subcategory.nomeSubcategoria || '',
     });
 
+    setError('');
+    setSuccess('');
     setModal('edit');
   };
 
   const openDeleteModal = (subcategory) => {
     setSelectedSubcategory(subcategory);
+
+    setError('');
+    setSuccess('');
     setModal('delete');
   };
 
@@ -195,72 +253,97 @@ export default function SubcategoriasPage() {
    * =====================================================
    */
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const name = form.name.trim();
-    const description = form.description.trim();
+    const nomeSubcategoria =
+      form.nomeSubcategoria.trim();
 
-    if (!name || !form.category) {
+    if (
+      nomeSubcategoria.length < 2 ||
+      nomeSubcategoria.length > 255
+    ) {
+      setError(
+        'O nome da subcategoria deve ter entre 2 e 255 caracteres.'
+      );
+
       return;
     }
 
-    /*
-     * CREATE
-     */
+    try {
+      setSubmitting(true);
+      setError('');
+      setSuccess('');
 
-    if (modal === 'create') {
-      const newSubcategory = {
-        id:
-          Math.max(
-            ...subcategories.map(
-              (subcategory) => subcategory.id
-            ),
-            0
-          ) + 1,
+      const isEditing =
+        modal === 'edit' && selectedSubcategory;
 
-        name,
+      const url = isEditing
+        ? `${API_ENDPOINT}/${selectedSubcategory.idSubcategoria}`
+        : API_ENDPOINT;
 
-        category: form.category,
+      const method = isEditing ? 'PUT' : 'POST';
 
-        description,
+      const response = await fetch(url, {
+        method,
+        headers: getHeaders(true),
+        body: JSON.stringify({
+          nomeSubcategoria,
+        }),
+      });
 
-        status: form.status,
-      };
+      const data = await response.json();
 
-      setSubcategories((previous) => [
-        ...previous,
-        newSubcategory,
-      ]);
+      if (!response.ok) {
+        throw new Error(
+          data?.mensagem ||
+            `Não foi possível ${
+              isEditing ? 'atualizar' : 'criar'
+            } a subcategoria.`
+        );
+      }
 
-      setCurrentPage(1);
-    }
+      if (!data?.sucesso) {
+        throw new Error(
+          data?.mensagem ||
+            `Não foi possível ${
+              isEditing ? 'atualizar' : 'criar'
+            } a subcategoria.`
+        );
+      }
 
-    /*
-     * EDIT
-     */
-
-    if (
-      modal === 'edit' &&
-      selectedSubcategory
-    ) {
-      setSubcategories((previous) =>
-        previous.map((subcategory) =>
-          subcategory.id ===
-          selectedSubcategory.id
-            ? {
-                ...subcategory,
-                name,
-                category: form.category,
-                description,
-                status: form.status,
-              }
-            : subcategory
-        )
+      setSuccess(
+        data?.mensagem ||
+          (isEditing
+            ? 'Subcategoria atualizada com sucesso.'
+            : 'Subcategoria criada com sucesso.')
       );
-    }
 
-    closeModal();
+      closeModal();
+
+      /*
+       * Depois de criar/editar, voltamos para a primeira
+       * página para manter o comportamento da página
+       * original.
+       */
+      if (!isEditing) {
+        setCurrentPage(1);
+      } else {
+        await loadSubcategories(currentPage);
+      }
+    } catch (requestError) {
+      console.error(
+        'Erro ao salvar subcategoria:',
+        requestError
+      );
+
+      setError(
+        requestError.message ||
+          'Não foi possível salvar a subcategoria.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   /*
@@ -269,31 +352,120 @@ export default function SubcategoriasPage() {
    * =====================================================
    */
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedSubcategory) {
       return;
     }
 
-    setSubcategories((previous) =>
-      previous.filter(
-        (subcategory) =>
-          subcategory.id !==
-          selectedSubcategory.id
-      )
-    );
+    try {
+      setSubmitting(true);
+      setError('');
 
-    closeModal();
+      const response = await fetch(
+        `${API_ENDPOINT}/${selectedSubcategory.idSubcategoria}`,
+        {
+          method: 'DELETE',
+          headers: getHeaders(),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.mensagem ||
+            'Não foi possível excluir a subcategoria.'
+        );
+      }
+
+      if (!data?.sucesso) {
+        throw new Error(
+          data?.mensagem ||
+            'Não foi possível excluir a subcategoria.'
+        );
+      }
+
+      setSuccess(
+        data?.mensagem ||
+          'Subcategoria excluída com sucesso.'
+      );
+
+      closeModal();
+
+      /*
+       * Se excluir o último registro da página atual,
+       * voltamos uma página quando necessário.
+       */
+      const shouldGoBack =
+        subcategories.length === 1 &&
+        currentPage > 1;
+
+      if (shouldGoBack) {
+        setCurrentPage((page) =>
+          Math.max(1, page - 1)
+        );
+      } else {
+        await loadSubcategories(currentPage);
+      }
+    } catch (requestError) {
+      console.error(
+        'Erro ao excluir subcategoria:',
+        requestError
+      );
+
+      setError(
+        requestError.message ||
+          'Não foi possível excluir a subcategoria.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   /*
    * =====================================================
    * BUSCA
    * =====================================================
+   *
+   * Como seu backend não possui endpoint de busca,
+   * o filtro é aplicado sobre os registros da página
+   * atualmente carregada.
    */
 
   const handleSearch = (event) => {
     setSearch(event.target.value);
-    setCurrentPage(1);
+  };
+
+  /*
+   * =====================================================
+   * ATUALIZAR
+   * =====================================================
+   */
+
+  const handleRefresh = async () => {
+    setSearch('');
+    setSuccess('');
+    setError('');
+
+    await loadSubcategories(currentPage);
+  };
+
+  /*
+   * =====================================================
+   * PAGINAÇÃO
+   * =====================================================
+   */
+
+  const handlePreviousPage = () => {
+    setCurrentPage((page) =>
+      Math.max(1, page - 1)
+    );
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((page) =>
+      Math.min(totalPages, page + 1)
+    );
   };
 
   /*
@@ -311,9 +483,7 @@ export default function SubcategoriasPage() {
         ================================================= */}
 
         <section className="users-heading">
-
           <div>
-
             <span className="users-eyebrow">
               Catálogo
             </span>
@@ -326,35 +496,74 @@ export default function SubcategoriasPage() {
               Gerencie as subcategorias disponíveis
               no catálogo.
             </p>
-
           </div>
 
           <div className="users-heading-actions">
-
             <button
               type="button"
               className="users-btn users-btn-secondary"
-              onClick={() => {
-                setSearch('');
-                setCurrentPage(1);
-              }}
+              onClick={handleRefresh}
+              disabled={loading}
             >
               <i className="bi bi-arrow-clockwise" />
-              Atualizar
+
+              {loading
+                ? 'Atualizando...'
+                : 'Atualizar'}
             </button>
 
             <button
               type="button"
               className="users-btn users-btn-primary"
               onClick={openCreateModal}
+              disabled={loading}
             >
               <i className="bi bi-plus-lg" />
+
               Nova subcategoria
             </button>
-
           </div>
-
         </section>
+
+        {/* =================================================
+            ALERTS
+        ================================================= */}
+
+        {error && (
+          <div
+            className="alert alert-danger d-flex align-items-center gap-2 mb-3"
+            role="alert"
+          >
+            <i className="bi bi-exclamation-triangle" />
+
+            <span>{error}</span>
+
+            <button
+              type="button"
+              className="btn-close ms-auto"
+              aria-label="Fechar"
+              onClick={() => setError('')}
+            />
+          </div>
+        )}
+
+        {success && (
+          <div
+            className="alert alert-success d-flex align-items-center gap-2 mb-3"
+            role="alert"
+          >
+            <i className="bi bi-check-circle" />
+
+            <span>{success}</span>
+
+            <button
+              type="button"
+              className="btn-close ms-auto"
+              aria-label="Fechar"
+              onClick={() => setSuccess('')}
+            />
+          </div>
+        )}
 
         {/* =================================================
             TABLE CARD
@@ -363,9 +572,7 @@ export default function SubcategoriasPage() {
         <section className="users-card">
 
           <div className="users-card-header">
-
             <div>
-
               <span className="users-card-label">
                 Gerenciamento
               </span>
@@ -373,13 +580,10 @@ export default function SubcategoriasPage() {
               <h2>
                 Subcategorias cadastradas
               </h2>
-
             </div>
 
             <div className="users-card-header-right">
-
               <div className="users-search">
-
                 <i className="bi bi-search" />
 
                 <input
@@ -391,25 +595,19 @@ export default function SubcategoriasPage() {
                 />
 
                 {search && (
-
                   <button
                     type="button"
                     className="users-search-clear"
-                    onClick={() => {
-                      setSearch('');
-                      setCurrentPage(1);
-                    }}
+                    onClick={() =>
+                      setSearch('')
+                    }
                     aria-label="Limpar busca"
                   >
                     <i className="bi bi-x" />
                   </button>
-
                 )}
-
               </div>
-
             </div>
-
           </div>
 
           {/* =================================================
@@ -417,34 +615,54 @@ export default function SubcategoriasPage() {
           ================================================= */}
 
           <div className="table-responsive users-table-wrapper">
-
             <table className="table users-table align-middle">
 
               <thead>
-
                 <tr>
                   <th>Subcategoria</th>
-                  <th>Categoria</th>
-                  <th>Descrição</th>
-                  <th>Status</th>
+                  <th>ID</th>
                   <th>Ações</th>
                 </tr>
-
               </thead>
 
               <tbody>
 
-                {currentSubcategories.length > 0 ? (
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan="3"
+                      className="users-empty"
+                    >
+                      <div className="users-empty-content">
 
-                  currentSubcategories.map(
+                        <div className="users-empty-icon">
+                          <i className="bi bi-arrow-repeat" />
+                        </div>
+
+                        <strong>
+                          Carregando subcategorias...
+                        </strong>
+
+                        <span>
+                          Aguarde enquanto buscamos os
+                          dados.
+                        </span>
+
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredSubcategories.length > 0 ? (
+                  filteredSubcategories.map(
                     (subcategory) => (
-
-                      <tr key={subcategory.id}>
+                      <tr
+                        key={
+                          subcategory.idSubcategoria
+                        }
+                      >
 
                         {/* SUBCATEGORY */}
 
                         <td>
-
                           <div className="user-cell">
 
                             <div className="user-avatar">
@@ -454,62 +672,34 @@ export default function SubcategoriasPage() {
                             <div className="user-information">
 
                               <span className="user-name">
-                                {subcategory.name}
+                                {
+                                  subcategory.nomeSubcategoria
+                                }
                               </span>
 
                               <span className="user-id">
-                                ID #{subcategory.id}
+                                Subcategoria
                               </span>
 
                             </div>
 
                           </div>
-
                         </td>
 
-                        {/* CATEGORY */}
+                        {/* ID */}
 
                         <td>
-
-                          <span className="user-role">
-                            {subcategory.category}
-                          </span>
-
-                        </td>
-
-                        {/* DESCRIPTION */}
-
-                        <td>
-
                           <span className="table-muted">
-                            {subcategory.description ||
-                              'Sem descrição'}
+                            ID #
+                            {
+                              subcategory.idSubcategoria
+                            }
                           </span>
-
-                        </td>
-
-                        {/* STATUS */}
-
-                        <td>
-
-                          <span
-                            className={`user-status ${getStatusClass(
-                              subcategory.status
-                            )}`}
-                          >
-
-                            <span />
-
-                            {subcategory.status}
-
-                          </span>
-
                         </td>
 
                         {/* ACTIONS */}
 
                         <td>
-
                           <div className="user-actions">
 
                             <button
@@ -522,6 +712,7 @@ export default function SubcategoriasPage() {
                               }
                             >
                               <i className="bi bi-pencil" />
+
                               Editar
                             </button>
 
@@ -535,27 +726,22 @@ export default function SubcategoriasPage() {
                               }
                             >
                               <i className="bi bi-trash" />
+
                               Excluir
                             </button>
 
                           </div>
-
                         </td>
 
                       </tr>
-
                     )
                   )
-
                 ) : (
-
                   <tr>
-
                     <td
-                      colSpan="5"
+                      colSpan="3"
                       className="users-empty"
                     >
-
                       <div className="users-empty-content">
 
                         <div className="users-empty-icon">
@@ -567,22 +753,18 @@ export default function SubcategoriasPage() {
                         </strong>
 
                         <span>
-                          Tente buscar por outra
-                          subcategoria.
+                          {search
+                            ? 'Tente buscar por outro nome.'
+                            : 'Ainda não existem subcategorias cadastradas.'}
                         </span>
 
                       </div>
-
                     </td>
-
                   </tr>
-
                 )}
 
               </tbody>
-
             </table>
-
           </div>
 
           {/* =================================================
@@ -593,120 +775,101 @@ export default function SubcategoriasPage() {
 
             <span>
               Mostrando{' '}
-              <strong>
-                {currentSubcategories.length}
-              </strong>{' '}
-              de{' '}
+
               <strong>
                 {filteredSubcategories.length}
               </strong>{' '}
+
+              de{' '}
+
+              <strong>
+                {total}
+              </strong>{' '}
+
               subcategorias
             </span>
 
-            <nav aria-label="Paginação de subcategorias">
-
+            <nav
+              aria-label="Paginação de subcategorias"
+            >
               <ul className="pagination users-pagination">
 
                 <li
                   className={`page-item ${
-                    safeCurrentPage === 1
+                    currentPage === 1
                       ? 'disabled'
                       : ''
                   }`}
                 >
-
                   <button
                     type="button"
                     className="page-link"
                     disabled={
-                      safeCurrentPage === 1
+                      currentPage === 1 ||
+                      loading
                     }
-                    onClick={() =>
-                      setCurrentPage(
-                        (page) =>
-                          Math.max(
-                            1,
-                            page - 1
-                          )
-                      )
+                    onClick={
+                      handlePreviousPage
                     }
+                    aria-label="Página anterior"
                   >
                     <i className="bi bi-chevron-left" />
                   </button>
-
                 </li>
 
                 {Array.from(
                   {
                     length: totalPages,
                   },
-                  (_, index) =>
-                    index + 1
+                  (_, index) => index + 1
                 ).map((page) => (
-
                   <li
                     key={page}
                     className={`page-item ${
-                      page ===
-                      safeCurrentPage
+                      page === currentPage
                         ? 'active'
                         : ''
                     }`}
                   >
-
                     <button
                       type="button"
                       className="page-link"
+                      disabled={loading}
                       onClick={() =>
                         setCurrentPage(page)
                       }
                     >
                       {page}
                     </button>
-
                   </li>
-
                 ))}
 
                 <li
                   className={`page-item ${
-                    safeCurrentPage ===
-                    totalPages
+                    currentPage === totalPages
                       ? 'disabled'
                       : ''
                   }`}
                 >
-
                   <button
                     type="button"
                     className="page-link"
                     disabled={
-                      safeCurrentPage ===
-                      totalPages
+                      currentPage === totalPages ||
+                      loading
                     }
-                    onClick={() =>
-                      setCurrentPage(
-                        (page) =>
-                          Math.min(
-                            totalPages,
-                            page + 1
-                          )
-                      )
-                    }
+                    onClick={handleNextPage}
+                    aria-label="Próxima página"
                   >
                     <i className="bi bi-chevron-right" />
                   </button>
-
                 </li>
 
               </ul>
-
             </nav>
 
           </div>
-
         </section>
-
       </main>
 
       {/* ===================================================
@@ -715,7 +878,6 @@ export default function SubcategoriasPage() {
 
       {(modal === 'create' ||
         modal === 'edit') && (
-
         <div
           className="users-modal-backdrop"
           onMouseDown={(event) => {
@@ -727,7 +889,6 @@ export default function SubcategoriasPage() {
             }
           }}
         >
-
           <div
             className="users-modal"
             role="dialog"
@@ -735,8 +896,9 @@ export default function SubcategoriasPage() {
             aria-labelledby="subcategory-modal-title"
           >
 
-            <div className="users-modal-header">
+            {/* HEADER */}
 
+            <div className="users-modal-header">
               <div>
 
                 <span className="users-modal-label">
@@ -757,12 +919,14 @@ export default function SubcategoriasPage() {
                 type="button"
                 className="users-modal-close"
                 onClick={closeModal}
+                disabled={submitting}
                 aria-label="Fechar modal"
               >
                 <i className="bi bi-x-lg" />
               </button>
-
             </div>
+
+            {/* FORM */}
 
             <form onSubmit={handleSubmit}>
 
@@ -776,7 +940,7 @@ export default function SubcategoriasPage() {
 
                   {/* NAME */}
 
-                  <div className="user-form-field">
+                  <div className="user-form-field full">
 
                     <label htmlFor="subcategory-name">
                       Subcategoria
@@ -788,127 +952,18 @@ export default function SubcategoriasPage() {
 
                       <input
                         id="subcategory-name"
-                        name="name"
+                        name="nomeSubcategoria"
                         type="text"
-                        value={form.name}
-                        onChange={
-                          handleFormChange
-                        }
-                        placeholder="Ex.: Camiseta Básica"
-                        maxLength={80}
-                        required
-                      />
-
-                    </div>
-
-                  </div>
-
-                  {/* CATEGORY */}
-
-                  <div className="user-form-field">
-
-                    <label htmlFor="subcategory-category">
-                      Categoria
-                    </label>
-
-                    <div className="user-input-wrapper">
-
-                      <i className="bi bi-grid" />
-
-                      <select
-                        id="subcategory-category"
-                        name="category"
                         value={
-                          form.category
+                          form.nomeSubcategoria
                         }
                         onChange={
                           handleFormChange
                         }
-                        required
-                      >
-
-                        <option value="">
-                          Selecione uma categoria
-                        </option>
-
-                        {categories.map(
-                          (category) => (
-
-                            <option
-                              key={category}
-                              value={category}
-                            >
-                              {category}
-                            </option>
-
-                          )
-                        )}
-
-                      </select>
-
-                    </div>
-
-                  </div>
-
-                  {/* STATUS */}
-
-                  <div className="user-form-field">
-
-                    <label htmlFor="subcategory-status">
-                      Status
-                    </label>
-
-                    <div className="user-input-wrapper">
-
-                      <i className="bi bi-circle-half" />
-
-                      <select
-                        id="subcategory-status"
-                        name="status"
-                        value={form.status}
-                        onChange={
-                          handleFormChange
-                        }
-                      >
-
-                        <option value="Ativo">
-                          Ativo
-                        </option>
-
-                        <option value="Inativo">
-                          Inativo
-                        </option>
-
-                      </select>
-
-                    </div>
-
-                  </div>
-
-                  {/* DESCRIPTION */}
-
-                  <div className="user-form-field full">
-
-                    <label htmlFor="subcategory-description">
-                      Descrição
-                    </label>
-
-                    <div className="user-input-wrapper textarea-wrapper">
-
-                      <i className="bi bi-card-text" />
-
-                      <textarea
-                        id="subcategory-description"
-                        name="description"
-                        value={
-                          form.description
-                        }
-                        onChange={
-                          handleFormChange
-                        }
-                        placeholder="Descreva esta subcategoria..."
-                        rows={4}
+                        placeholder="Ex.: Camisetas básicas"
                         maxLength={255}
+                        required
+                        autoFocus
                       />
 
                     </div>
@@ -916,8 +971,9 @@ export default function SubcategoriasPage() {
                   </div>
 
                 </div>
-
               </div>
+
+              {/* FOOTER */}
 
               <div className="users-modal-footer">
 
@@ -925,6 +981,7 @@ export default function SubcategoriasPage() {
                   type="button"
                   className="users-modal-btn secondary"
                   onClick={closeModal}
+                  disabled={submitting}
                 >
                   Cancelar
                 </button>
@@ -932,30 +989,32 @@ export default function SubcategoriasPage() {
                 <button
                   type="submit"
                   className="users-modal-btn primary"
+                  disabled={submitting}
                 >
 
                   <i
                     className={
-                      modal === 'create'
-                        ? 'bi bi-plus-lg'
-                        : 'bi bi-check-lg'
+                      submitting
+                        ? 'bi bi-arrow-repeat'
+                        : modal === 'create'
+                          ? 'bi bi-plus-lg'
+                          : 'bi bi-check-lg'
                     }
                   />
 
-                  {modal === 'create'
-                    ? 'Criar subcategoria'
-                    : 'Salvar alterações'}
+                  {submitting
+                    ? 'Salvando...'
+                    : modal === 'create'
+                      ? 'Criar subcategoria'
+                      : 'Salvar alterações'}
 
                 </button>
 
               </div>
 
             </form>
-
           </div>
-
         </div>
-
       )}
 
       {/* ===================================================
@@ -964,7 +1023,6 @@ export default function SubcategoriasPage() {
 
       {modal === 'delete' &&
         selectedSubcategory && (
-
           <div
             className="users-modal-backdrop"
             onMouseDown={(event) => {
@@ -976,7 +1034,6 @@ export default function SubcategoriasPage() {
               }
             }}
           >
-
             <div
               className="users-modal users-delete-modal"
               role="dialog"
@@ -1001,9 +1058,13 @@ export default function SubcategoriasPage() {
                 <p>
                   Você está prestes a excluir a
                   subcategoria{' '}
+
                   <strong>
-                    {selectedSubcategory.name}
+                    {
+                      selectedSubcategory.nomeSubcategoria
+                    }
                   </strong>
+
                   . Essa ação não poderá ser
                   desfeita.
                 </p>
@@ -1016,6 +1077,7 @@ export default function SubcategoriasPage() {
                   type="button"
                   className="users-modal-btn secondary"
                   onClick={closeModal}
+                  disabled={submitting}
                 >
                   Cancelar
                 </button>
@@ -1024,19 +1086,28 @@ export default function SubcategoriasPage() {
                   type="button"
                   className="users-modal-btn danger"
                   onClick={handleDelete}
+                  disabled={submitting}
                 >
-                  <i className="bi bi-trash" />
-                  Excluir subcategoria
+
+                  <i
+                    className={
+                      submitting
+                        ? 'bi bi-arrow-repeat'
+                        : 'bi bi-trash'
+                    }
+                  />
+
+                  {submitting
+                    ? 'Excluindo...'
+                    : 'Excluir subcategoria'}
+
                 </button>
 
               </div>
 
             </div>
-
           </div>
-
         )}
-
     </>
   );
 }

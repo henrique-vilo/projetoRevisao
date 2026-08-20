@@ -2,168 +2,214 @@
 
 import '../tables.css';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-const initialColors = [
-  {
-    id: 1,
-    name: 'Azul',
-    hex: '#2563EB',
-    description: 'Azul padrão',
-    status: 'Ativo',
-  },
-  {
-    id: 2,
-    name: 'Vermelho',
-    hex: '#DC2626',
-    description: 'Vermelho padrão',
-    status: 'Ativo',
-  },
-  {
-    id: 3,
-    name: 'Verde',
-    hex: '#16A34A',
-    description: 'Verde padrão',
-    status: 'Ativo',
-  },
-  {
-    id: 4,
-    name: 'Amarelo',
-    hex: '#EAB308',
-    description: 'Amarelo padrão',
-    status: 'Ativo',
-  },
-  {
-    id: 5,
-    name: 'Preto',
-    hex: '#171717',
-    description: 'Preto padrão',
-    status: 'Ativo',
-  },
-  {
-    id: 6,
-    name: 'Branco',
-    hex: '#FFFFFF',
-    description: 'Branco padrão',
-    status: 'Inativo',
-  },
-];
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+const LIMITE_POR_PAGINA = 10;
 
 const emptyForm = {
-  name: '',
-  hex: '#2563EB',
-  description: '',
-  status: 'Ativo',
+  tom: '',
+  nomeCor: '',
+  codigoCor: '#2563EB',
 };
 
-function getStatusClass(status) {
-  return status === 'Ativo' ? 'success' : 'danger';
+function getToken() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  return (
+    localStorage.getItem('token') ||
+    sessionStorage.getItem('token')
+  );
+}
+
+function getErrorMessage(error) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'Ocorreu um erro inesperado.';
 }
 
 export default function CoresPage() {
-  const [colors, setColors] = useState(initialColors);
+  /*
+   * =====================================================
+   * ESTADO
+   * =====================================================
+   */
+
+  const [colors, setColors] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const [search, setSearch] = useState('');
 
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [pagination, setPagination] = useState({
+    pagina: 1,
+    limite: LIMITE_POR_PAGINA,
+    total: 0,
+    totalPaginas: 1,
+  });
+
   const [modal, setModal] = useState(null);
 
-  const [selectedColor, setSelectedColor] =
-    useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
 
   const [form, setForm] = useState(emptyForm);
 
-  const colorsPerPage = 5;
-
   /*
    * =====================================================
-   * FILTRO
+   * BUSCAR CORES
    * =====================================================
    */
 
-  const filteredColors = useMemo(() => {
-    const term = search.trim().toLowerCase();
+  const fetchColors = useCallback(async () => {
+    setLoading(true);
+    setError('');
 
-    if (!term) {
-      return colors;
+    try {
+      const params = new URLSearchParams({
+        pagina: String(currentPage),
+        limite: String(LIMITE_POR_PAGINA),
+      });
+
+      const response = await fetch(
+        `${API_URL}/cores?${params.toString()}`,
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
+          cache: 'no-store',
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.sucesso) {
+        throw new Error(
+          result.mensagem ||
+            result.erro ||
+            'Não foi possível carregar as cores.'
+        );
+      }
+
+      setColors(Array.isArray(result.dados) ? result.dados : []);
+
+      setPagination({
+        pagina: result.paginacao?.pagina || currentPage,
+        limite:
+          result.paginacao?.limite || LIMITE_POR_PAGINA,
+        total: result.paginacao?.total || 0,
+        totalPaginas:
+          result.paginacao?.totalPaginas || 1,
+      });
+    } catch (err) {
+      console.error('Erro ao carregar cores:', err);
+
+      setColors([]);
+
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
     }
-
-    return colors.filter((color) =>
-      [
-        color.name,
-        color.hex,
-        color.description,
-        color.status,
-      ].some((value) =>
-        value
-          .toLowerCase()
-          .includes(term)
-      )
-    );
-  }, [colors, search]);
+  }, [currentPage]);
 
   /*
    * =====================================================
-   * PAGINAÇÃO
+   * CARREGAR AO ENTRAR / TROCAR PÁGINA
    * =====================================================
    */
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(
-      filteredColors.length / colorsPerPage
-    )
-  );
-
-  const safeCurrentPage = Math.min(
-    currentPage,
-    totalPages
-  );
-
-  const startIndex =
-    (safeCurrentPage - 1) *
-    colorsPerPage;
-
-  const currentColors =
-    filteredColors.slice(
-      startIndex,
-      startIndex + colorsPerPage
-    );
+  useEffect(() => {
+    fetchColors();
+  }, [fetchColors]);
 
   /*
    * =====================================================
-   * MODAIS
+   * LIMPAR MENSAGENS
+   * =====================================================
+   */
+
+  const clearMessages = () => {
+    setError('');
+    setSuccess('');
+  };
+
+  /*
+   * =====================================================
+   * FECHAR MODAL
    * =====================================================
    */
 
   const closeModal = () => {
     setModal(null);
     setSelectedColor(null);
-    setForm(emptyForm);
+
+    setForm({
+      ...emptyForm,
+    });
   };
 
+  /*
+   * =====================================================
+   * MODAL CRIAR
+   * =====================================================
+   */
+
   const openCreateModal = () => {
+    clearMessages();
+
     setSelectedColor(null);
-    setForm(emptyForm);
+
+    setForm({
+      ...emptyForm,
+    });
+
     setModal('create');
   };
 
+  /*
+   * =====================================================
+   * MODAL EDITAR
+   * =====================================================
+   */
+
   const openEditModal = (color) => {
+    clearMessages();
+
     setSelectedColor(color);
 
     setForm({
-      name: color.name,
-      hex: color.hex,
-      description: color.description,
-      status: color.status,
+      tom: color.tom || '',
+      nomeCor: color.nomeCor || '',
+      codigoCor: color.codigoCor || '#2563EB',
     });
 
     setModal('edit');
   };
 
+  /*
+   * =====================================================
+   * MODAL EXCLUIR
+   * =====================================================
+   */
+
   const openDeleteModal = (color) => {
+    clearMessages();
+
     setSelectedColor(color);
+
     setModal('delete');
   };
 
@@ -182,12 +228,18 @@ export default function CoresPage() {
     }));
   };
 
+  /*
+   * =====================================================
+   * COR HEX
+   * =====================================================
+   */
+
   const handleColorChange = (event) => {
     const { value } = event.target;
 
     setForm((previous) => ({
       ...previous,
-      hex: value.toUpperCase(),
+      codigoCor: value.toUpperCase(),
     }));
   };
 
@@ -197,77 +249,110 @@ export default function CoresPage() {
    * =====================================================
    */
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const name = form.name.trim();
+    clearMessages();
 
-    const description =
-      form.description.trim();
+    const tom = form.tom.trim();
+    const nomeCor = form.nomeCor.trim();
+    const codigoCor = form.codigoCor.trim().toUpperCase();
 
-    const hex =
-      form.hex.trim().toUpperCase();
+    /*
+     * Validação frontend
+     */
 
-    if (!name) {
+    if (!tom) {
+      setError('Informe o tom da cor.');
       return;
     }
 
-    /*
-     * CREATE
-     */
-
-    if (modal === 'create') {
-      const newColor = {
-        id:
-          Math.max(
-            ...colors.map(
-              (color) => color.id
-            ),
-            0
-          ) + 1,
-
-        name,
-
-        hex,
-
-        description,
-
-        status: form.status,
-      };
-
-      setColors((previous) => [
-        ...previous,
-        newColor,
-      ]);
-
-      setCurrentPage(1);
+    if (!nomeCor) {
+      setError('Informe o nome da cor.');
+      return;
     }
 
-    /*
-     * EDIT
-     */
+    if (!codigoCor) {
+      setError('Informe o código HEX da cor.');
+      return;
+    }
 
-    if (
-      modal === 'edit' &&
-      selectedColor
-    ) {
-      setColors((previous) =>
-        previous.map((color) =>
-          color.id === selectedColor.id
-            ? {
-                ...color,
-                name,
-                hex,
-                description,
-                status:
-                  form.status,
-              }
-            : color
-        )
+    if (!/^#[0-9A-Fa-f]{6}$/.test(codigoCor)) {
+      setError(
+        'O código HEX deve estar no formato #000000.'
       );
+      return;
     }
 
-    closeModal();
+    const token = getToken();
+
+    if (!token) {
+      setError(
+        'Sua sessão expirou. Faça login novamente.'
+      );
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const isEditing =
+        modal === 'edit' && selectedColor;
+
+      const url = isEditing
+        ? `${API_URL}/cores/${selectedColor.idCor}`
+        : `${API_URL}/cores`;
+
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          tom,
+          nomeCor,
+          codigoCor,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.sucesso) {
+        throw new Error(
+          result.mensagem ||
+            result.erro ||
+            `Não foi possível ${
+              isEditing ? 'atualizar' : 'criar'
+            } a cor.`
+        );
+      }
+
+      closeModal();
+
+      setSuccess(
+        isEditing
+          ? 'Cor atualizada com sucesso.'
+          : 'Cor criada com sucesso.'
+      );
+
+      /*
+       * Recarrega os dados reais do backend.
+       */
+      await fetchColors();
+    } catch (err) {
+      console.error(
+        'Erro ao salvar cor:',
+        err
+      );
+
+      setError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   /*
@@ -276,31 +361,155 @@ export default function CoresPage() {
    * =====================================================
    */
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedColor) {
       return;
     }
 
-    setColors((previous) =>
-      previous.filter(
-        (color) =>
-          color.id !==
-          selectedColor.id
-      )
-    );
+    clearMessages();
 
-    closeModal();
+    const token = getToken();
+
+    if (!token) {
+      setError(
+        'Sua sessão expirou. Faça login novamente.'
+      );
+      return;
+    }
+
+    setDeleting(true);
+
+    try {
+      const response = await fetch(
+        `${API_URL}/cores/${selectedColor.idCor}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.sucesso) {
+        throw new Error(
+          result.mensagem ||
+            result.erro ||
+            'Não foi possível excluir a cor.'
+        );
+      }
+
+      closeModal();
+
+      setSuccess('Cor excluída com sucesso.');
+
+      /*
+       * Se a página atual ficar vazia após excluir
+       * o último registro, volta uma página.
+       */
+
+      if (
+        colors.length === 1 &&
+        currentPage > 1
+      ) {
+        setCurrentPage((page) => page - 1);
+      } else {
+        await fetchColors();
+      }
+    } catch (err) {
+      console.error(
+        'Erro ao excluir cor:',
+        err
+      );
+
+      setError(getErrorMessage(err));
+    } finally {
+      setDeleting(false);
+    }
   };
 
   /*
    * =====================================================
    * BUSCA
    * =====================================================
+   *
+   * O backend atual não possui endpoint de pesquisa
+   * por nome. Portanto, a busca abaixo filtra somente
+   * os registros da página atualmente carregada.
+   *
+   * Quando fizermos o backend de busca das entidades,
+   * podemos transformar isso em busca server-side.
    */
 
-  const handleSearch = (event) => {
-    setSearch(event.target.value);
-    setCurrentPage(1);
+  const normalizedSearch =
+    search.trim().toLowerCase();
+
+  const filteredColors = colors.filter(
+    (color) => {
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      return [
+        color.idCor?.toString(),
+        color.tom,
+        color.nomeCor,
+        color.codigoCor,
+      ].some((value) =>
+        String(value || '')
+          .toLowerCase()
+          .includes(normalizedSearch)
+      );
+    }
+  );
+
+  /*
+   * =====================================================
+   * PAGINAÇÃO
+   * =====================================================
+   */
+
+  const totalPages = Math.max(
+    1,
+    pagination.totalPaginas || 1
+  );
+
+  const safeCurrentPage = Math.min(
+    currentPage,
+    totalPages
+  );
+
+  /*
+   * =====================================================
+   * ALTERAR PÁGINA
+   * =====================================================
+   */
+
+  const goToPage = (page) => {
+    const nextPage = Math.min(
+      Math.max(page, 1),
+      totalPages
+    );
+
+    if (nextPage !== currentPage) {
+      setCurrentPage(nextPage);
+    }
+  };
+
+  /*
+   * =====================================================
+   * ATUALIZAR
+   * =====================================================
+   */
+
+  const handleRefresh = async () => {
+    clearMessages();
+
+    await fetchColors();
+
+    setSuccess('Dados atualizados.');
   };
 
   /*
@@ -318,9 +527,7 @@ export default function CoresPage() {
         ================================================= */}
 
         <section className="users-heading">
-
           <div>
-
             <span className="users-eyebrow">
               Catálogo
             </span>
@@ -332,7 +539,6 @@ export default function CoresPage() {
             <p>
               Gerencie as cores disponíveis no catálogo.
             </p>
-
           </div>
 
           <div className="users-heading-actions">
@@ -340,27 +546,79 @@ export default function CoresPage() {
             <button
               type="button"
               className="users-btn users-btn-secondary"
-              onClick={() => {
-                setSearch('');
-                setCurrentPage(1);
-              }}
+              onClick={handleRefresh}
+              disabled={loading}
             >
-              <i className="bi bi-arrow-clockwise" />
-              Atualizar
+              <i
+                className={`bi ${
+                  loading
+                    ? 'bi-arrow-repeat'
+                    : 'bi-arrow-clockwise'
+                }`}
+              />
+
+              {loading
+                ? 'Atualizando...'
+                : 'Atualizar'}
             </button>
 
             <button
               type="button"
               className="users-btn users-btn-primary"
               onClick={openCreateModal}
+              disabled={submitting}
             >
               <i className="bi bi-plus-lg" />
+
               Nova cor
             </button>
 
           </div>
-
         </section>
+
+        {/* =================================================
+            MENSAGENS
+        ================================================= */}
+
+        {error && (
+          <div
+            className="alert alert-danger d-flex align-items-center justify-content-between"
+            role="alert"
+          >
+            <div className="d-flex align-items-center gap-2">
+              <i className="bi bi-exclamation-circle" />
+
+              <span>{error}</span>
+            </div>
+
+            <button
+              type="button"
+              className="btn-close"
+              aria-label="Fechar"
+              onClick={() => setError('')}
+            />
+          </div>
+        )}
+
+        {success && (
+          <div
+            className="alert alert-success d-flex align-items-center justify-content-between"
+            role="alert"
+          >
+            <div className="d-flex align-items-center gap-2">
+              <i className="bi bi-check-circle" />
+
+              <span>{success}</span>
+            </div>
+
+            <button
+              type="button"
+              className="btn-close"
+              aria-label="Fechar"
+              onClick={() => setSuccess('')}
+            />
+          </div>
+        )}
 
         {/* =================================================
             TABLE CARD
@@ -371,7 +629,6 @@ export default function CoresPage() {
           <div className="users-card-header">
 
             <div>
-
               <span className="users-card-label">
                 Gerenciamento
               </span>
@@ -379,7 +636,6 @@ export default function CoresPage() {
               <h2>
                 Cores cadastradas
               </h2>
-
             </div>
 
             <div className="users-card-header-right">
@@ -391,25 +647,24 @@ export default function CoresPage() {
                 <input
                   type="text"
                   value={search}
-                  onChange={handleSearch}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                  }}
                   placeholder="Buscar cor..."
                   aria-label="Buscar cor"
                 />
 
                 {search && (
-
                   <button
                     type="button"
                     className="users-search-clear"
-                    onClick={() => {
-                      setSearch('');
-                      setCurrentPage(1);
-                    }}
+                    onClick={() =>
+                      setSearch('')
+                    }
                     aria-label="Limpar busca"
                   >
                     <i className="bi bi-x" />
                   </button>
-
                 )}
 
               </div>
@@ -427,26 +682,48 @@ export default function CoresPage() {
             <table className="table users-table align-middle">
 
               <thead>
-
                 <tr>
                   <th>Cor</th>
                   <th>HEX</th>
-                  <th>Descrição</th>
-                  <th>Status</th>
+                  <th>Tom</th>
                   <th>Ações</th>
                 </tr>
-
               </thead>
 
               <tbody>
 
-                {currentColors.length > 0 ? (
+                {loading ? (
 
-                  currentColors.map((color) => (
+                  <tr>
+                    <td
+                      colSpan="4"
+                      className="users-empty"
+                    >
+                      <div className="users-empty-content">
 
-                    <tr key={color.id}>
+                        <div className="users-empty-icon">
+                          <i className="bi bi-arrow-repeat" />
+                        </div>
 
-                      {/* COLOR */}
+                        <strong>
+                          Carregando cores...
+                        </strong>
+
+                        <span>
+                          Buscando dados do servidor.
+                        </span>
+
+                      </div>
+                    </td>
+                  </tr>
+
+                ) : filteredColors.length > 0 ? (
+
+                  filteredColors.map((color) => (
+
+                    <tr key={color.idCor}>
+
+                      {/* COR */}
 
                       <td>
 
@@ -456,19 +733,21 @@ export default function CoresPage() {
                             className="color-preview"
                             style={{
                               backgroundColor:
-                                color.hex,
+                                color.codigoCor,
                             }}
-                            title={color.hex}
+                            title={
+                              color.codigoCor
+                            }
                           />
 
                           <div className="user-information">
 
                             <span className="user-name">
-                              {color.name}
+                              {color.nomeCor}
                             </span>
 
                             <span className="user-id">
-                              ID #{color.id}
+                              ID #{color.idCor}
                             </span>
 
                           </div>
@@ -482,36 +761,18 @@ export default function CoresPage() {
                       <td>
 
                         <span className="color-hex">
-                          {color.hex}
+                          {color.codigoCor}
                         </span>
 
                       </td>
 
-                      {/* DESCRIPTION */}
+                      {/* TOM */}
 
                       <td>
 
                         <span className="table-muted">
-                          {color.description ||
-                            'Sem descrição'}
-                        </span>
-
-                      </td>
-
-                      {/* STATUS */}
-
-                      <td>
-
-                        <span
-                          className={`user-status ${getStatusClass(
-                            color.status
-                          )}`}
-                        >
-
-                          <span />
-
-                          {color.status}
-
+                          {color.tom ||
+                            'Sem tom informado'}
                         </span>
 
                       </td>
@@ -526,12 +787,15 @@ export default function CoresPage() {
                             type="button"
                             className="user-action edit"
                             onClick={() =>
-                              openEditModal(
-                                color
-                              )
+                              openEditModal(color)
+                            }
+                            disabled={
+                              submitting ||
+                              deleting
                             }
                           >
                             <i className="bi bi-pencil" />
+
                             Editar
                           </button>
 
@@ -543,8 +807,13 @@ export default function CoresPage() {
                                 color
                               )
                             }
+                            disabled={
+                              submitting ||
+                              deleting
+                            }
                           >
                             <i className="bi bi-trash" />
+
                             Excluir
                           </button>
 
@@ -561,7 +830,7 @@ export default function CoresPage() {
                   <tr>
 
                     <td
-                      colSpan="5"
+                      colSpan="4"
                       className="users-empty"
                     >
 
@@ -576,7 +845,9 @@ export default function CoresPage() {
                         </strong>
 
                         <span>
-                          Tente buscar por outra cor.
+                          {search
+                            ? 'Tente buscar por outro termo.'
+                            : 'Ainda não existem cores cadastradas.'}
                         </span>
 
                       </div>
@@ -602,18 +873,22 @@ export default function CoresPage() {
             <span>
               Mostrando{' '}
               <strong>
-                {currentColors.length}
+                {filteredColors.length}
               </strong>{' '}
               de{' '}
               <strong>
-                {filteredColors.length}
+                {pagination.total}
               </strong>{' '}
               cores
             </span>
 
-            <nav aria-label="Paginação de cores">
+            <nav
+              aria-label="Paginação de cores"
+            >
 
               <ul className="pagination users-pagination">
+
+                {/* ANTERIOR */}
 
                 <li
                   className={`page-item ${
@@ -627,15 +902,12 @@ export default function CoresPage() {
                     type="button"
                     className="page-link"
                     disabled={
-                      safeCurrentPage === 1
+                      safeCurrentPage === 1 ||
+                      loading
                     }
                     onClick={() =>
-                      setCurrentPage(
-                        (page) =>
-                          Math.max(
-                            1,
-                            page - 1
-                          )
+                      goToPage(
+                        safeCurrentPage - 1
                       )
                     }
                   >
@@ -644,12 +916,13 @@ export default function CoresPage() {
 
                 </li>
 
+                {/* PÁGINAS */}
+
                 {Array.from(
                   {
                     length: totalPages,
                   },
-                  (_, index) =>
-                    index + 1
+                  (_, index) => index + 1
                 ).map((page) => (
 
                   <li
@@ -666,8 +939,9 @@ export default function CoresPage() {
                       type="button"
                       className="page-link"
                       onClick={() =>
-                        setCurrentPage(page)
+                        goToPage(page)
                       }
+                      disabled={loading}
                     >
                       {page}
                     </button>
@@ -675,6 +949,8 @@ export default function CoresPage() {
                   </li>
 
                 ))}
+
+                {/* PRÓXIMA */}
 
                 <li
                   className={`page-item ${
@@ -690,15 +966,12 @@ export default function CoresPage() {
                     className="page-link"
                     disabled={
                       safeCurrentPage ===
-                      totalPages
+                        totalPages ||
+                      loading
                     }
                     onClick={() =>
-                      setCurrentPage(
-                        (page) =>
-                          Math.min(
-                            totalPages,
-                            page + 1
-                          )
+                      goToPage(
+                        safeCurrentPage + 1
                       )
                     }
                   >
@@ -743,6 +1016,8 @@ export default function CoresPage() {
             aria-labelledby="color-modal-title"
           >
 
+            {/* HEADER */}
+
             <div className="users-modal-header">
 
               <div>
@@ -765,12 +1040,15 @@ export default function CoresPage() {
                 type="button"
                 className="users-modal-close"
                 onClick={closeModal}
+                disabled={submitting}
                 aria-label="Fechar modal"
               >
                 <i className="bi bi-x-lg" />
               </button>
 
             </div>
+
+            {/* FORM */}
 
             <form onSubmit={handleSubmit}>
 
@@ -782,12 +1060,12 @@ export default function CoresPage() {
 
                 <div className="user-form-grid">
 
-                  {/* NAME */}
+                  {/* TOM */}
 
                   <div className="user-form-field">
 
-                    <label htmlFor="color-name">
-                      Nome
+                    <label htmlFor="color-tom">
+                      Tom
                     </label>
 
                     <div className="user-input-wrapper">
@@ -795,16 +1073,47 @@ export default function CoresPage() {
                       <i className="bi bi-palette" />
 
                       <input
-                        id="color-name"
-                        name="name"
+                        id="color-tom"
+                        name="tom"
                         type="text"
-                        value={form.name}
+                        value={form.tom}
                         onChange={
                           handleFormChange
                         }
                         placeholder="Ex.: Azul"
-                        maxLength={50}
+                        maxLength={100}
                         required
+                        disabled={submitting}
+                      />
+
+                    </div>
+
+                  </div>
+
+                  {/* NOME */}
+
+                  <div className="user-form-field">
+
+                    <label htmlFor="color-name">
+                      Nome da cor
+                    </label>
+
+                    <div className="user-input-wrapper">
+
+                      <i className="bi bi-type" />
+
+                      <input
+                        id="color-name"
+                        name="nomeCor"
+                        type="text"
+                        value={form.nomeCor}
+                        onChange={
+                          handleFormChange
+                        }
+                        placeholder="Ex.: Azul Royal"
+                        maxLength={100}
+                        required
+                        disabled={submitting}
                       />
 
                     </div>
@@ -813,7 +1122,7 @@ export default function CoresPage() {
 
                   {/* HEX */}
 
-                  <div className="user-form-field">
+                  <div className="user-form-field full">
 
                     <label htmlFor="color-hex">
                       Código HEX
@@ -823,34 +1132,36 @@ export default function CoresPage() {
 
                       <input
                         id="color-hex"
-                        name="hex"
+                        name="codigoCor"
                         type="color"
                         value={
                           /^#[0-9A-Fa-f]{6}$/.test(
-                            form.hex
+                            form.codigoCor
                           )
-                            ? form.hex
+                            ? form.codigoCor
                             : '#2563EB'
                         }
                         onChange={
                           handleColorChange
                         }
                         aria-label="Selecionar cor"
+                        disabled={submitting}
                       />
 
                       <input
                         type="text"
-                        value={form.hex}
+                        value={
+                          form.codigoCor
+                        }
                         onChange={(event) => {
+
                           let value =
                             event.target.value
                               .toUpperCase();
 
                           if (
                             value &&
-                            !value.startsWith(
-                              '#'
-                            )
+                            !value.startsWith('#')
                           ) {
                             value = `#${value}`;
                           }
@@ -858,79 +1169,17 @@ export default function CoresPage() {
                           setForm(
                             (previous) => ({
                               ...previous,
-                              hex: value,
+                              codigoCor:
+                                value,
                             })
                           );
+
                         }}
                         placeholder="#2563EB"
                         maxLength={7}
                         pattern="^#[0-9A-Fa-f]{6}$"
                         required
-                      />
-
-                    </div>
-
-                  </div>
-
-                  {/* STATUS */}
-
-                  <div className="user-form-field">
-
-                    <label htmlFor="color-status">
-                      Status
-                    </label>
-
-                    <div className="user-input-wrapper">
-
-                      <i className="bi bi-circle-half" />
-
-                      <select
-                        id="color-status"
-                        name="status"
-                        value={form.status}
-                        onChange={
-                          handleFormChange
-                        }
-                      >
-
-                        <option value="Ativo">
-                          Ativo
-                        </option>
-
-                        <option value="Inativo">
-                          Inativo
-                        </option>
-
-                      </select>
-
-                    </div>
-
-                  </div>
-
-                  {/* DESCRIPTION */}
-
-                  <div className="user-form-field full">
-
-                    <label htmlFor="color-description">
-                      Descrição
-                    </label>
-
-                    <div className="user-input-wrapper textarea-wrapper">
-
-                      <i className="bi bi-card-text" />
-
-                      <textarea
-                        id="color-description"
-                        name="description"
-                        value={
-                          form.description
-                        }
-                        onChange={
-                          handleFormChange
-                        }
-                        placeholder="Descreva esta cor..."
-                        rows={4}
-                        maxLength={255}
+                        disabled={submitting}
                       />
 
                     </div>
@@ -941,12 +1190,15 @@ export default function CoresPage() {
 
               </div>
 
+              {/* FOOTER */}
+
               <div className="users-modal-footer">
 
                 <button
                   type="button"
                   className="users-modal-btn secondary"
                   onClick={closeModal}
+                  disabled={submitting}
                 >
                   Cancelar
                 </button>
@@ -954,19 +1206,33 @@ export default function CoresPage() {
                 <button
                   type="submit"
                   className="users-modal-btn primary"
+                  disabled={submitting}
                 >
 
-                  <i
-                    className={
-                      modal === 'create'
-                        ? 'bi bi-plus-lg'
-                        : 'bi bi-check-lg'
-                    }
-                  />
+                  {submitting ? (
+                    <>
+                      <span
+                        className="spinner-border spinner-border-sm"
+                        aria-hidden="true"
+                      />
 
-                  {modal === 'create'
-                    ? 'Criar cor'
-                    : 'Salvar alterações'}
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <i
+                        className={
+                          modal === 'create'
+                            ? 'bi bi-plus-lg'
+                            : 'bi bi-check-lg'
+                        }
+                      />
+
+                      {modal === 'create'
+                        ? 'Criar cor'
+                        : 'Salvar alterações'}
+                    </>
+                  )}
 
                 </button>
 
@@ -990,12 +1256,14 @@ export default function CoresPage() {
           <div
             className="users-modal-backdrop"
             onMouseDown={(event) => {
+
               if (
                 event.target ===
                 event.currentTarget
               ) {
                 closeModal();
               }
+
             }}
           >
 
@@ -1024,7 +1292,7 @@ export default function CoresPage() {
                   Você está prestes a excluir a
                   cor{' '}
                   <strong>
-                    {selectedColor.name}
+                    {selectedColor.nomeCor}
                   </strong>
                   . Essa ação não poderá ser
                   desfeita.
@@ -1038,6 +1306,7 @@ export default function CoresPage() {
                   type="button"
                   className="users-modal-btn secondary"
                   onClick={closeModal}
+                  disabled={deleting}
                 >
                   Cancelar
                 </button>
@@ -1046,9 +1315,25 @@ export default function CoresPage() {
                   type="button"
                   className="users-modal-btn danger"
                   onClick={handleDelete}
+                  disabled={deleting}
                 >
-                  <i className="bi bi-trash" />
-                  Excluir cor
+
+                  {deleting ? (
+                    <>
+                      <span
+                        className="spinner-border spinner-border-sm"
+                        aria-hidden="true"
+                      />
+
+                      Excluindo...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-trash" />
+                      Excluir cor
+                    </>
+                  )}
+
                 </button>
 
               </div>

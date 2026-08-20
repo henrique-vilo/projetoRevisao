@@ -1,137 +1,108 @@
 'use client';
 
 import '../tables.css';
+import'./produtos.css';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 /* =====================================================
-   PRODUTOS FICTÍCIOS
+   CONFIGURAÇÃO
 ===================================================== */
 
-const initialProducts = [
-  {
-    id: 1,
-    name: 'Essencial Premium',
-    description:
-      'Camiseta básica de algodão com modelagem regular.',
-    category: 'Camisetas',
-    price: 89.9,
-    stock: 42,
-    status: 'Ativo',
-    image: null,
-  },
-  {
-    id: 2,
-    name: 'Urban Classic',
-    description:
-      'Camisa masculina casual para uso diário.',
-    category: 'Camisas',
-    price: 129.9,
-    stock: 27,
-    status: 'Ativo',
-    image: null,
-  },
-  {
-    id: 3,
-    name: 'Denim Blue',
-    description:
-      'Jeans azul de corte tradicional e acabamento moderno.',
-    category: 'Calças',
-    price: 189.9,
-    stock: 18,
-    status: 'Ativo',
-    image: null,
-  },
-  {
-    id: 4,
-    name: 'Street Hoodie',
-    description:
-      'Moletom confortável com estética urbana.',
-    category: 'Moletons',
-    price: 219.9,
-    stock: 9,
-    status: 'Ativo',
-    image: null,
-  },
-  {
-    id: 5,
-    name: 'Minimal White',
-    description:
-      'Peça minimalista para composições casuais.',
-    category: 'Camisetas',
-    price: 79.9,
-    stock: 0,
-    status: 'Inativo',
-    image: null,
-  },
-  {
-    id: 6,
-    name: 'Classic Fit',
-    description:
-      'Modelagem clássica com acabamento premium.',
-    category: 'Camisas',
-    price: 149.9,
-    stock: 31,
-    status: 'Ativo',
-    image: null,
-  },
-  {
-    id: 7,
-    name: 'Basic Denim',
-    description:
-      'Calça jeans versátil para diferentes ocasiões.',
-    category: 'Calças',
-    price: 169.9,
-    stock: 14,
-    status: 'Ativo',
-    image: null,
-  },
-  {
-    id: 8,
-    name: 'Essential Hoodie',
-    description:
-      'Moletom básico com visual clean.',
-    category: 'Moletons',
-    price: 199.9,
-    stock: 6,
-    status: 'Ativo',
-    image: null,
-  },
-];
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+/*
+  Caso seu backend esteja em outra porta/endereço,
+  defina no .env.local:
+
+  NEXT_PUBLIC_API_URL=http://localhost:3001
+*/
 
 /* =====================================================
-   FORMULÁRIO
+   ESTADO INICIAL DO FORMULÁRIO
 ===================================================== */
 
 const emptyForm = {
-  name: '',
-  description: '',
-  category: 'Camisetas',
-  price: '',
-  stock: '',
-  status: 'Ativo',
-  image: null,
+  sku: '',
+  nome: '',
+  nomeCombinacao: '',
+  descricao: '',
+  genero: 'Unissex',
+  preco: '',
+  idCategoria: '',
+  idSubcategoria: '',
+  idCor: '',
+  idTamanho: '',
+  idModelo: '',
+  estoque: '',
+  imagem1: null,
+  imagem2: null,
+  imagem3: null,
+  imagem4: null,
 };
 
 /* =====================================================
-   STATUS
+   HELPERS
 ===================================================== */
 
-function getStatusClass(status) {
-  return status === 'Ativo'
-    ? 'success'
-    : 'danger';
+function getToken() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  return (
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken')
+  );
 }
-
-/* =====================================================
-   PREÇO
-===================================================== */
 
 function formatPrice(value) {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
-  }).format(value);
+  }).format(Number(value) || 0);
+}
+
+function getImageUrl(filename) {
+  if (!filename) {
+    return null;
+  }
+
+  if (
+    filename.startsWith('http://') ||
+    filename.startsWith('https://')
+  ) {
+    return filename;
+  }
+
+  return `${API_URL}/uploads/${filename}`;
+}
+
+function getStatusClass(ativo) {
+  return Number(ativo) === 1 ? 'success' : 'danger';
+}
+
+function getStockClass(stock) {
+  if (Number(stock) <= 0) {
+    return 'danger';
+  }
+
+  if (Number(stock) <= 10) {
+    return 'warning';
+  }
+
+  return 'success';
+}
+
+function getOptionId(item, possibleKeys = []) {
+  for (const key of possibleKeys) {
+    if (item?.[key] !== undefined && item?.[key] !== null) {
+      return item[key];
+    }
+  }
+
+  return '';
 }
 
 /* =====================================================
@@ -139,94 +110,376 @@ function formatPrice(value) {
 ===================================================== */
 
 export default function ProdutosPage() {
-  const [products, setProducts] =
-    useState(initialProducts);
+  /* ===================================================
+     PRODUTOS
+  =================================================== */
 
-  const [search, setSearch] =
-    useState('');
+  const [products, setProducts] = useState([]);
 
-  const [currentPage, setCurrentPage] =
-    useState(1);
+  const [search, setSearch] = useState('');
 
-  const [modal, setModal] =
-    useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [totalProducts, setTotalProducts] = useState(0);
+
+  const productsPerPage = 10;
+
+  /* ===================================================
+     FILTROS
+  =================================================== */
+
+  const [filters, setFilters] = useState({
+    genero: '',
+    idCategoria: '',
+    idSubcategoria: '',
+    idCor: '',
+    idTamanho: '',
+    idModelo: '',
+    precoMin: '',
+    precoMax: '',
+    emEstoque: '',
+    ordenarPor: 'recente',
+  });
+
+  /* ===================================================
+     LISTAS AUXILIARES
+  =================================================== */
+
+  const [categorias, setCategorias] = useState([]);
+  const [subcategorias, setSubcategorias] = useState([]);
+  const [cores, setCores] = useState([]);
+  const [tamanhos, setTamanhos] = useState([]);
+  const [modelos, setModelos] = useState([]);
+
+  /* ===================================================
+     UI
+  =================================================== */
+
+  const [loading, setLoading] = useState(true);
+
+  const [loadingOptions, setLoadingOptions] =
+    useState(true);
+
+  const [error, setError] = useState('');
+
+  const [modal, setModal] = useState(null);
 
   const [selectedProduct, setSelectedProduct] =
     useState(null);
 
-  const [form, setForm] =
-    useState(emptyForm);
+  const [form, setForm] = useState(emptyForm);
 
-  const productsPerPage = 5;
+  const [imagePreviews, setImagePreviews] =
+    useState({
+      imagem1: null,
+      imagem2: null,
+      imagem3: null,
+      imagem4: null,
+    });
+
+  const [submitting, setSubmitting] =
+    useState(false);
+
+  const [successMessage, setSuccessMessage] =
+    useState('');
+
+  const [showFilters, setShowFilters] =
+    useState(false);
 
   /* ===================================================
-     FILTRO
+     HEADERS
   =================================================== */
 
-  const filteredProducts = useMemo(() => {
-    const term = search
-      .trim()
-      .toLowerCase();
+  const getHeaders = () => {
+    const token = getToken();
 
-    if (!term) {
-      return products;
+    return token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {};
+  };
+
+  /* ===================================================
+     CARREGAR PRODUTOS
+  =================================================== */
+
+  const carregarProdutos = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const params = new URLSearchParams();
+
+      params.set('pagina', currentPage);
+      params.set('limite', productsPerPage);
+
+      if (search.trim()) {
+        params.set('busca', search.trim());
+      }
+
+      Object.entries(filters).forEach(
+        ([key, value]) => {
+          if (
+            value !== '' &&
+            value !== null &&
+            value !== undefined
+          ) {
+            params.set(key, value);
+          }
+        }
+      );
+
+      const response = await fetch(
+        `${API_URL}/produtos?${params.toString()}`,
+        {
+          method: 'GET',
+          headers: {
+            ...getHeaders(),
+          },
+          cache: 'no-store',
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.sucesso) {
+        throw new Error(
+          data.erro ||
+            data.mensagem ||
+            'Não foi possível carregar os produtos.'
+        );
+      }
+
+      setProducts(data.dados || []);
+
+      setTotalProducts(
+        Number(data.paginacao?.total) || 0
+      );
+
+      setTotalPages(
+        Math.max(
+          1,
+          Number(data.paginacao?.totalPaginas) || 1
+        )
+      );
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        err.message ||
+          'Não foi possível carregar os produtos.'
+      );
+
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ===================================================
+     CARREGAR OPÇÕES DOS SELECTS
+  =================================================== */
+
+  const carregarOpcoes = async () => {
+    try {
+      setLoadingOptions(true);
+
+      const endpoints = [
+        {
+          key: 'categorias',
+          url: '/categorias',
+        },
+        {
+          key: 'subcategorias',
+          url: '/subcategorias',
+        },
+        {
+          key: 'cores',
+          url: '/cores',
+        },
+        {
+          key: 'tamanhos',
+          url: '/tamanhos',
+        },
+        {
+          key: 'modelos',
+          url: '/modelos',
+        },
+      ];
+
+      const responses = await Promise.all(
+        endpoints.map(async (endpoint) => {
+          const response = await fetch(
+            `${API_URL}${endpoint.url}?pagina=1&limite=100`,
+            {
+              method: 'GET',
+              headers: {
+                ...getHeaders(),
+              },
+              cache: 'no-store',
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(
+              `Erro ao carregar ${endpoint.key}`
+            );
+          }
+
+          const data = await response.json();
+
+          return {
+            key: endpoint.key,
+            data: data.dados || [],
+          };
+        })
+      );
+
+      responses.forEach(({ key, data }) => {
+        if (key === 'categorias') {
+          setCategorias(data);
+        }
+
+        if (key === 'subcategorias') {
+          setSubcategorias(data);
+        }
+
+        if (key === 'cores') {
+          setCores(data);
+        }
+
+        if (key === 'tamanhos') {
+          setTamanhos(data);
+        }
+
+        if (key === 'modelos') {
+          setModelos(data);
+        }
+      });
+    } catch (err) {
+      console.error(
+        'Erro ao carregar opções:',
+        err
+      );
+    } finally {
+      setLoadingOptions(false);
+    }
+  };
+
+  /* ===================================================
+     EFFECTS
+  =================================================== */
+
+  useEffect(() => {
+    carregarOpcoes();
+  }, []);
+
+  useEffect(() => {
+    carregarProdutos();
+  }, [currentPage, filters]);
+
+  /* ===================================================
+     BUSCA COM DEBOUNCE
+  =================================================== */
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+        return;
+      }
+
+      carregarProdutos();
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  /* ===================================================
+     HANDLERS
+  =================================================== */
+
+  const handleFilterChange = (event) => {
+    const { name, value } = event.target;
+
+    setFilters((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+
+    setCurrentPage(1);
+  };
+
+  const handleFormChange = (event) => {
+    const { name, value } = event.target;
+
+    setForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
+
+  const handleImageChange = (event) => {
+    const { name, files } = event.target;
+
+    const file = files?.[0];
+
+    if (!file) {
+      return;
     }
 
-    return products.filter((product) =>
-      [
-        product.name,
-        product.description,
-        product.category,
-        product.status,
-        String(product.id),
-      ].some((value) =>
-        String(value)
-          .toLowerCase()
-          .includes(term)
-      )
-    );
-  }, [products, search]);
+    setForm((previous) => ({
+      ...previous,
+      [name]: file,
+    }));
 
-  /* ===================================================
-     PAGINAÇÃO
-  =================================================== */
+    const preview = URL.createObjectURL(file);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(
-      filteredProducts.length /
-        productsPerPage
-    )
-  );
-
-  const safeCurrentPage = Math.min(
-    currentPage,
-    totalPages
-  );
-
-  const startIndex =
-    (safeCurrentPage - 1) *
-    productsPerPage;
-
-  const currentProducts =
-    filteredProducts.slice(
-      startIndex,
-      startIndex + productsPerPage
-    );
+    setImagePreviews((previous) => ({
+      ...previous,
+      [name]: preview,
+    }));
+  };
 
   /* ===================================================
      MODAIS
   =================================================== */
 
   const closeModal = () => {
+    Object.values(imagePreviews).forEach((url) => {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    });
+
     setModal(null);
     setSelectedProduct(null);
     setForm(emptyForm);
+
+    setImagePreviews({
+      imagem1: null,
+      imagem2: null,
+      imagem3: null,
+      imagem4: null,
+    });
+
+    setSubmitting(false);
   };
 
   const openCreateModal = () => {
     setSelectedProduct(null);
     setForm(emptyForm);
+
+    setImagePreviews({
+      imagem1: null,
+      imagem2: null,
+      imagem3: null,
+      imagem4: null,
+    });
+
     setModal('create');
   };
 
@@ -234,13 +487,34 @@ export default function ProdutosPage() {
     setSelectedProduct(product);
 
     setForm({
-      name: product.name,
-      description: product.description,
-      category: product.category,
-      price: product.price,
-      stock: product.stock,
-      status: product.status,
-      image: product.image,
+      sku: product.sku || '',
+      nome: product.nome || '',
+      nomeCombinacao:
+        product.nomeCombinacao || '',
+      descricao: product.descricao || '',
+      genero: product.genero || 'Unissex',
+      preco: product.preco ?? '',
+      idCategoria:
+        product.idCategoria ?? '',
+      idSubcategoria:
+        product.idSubcategoria ?? '',
+      idCor: product.idCor ?? '',
+      idTamanho:
+        product.idTamanho ?? '',
+      idModelo:
+        product.idModelo ?? '',
+      estoque: product.estoque ?? '',
+      imagem1: null,
+      imagem2: null,
+      imagem3: null,
+      imagem4: null,
+    });
+
+    setImagePreviews({
+      imagem1: getImageUrl(product.imagem1),
+      imagem2: getImageUrl(product.imagem2),
+      imagem3: getImageUrl(product.imagem3),
+      imagem4: getImageUrl(product.imagem4),
     });
 
     setModal('edit');
@@ -252,213 +526,301 @@ export default function ProdutosPage() {
   };
 
   /* ===================================================
-     FORM
+     SUBMIT
   =================================================== */
 
-  const handleFormChange = (event) => {
-    const {
-      name,
-      value,
-    } = event.target;
-
-    setForm((previous) => ({
-      ...previous,
-      [name]: value,
-    }));
-  };
-
-  /* ===================================================
-     CRIAR / EDITAR
-  =================================================== */
-
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const name =
-      form.name.trim();
-
-    const description =
-      form.description.trim();
-
-    const category =
-      form.category.trim();
-
-    const price =
-      Number(form.price);
-
-    const stock =
-      Number(form.stock);
-
-    if (!name) {
+    if (submitting) {
       return;
     }
 
-    if (!category) {
-      return;
-    }
+    setSubmitting(true);
+    setError('');
+    setSuccessMessage('');
 
-    if (
-      !Number.isFinite(price) ||
-      price < 0
-    ) {
-      return;
-    }
+    try {
+      const formData = new FormData();
 
-    if (
-      !Number.isInteger(stock) ||
-      stock < 0
-    ) {
-      return;
-    }
-
-    /* ================================================
-       CREATE
-    ================================================ */
-
-    if (modal === 'create') {
-      const newProduct = {
-        id:
-          Math.max(
-            ...products.map(
-              (product) =>
-                product.id
-            ),
-            0
-          ) + 1,
-
-        name,
-
-        description,
-
-        category,
-
-        price,
-
-        stock,
-
-        status:
-          form.status,
-
-        image: null,
-      };
-
-      setProducts(
-        (previous) => [
-          ...previous,
-          newProduct,
-        ]
+      formData.append(
+        'sku',
+        form.sku.trim()
       );
 
-      setCurrentPage(1);
-    }
-
-    /* ================================================
-       EDIT
-    ================================================ */
-
-    if (
-      modal === 'edit' &&
-      selectedProduct
-    ) {
-      setProducts(
-        (previous) =>
-          previous.map(
-            (product) =>
-              product.id ===
-              selectedProduct.id
-                ? {
-                    ...product,
-                    name,
-                    description,
-                    category,
-                    price,
-                    stock,
-                    status:
-                      form.status,
-                    image: null,
-                  }
-                : product
-          )
+      formData.append(
+        'nome',
+        form.nome.trim()
       );
-    }
 
-    closeModal();
+      formData.append(
+        'nomeCombinacao',
+        form.nomeCombinacao.trim()
+      );
+
+      formData.append(
+        'descricao',
+        form.descricao.trim()
+      );
+
+      formData.append(
+        'genero',
+        form.genero
+      );
+
+      formData.append(
+        'preco',
+        String(Number(form.preco))
+      );
+
+      formData.append(
+        'idCategoria',
+        String(form.idCategoria)
+      );
+
+      formData.append(
+        'idSubcategoria',
+        String(form.idSubcategoria)
+      );
+
+      formData.append(
+        'idCor',
+        String(form.idCor)
+      );
+
+      formData.append(
+        'idTamanho',
+        String(form.idTamanho)
+      );
+
+      formData.append(
+        'idModelo',
+        String(form.idModelo)
+      );
+
+      formData.append(
+        'estoque',
+        String(Number(form.estoque))
+      );
+
+      if (form.imagem1) {
+        formData.append(
+          'imagem1',
+          form.imagem1
+        );
+      }
+
+      if (form.imagem2) {
+        formData.append(
+          'imagem2',
+          form.imagem2
+        );
+      }
+
+      if (form.imagem3) {
+        formData.append(
+          'imagem3',
+          form.imagem3
+        );
+      }
+
+      if (form.imagem4) {
+        formData.append(
+          'imagem4',
+          form.imagem4
+        );
+      }
+
+      const isEdit = modal === 'edit';
+
+      const url = isEdit
+        ? `${API_URL}/produtos/${selectedProduct.idProduto}`
+        : `${API_URL}/produtos`;
+
+      const response = await fetch(url, {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: {
+          ...getHeaders(),
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.sucesso) {
+        throw new Error(
+          data.erro ||
+            data.mensagem ||
+            'Não foi possível salvar o produto.'
+        );
+      }
+
+      setSuccessMessage(
+        isEdit
+          ? 'Produto atualizado com sucesso.'
+          : 'Produto cadastrado com sucesso.'
+      );
+
+      closeModal();
+
+      await carregarProdutos();
+
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 4000);
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        err.message ||
+          'Não foi possível salvar o produto.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   /* ===================================================
-     EXCLUIR
+     DELETE
   =================================================== */
 
-  const handleDelete = () => {
-    if (!selectedProduct) {
+  const handleDelete = async () => {
+    if (!selectedProduct || submitting) {
       return;
     }
 
-    setProducts(
-      (previous) =>
-        previous.filter(
-          (product) =>
-            product.id !==
-            selectedProduct.id
-        )
-    );
+    setSubmitting(true);
+    setError('');
 
-    closeModal();
+    try {
+      const response = await fetch(
+        `${API_URL}/produtos/${selectedProduct.idProduto}`,
+        {
+          method: 'DELETE',
+          headers: {
+            ...getHeaders(),
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.sucesso) {
+        throw new Error(
+          data.erro ||
+            data.mensagem ||
+            'Não foi possível desativar o produto.'
+        );
+      }
+
+      closeModal();
+
+      await carregarProdutos();
+
+      setSuccessMessage(
+        'Produto desativado com sucesso.'
+      );
+
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 4000);
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        err.message ||
+          'Não foi possível desativar o produto.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   /* ===================================================
-     BUSCA
+     RESET FILTROS
   =================================================== */
 
-  const handleSearch = (event) => {
-    setSearch(
-      event.target.value
-    );
+  const resetFilters = () => {
+    setSearch('');
+
+    setFilters({
+      genero: '',
+      idCategoria: '',
+      idSubcategoria: '',
+      idCor: '',
+      idTamanho: '',
+      idModelo: '',
+      precoMin: '',
+      precoMax: '',
+      emEstoque: '',
+      ordenarPor: 'recente',
+    });
 
     setCurrentPage(1);
   };
 
   /* ===================================================
-     PAGE
+     SUBCATEGORIAS FILTRADAS
+  =================================================== */
+
+  const availableSubcategories = useMemo(() => {
+    if (!filters.idCategoria) {
+      return subcategorias;
+    }
+
+    return subcategorias.filter((item) => {
+      const categoryId = getOptionId(
+        item,
+        [
+          'idCategoria',
+          'categoriaId',
+        ]
+      );
+
+      return (
+        String(categoryId) ===
+        String(filters.idCategoria)
+      );
+    });
+  }, [
+    subcategorias,
+    filters.idCategoria,
+  ]);
+
+  /* ===================================================
+     RENDER
   =================================================== */
 
   return (
     <>
       <main className="users-page">
-
         {/* =================================================
             HEADER
         ================================================= */}
 
         <section className="users-heading">
-
           <div>
-
             <span className="users-eyebrow">
               Catálogo
             </span>
 
-            <h1>
-              Produtos
-            </h1>
+            <h1>Produtos</h1>
 
             <p>
-              Gerencie os produtos disponíveis no catálogo.
+              Gerencie os produtos disponíveis no
+              catálogo.
             </p>
-
           </div>
 
           <div className="users-heading-actions">
-
             <button
               type="button"
               className="users-btn users-btn-secondary"
-              onClick={() => {
-                setSearch('');
-                setCurrentPage(1);
-              }}
+              onClick={carregarProdutos}
+              disabled={loading}
             >
               <i className="bi bi-arrow-clockwise" />
+
               Atualizar
             </button>
 
@@ -468,23 +830,57 @@ export default function ProdutosPage() {
               onClick={openCreateModal}
             >
               <i className="bi bi-plus-lg" />
+
               Novo produto
             </button>
-
           </div>
-
         </section>
+
+        {/* =================================================
+            ALERTAS
+        ================================================= */}
+
+        {error && (
+          <div className="products-alert error">
+            <i className="bi bi-exclamation-circle" />
+
+            <span>{error}</span>
+
+            <button
+              type="button"
+              onClick={() => setError('')}
+            >
+              <i className="bi bi-x" />
+            </button>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="products-alert success">
+            <i className="bi bi-check-circle" />
+
+            <span>{successMessage}</span>
+
+            <button
+              type="button"
+              onClick={() =>
+                setSuccessMessage('')
+              }
+            >
+              <i className="bi bi-x" />
+            </button>
+          </div>
+        )}
 
         {/* =================================================
             CARD
         ================================================= */}
 
         <section className="users-card">
+          {/* HEADER */}
 
           <div className="users-card-header">
-
             <div>
-
               <span className="users-card-label">
                 Gerenciamento
               </span>
@@ -492,19 +888,20 @@ export default function ProdutosPage() {
               <h2>
                 Produtos cadastrados
               </h2>
-
             </div>
 
             <div className="users-card-header-right">
-
               <div className="users-search">
-
                 <i className="bi bi-search" />
 
                 <input
                   type="text"
                   value={search}
-                  onChange={handleSearch}
+                  onChange={(event) => {
+                    setSearch(
+                      event.target.value
+                    );
+                  }}
                   placeholder="Buscar produto..."
                   aria-label="Buscar produto"
                 />
@@ -513,162 +910,555 @@ export default function ProdutosPage() {
                   <button
                     type="button"
                     className="users-search-clear"
-                    onClick={() => {
-                      setSearch('');
-                      setCurrentPage(1);
-                    }}
+                    onClick={() =>
+                      setSearch('')
+                    }
                     aria-label="Limpar busca"
                   >
                     <i className="bi bi-x" />
                   </button>
                 )}
-
               </div>
 
-            </div>
+              <button
+                type="button"
+                className="products-filter-toggle"
+                onClick={() =>
+                  setShowFilters(
+                    (previous) =>
+                      !previous
+                  )
+                }
+              >
+                <i className="bi bi-sliders" />
 
+                Filtros
+              </button>
+            </div>
           </div>
+
+          {/* =================================================
+              FILTROS
+          ================================================= */}
+
+          {showFilters && (
+            <div className="products-filters">
+              <div className="products-filter-grid">
+                {/* GÊNERO */}
+
+                <div className="products-filter-field">
+                  <label>Gênero</label>
+
+                  <select
+                    name="genero"
+                    value={filters.genero}
+                    onChange={
+                      handleFilterChange
+                    }
+                  >
+                    <option value="">
+                      Todos
+                    </option>
+
+                    <option value="Masculino">
+                      Masculino
+                    </option>
+
+                    <option value="Feminino">
+                      Feminino
+                    </option>
+
+                    <option value="Unissex">
+                      Unissex
+                    </option>
+                  </select>
+                </div>
+
+                {/* CATEGORIA */}
+
+                <div className="products-filter-field">
+                  <label>Categoria</label>
+
+                  <select
+                    name="idCategoria"
+                    value={
+                      filters.idCategoria
+                    }
+                    onChange={
+                      handleFilterChange
+                    }
+                  >
+                    <option value="">
+                      Todas
+                    </option>
+
+                    {categorias.map(
+                      (categoria) => {
+                        const id =
+                          getOptionId(
+                            categoria,
+                            [
+                              'idCategoria',
+                            ]
+                          );
+
+                        return (
+                          <option
+                            key={id}
+                            value={id}
+                          >
+                            {
+                              categoria.nomeCategoria
+                            }
+                          </option>
+                        );
+                      }
+                    )}
+                  </select>
+                </div>
+
+                {/* SUBCATEGORIA */}
+
+                <div className="products-filter-field">
+                  <label>
+                    Subcategoria
+                  </label>
+
+                  <select
+                    name="idSubcategoria"
+                    value={
+                      filters.idSubcategoria
+                    }
+                    onChange={
+                      handleFilterChange
+                    }
+                  >
+                    <option value="">
+                      Todas
+                    </option>
+
+                    {availableSubcategories.map(
+                      (subcategoria) => {
+                        const id =
+                          getOptionId(
+                            subcategoria,
+                            [
+                              'idSubcategoria',
+                            ]
+                          );
+
+                        return (
+                          <option
+                            key={id}
+                            value={id}
+                          >
+                            {
+                              subcategoria.nomeSubcategoria
+                            }
+                          </option>
+                        );
+                      }
+                    )}
+                  </select>
+                </div>
+
+                {/* COR */}
+
+                <div className="products-filter-field">
+                  <label>Cor</label>
+
+                  <select
+                    name="idCor"
+                    value={filters.idCor}
+                    onChange={
+                      handleFilterChange
+                    }
+                  >
+                    <option value="">
+                      Todas
+                    </option>
+
+                    {cores.map((cor) => {
+                      const id =
+                        getOptionId(cor, [
+                          'idCor',
+                        ]);
+
+                      return (
+                        <option
+                          key={id}
+                          value={id}
+                        >
+                          {cor.nomeCor}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                {/* TAMANHO */}
+
+                <div className="products-filter-field">
+                  <label>Tamanho</label>
+
+                  <select
+                    name="idTamanho"
+                    value={
+                      filters.idTamanho
+                    }
+                    onChange={
+                      handleFilterChange
+                    }
+                  >
+                    <option value="">
+                      Todos
+                    </option>
+
+                    {tamanhos.map(
+                      (tamanho) => {
+                        const id =
+                          getOptionId(
+                            tamanho,
+                            [
+                              'idTamanho',
+                            ]
+                          );
+
+                        return (
+                          <option
+                            key={id}
+                            value={id}
+                          >
+                            {
+                              tamanho.codigoTamanho
+                            }
+                          </option>
+                        );
+                      }
+                    )}
+                  </select>
+                </div>
+
+                {/* MODELO */}
+
+                <div className="products-filter-field">
+                  <label>Modelo</label>
+
+                  <select
+                    name="idModelo"
+                    value={
+                      filters.idModelo
+                    }
+                    onChange={
+                      handleFilterChange
+                    }
+                  >
+                    <option value="">
+                      Todos
+                    </option>
+
+                    {modelos.map(
+                      (modelo) => {
+                        const id =
+                          getOptionId(
+                            modelo,
+                            [
+                              'idModelo',
+                            ]
+                          );
+
+                        return (
+                          <option
+                            key={id}
+                            value={id}
+                          >
+                            {
+                              modelo.nomeModelo
+                            }
+                          </option>
+                        );
+                      }
+                    )}
+                  </select>
+                </div>
+
+                {/* PREÇO MIN */}
+
+                <div className="products-filter-field">
+                  <label>
+                    Preço mínimo
+                  </label>
+
+                  <input
+                    type="number"
+                    name="precoMin"
+                    value={
+                      filters.precoMin
+                    }
+                    onChange={
+                      handleFilterChange
+                    }
+                    min="0"
+                    step="0.01"
+                    placeholder="R$ 0,00"
+                  />
+                </div>
+
+                {/* PREÇO MAX */}
+
+                <div className="products-filter-field">
+                  <label>
+                    Preço máximo
+                  </label>
+
+                  <input
+                    type="number"
+                    name="precoMax"
+                    value={
+                      filters.precoMax
+                    }
+                    onChange={
+                      handleFilterChange
+                    }
+                    min="0"
+                    step="0.01"
+                    placeholder="R$ 999,99"
+                  />
+                </div>
+
+                {/* ESTOQUE */}
+
+                <div className="products-filter-field">
+                  <label>Estoque</label>
+
+                  <select
+                    name="emEstoque"
+                    value={
+                      filters.emEstoque
+                    }
+                    onChange={
+                      handleFilterChange
+                    }
+                  >
+                    <option value="">
+                      Todos
+                    </option>
+
+                    <option value="true">
+                      Em estoque
+                    </option>
+                  </select>
+                </div>
+
+                {/* ORDENAR */}
+
+                <div className="products-filter-field">
+                  <label>
+                    Ordenar por
+                  </label>
+
+                  <select
+                    name="ordenarPor"
+                    value={
+                      filters.ordenarPor
+                    }
+                    onChange={
+                      handleFilterChange
+                    }
+                  >
+                    <option value="recente">
+                      Mais recentes
+                    </option>
+
+                    <option value="antigo">
+                      Mais antigos
+                    </option>
+
+                    <option value="nome_asc">
+                      Nome A-Z
+                    </option>
+
+                    <option value="preco_asc">
+                      Menor preço
+                    </option>
+
+                    <option value="preco_desc">
+                      Maior preço
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="products-filter-footer">
+                <button
+                  type="button"
+                  className="products-filter-reset"
+                  onClick={resetFilters}
+                >
+                  <i className="bi bi-arrow-counterclockwise" />
+
+                  Limpar filtros
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* =================================================
               TABLE
           ================================================= */}
 
           <div className="table-responsive users-table-wrapper">
-
             <table className="table users-table align-middle">
-
               <thead>
-
                 <tr>
                   <th>Produto</th>
+
                   <th>Categoria</th>
+
                   <th>Preço</th>
+
                   <th>Estoque</th>
+
                   <th>Status</th>
+
                   <th>Ações</th>
                 </tr>
-
               </thead>
 
               <tbody>
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan="6"
+                      className="products-loading"
+                    >
+                      <div className="products-loading-content">
+                        <div className="spinner-border" />
 
-                {currentProducts.length > 0 ? (
+                        <span>
+                          Carregando produtos...
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : products.length > 0 ? (
+                  products.map((product) => {
+                    const image =
+                      getImageUrl(
+                        product.imagem1
+                      );
 
-                  currentProducts.map(
-                    (product) => (
-
+                    return (
                       <tr
-                        key={product.id}
+                        key={
+                          product.idProduto
+                        }
                       >
-
-                        {/* PRODUCT */}
+                        {/* PRODUTO */}
 
                         <td>
-
                           <div className="user-cell">
-
-                            <div className="user-avatar">
-                              <i className="bi bi-box-seam" />
+                            <div className="product-table-image">
+                              {image ? (
+                                <img
+                                  src={image}
+                                  alt={
+                                    product.nome
+                                  }
+                                />
+                              ) : (
+                                <i className="bi bi-box-seam" />
+                              )}
                             </div>
 
                             <div className="user-information">
-
                               <span className="user-name">
-                                {product.name}
+                                {
+                                  product.nome
+                                }
                               </span>
 
                               <span className="user-id">
-                                ID #{product.id}
+                                SKU:{' '}
+                                {
+                                  product.sku
+                                }
                               </span>
-
                             </div>
-
                           </div>
-
                         </td>
 
-                        {/* CATEGORY */}
+                        {/* CATEGORIA */}
 
                         <td>
+                          <div className="product-category-cell">
+                            <span className="user-type cliente">
+                              {
+                                product.categoriaNome ||
+                                'Sem categoria'
+                              }
+                            </span>
 
-                          <span className="user-type cliente">
-                            {product.category}
-                          </span>
-
+                            {product.subcategoriaNome && (
+                              <small>
+                                {
+                                  product.subcategoriaNome
+                                }
+                              </small>
+                            )}
+                          </div>
                         </td>
 
-                        {/* PRICE */}
+                        {/* PREÇO */}
 
                         <td>
-
-                          <strong
-                            style={{
-                              color:
-                                'var(--text-primary, #172033)',
-                              fontSize:
-                                '11px',
-                              fontWeight:
-                                600,
-                            }}
-                          >
+                          <strong className="product-price">
                             {formatPrice(
-                              product.price
+                              product.preco
                             )}
                           </strong>
-
                         </td>
 
-                        {/* STOCK */}
+                        {/* ESTOQUE */}
 
                         <td>
-
                           <span
-                            className={
-                              product.stock ===
-                              0
-                                ? 'user-status danger'
-                                : product.stock <=
-                                  10
-                                ? 'user-status warning'
-                                : 'user-status success'
-                            }
+                            className={`user-status ${getStockClass(
+                              product.estoque
+                            )}`}
                           >
-
                             <span />
 
-                            {product.stock ===
-                            0
+                            {Number(
+                              product.estoque
+                            ) <= 0
                               ? 'Sem estoque'
-                              : `${product.stock} un.`}
-
+                              : `${product.estoque} un.`}
                           </span>
-
                         </td>
 
                         {/* STATUS */}
 
                         <td>
-
                           <span
                             className={`user-status ${getStatusClass(
-                              product.status
+                              product.ativo
                             )}`}
                           >
-
                             <span />
 
-                            {product.status}
-
+                            {Number(
+                              product.ativo
+                            ) === 1
+                              ? 'Ativo'
+                              : 'Inativo'}
                           </span>
-
                         </td>
 
-                        {/* ACTIONS */}
+                        {/* AÇÕES */}
 
                         <td>
-
                           <div className="user-actions">
-
                             <button
                               type="button"
                               className="user-action edit"
@@ -679,6 +1469,7 @@ export default function ProdutosPage() {
                               }
                             >
                               <i className="bi bi-pencil" />
+
                               Editar
                             </button>
 
@@ -692,29 +1483,21 @@ export default function ProdutosPage() {
                               }
                             >
                               <i className="bi bi-trash" />
+
                               Excluir
                             </button>
-
                           </div>
-
                         </td>
-
                       </tr>
-
-                    )
-                  )
-
+                    );
+                  })
                 ) : (
-
                   <tr>
-
                     <td
                       colSpan="6"
                       className="users-empty"
                     >
-
                       <div className="users-empty-content">
-
                         <div className="users-empty-icon">
                           <i className="bi bi-box-seam" />
                         </div>
@@ -724,21 +1507,15 @@ export default function ProdutosPage() {
                         </strong>
 
                         <span>
-                          Tente buscar por outro produto.
+                          Tente alterar sua busca
+                          ou seus filtros.
                         </span>
-
                       </div>
-
                     </td>
-
                   </tr>
-
                 )}
-
               </tbody>
-
             </table>
-
           </div>
 
           {/* =================================================
@@ -746,44 +1523,32 @@ export default function ProdutosPage() {
           ================================================= */}
 
           <div className="users-table-footer">
-
             <span>
-
               Mostrando{' '}
-
               <strong>
-                {currentProducts.length}
+                {products.length}
               </strong>{' '}
-
               de{' '}
-
               <strong>
-                {filteredProducts.length}
+                {totalProducts}
               </strong>{' '}
-
               produtos
-
             </span>
 
             <nav aria-label="Paginação de produtos">
-
               <ul className="pagination users-pagination">
-
                 <li
                   className={`page-item ${
-                    safeCurrentPage ===
-                    1
+                    currentPage === 1
                       ? 'disabled'
                       : ''
                   }`}
                 >
-
                   <button
                     type="button"
                     className="page-link"
                     disabled={
-                      safeCurrentPage ===
-                      1
+                      currentPage === 1
                     }
                     onClick={() =>
                       setCurrentPage(
@@ -797,60 +1562,50 @@ export default function ProdutosPage() {
                   >
                     <i className="bi bi-chevron-left" />
                   </button>
-
                 </li>
 
                 {Array.from(
                   {
-                    length:
-                      totalPages,
+                    length: totalPages,
                   },
                   (_, index) =>
                     index + 1
-                ).map(
-                  (page) => (
-
-                    <li
-                      key={page}
-                      className={`page-item ${
-                        page ===
-                        safeCurrentPage
-                          ? 'active'
-                          : ''
-                      }`}
+                ).map((page) => (
+                  <li
+                    key={page}
+                    className={`page-item ${
+                      page === currentPage
+                        ? 'active'
+                        : ''
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      className="page-link"
+                      onClick={() =>
+                        setCurrentPage(
+                          page
+                        )
+                      }
                     >
-
-                      <button
-                        type="button"
-                        className="page-link"
-                        onClick={() =>
-                          setCurrentPage(
-                            page
-                          )
-                        }
-                      >
-                        {page}
-                      </button>
-
-                    </li>
-
-                  )
-                )}
+                      {page}
+                    </button>
+                  </li>
+                ))}
 
                 <li
                   className={`page-item ${
-                    safeCurrentPage ===
+                    currentPage ===
                     totalPages
                       ? 'disabled'
                       : ''
                   }`}
                 >
-
                   <button
                     type="button"
                     className="page-link"
                     disabled={
-                      safeCurrentPage ===
+                      currentPage ===
                       totalPages
                     }
                     onClick={() =>
@@ -865,17 +1620,11 @@ export default function ProdutosPage() {
                   >
                     <i className="bi bi-chevron-right" />
                   </button>
-
                 </li>
-
               </ul>
-
             </nav>
-
           </div>
-
         </section>
-
       </main>
 
       {/* ===================================================
@@ -884,7 +1633,6 @@ export default function ProdutosPage() {
 
       {(modal === 'create' ||
         modal === 'edit') && (
-
         <div
           className="users-modal-backdrop"
           onMouseDown={(event) => {
@@ -896,36 +1644,27 @@ export default function ProdutosPage() {
             }
           }}
         >
-
           <div
-            className="users-modal"
+            className="users-modal products-modal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="product-modal-title"
           >
-
             {/* HEADER */}
 
             <div className="users-modal-header">
-
               <div>
-
                 <span className="users-modal-label">
-
                   {modal === 'create'
                     ? 'Novo produto'
                     : 'Gerenciamento'}
-
                 </span>
 
                 <h2 id="product-modal-title">
-
                   {modal === 'create'
                     ? 'Criar produto'
                     : 'Editar produto'}
-
                 </h2>
-
               </div>
 
               <button
@@ -936,137 +1675,518 @@ export default function ProdutosPage() {
               >
                 <i className="bi bi-x-lg" />
               </button>
-
             </div>
 
-            <form
-              onSubmit={handleSubmit}
-            >
-
+            <form onSubmit={handleSubmit}>
               <div className="users-modal-body">
-
                 {/* =================================================
-                    IMAGE PLACEHOLDER
+                    IMAGENS
                 ================================================= */}
 
-                <div
-                  style={{
-                    width: '72px',
-                    height: '72px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '18px',
-                    borderRadius: '12px',
-                    background: '#eef4ff',
-                    color:
-                      'var(--primary-blue, #2563eb)',
-                    fontSize: '22px',
-                  }}
-                >
-                  <i className="bi bi-box-seam" />
+                <div className="products-image-section">
+                  <div className="products-image-header">
+                    <div>
+                      <span>
+                        Galeria
+                      </span>
+
+                      <strong>
+                        Imagens do produto
+                      </strong>
+                    </div>
+
+                    <small>
+                      Até 4 imagens
+                    </small>
+                  </div>
+
+                  <div className="products-image-grid">
+                    {[
+                      'imagem1',
+                      'imagem2',
+                      'imagem3',
+                      'imagem4',
+                    ].map(
+                      (
+                        imageName,
+                        index
+                      ) => (
+                        <label
+                          key={imageName}
+                          className={`product-image-upload ${
+                            index === 0
+                              ? 'main'
+                              : ''
+                          }`}
+                        >
+                          {imagePreviews[
+                            imageName
+                          ] ? (
+                            <img
+                              src={
+                                imagePreviews[
+                                  imageName
+                                ]
+                              }
+                              alt={`Imagem ${
+                                index + 1
+                              }`}
+                            />
+                          ) : (
+                            <>
+                              <i className="bi bi-image" />
+
+                              <span>
+                                {index ===
+                                0
+                                  ? 'Principal'
+                                  : `Imagem ${
+                                      index + 1
+                                    }`}
+                              </span>
+                            </>
+                          )}
+
+                          <input
+                            type="file"
+                            name={
+                              imageName
+                            }
+                            accept="image/*"
+                            onChange={
+                              handleImageChange
+                            }
+                          />
+
+                          <div className="product-image-overlay">
+                            <i className="bi bi-camera" />
+                          </div>
+                        </label>
+                      )
+                    )}
+                  </div>
                 </div>
 
-                <div className="user-form-grid">
+                {/* =================================================
+                    CAMPOS
+                ================================================= */}
 
-                  {/* NAME */}
+                <div className="user-form-grid">
+                  {/* SKU */}
 
                   <div className="user-form-field">
+                    <label htmlFor="product-sku">
+                      SKU
+                    </label>
 
+                    <div className="user-input-wrapper">
+                      <i className="bi bi-upc-scan" />
+
+                      <input
+                        id="product-sku"
+                        name="sku"
+                        type="text"
+                        value={
+                          form.sku
+                        }
+                        onChange={
+                          handleFormChange
+                        }
+                        placeholder="Ex.: CAM-001"
+                        maxLength={100}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* NOME */}
+
+                  <div className="user-form-field">
                     <label htmlFor="product-name">
                       Produto
                     </label>
 
                     <div className="user-input-wrapper">
-
                       <i className="bi bi-box-seam" />
 
                       <input
                         id="product-name"
-                        name="name"
+                        name="nome"
                         type="text"
                         value={
-                          form.name
+                          form.nome
                         }
                         onChange={
                           handleFormChange
                         }
                         placeholder="Ex.: Essential Premium"
-                        maxLength={100}
+                        maxLength={255}
                         required
                       />
-
                     </div>
-
                   </div>
 
-                  {/* CATEGORY */}
+                  {/* COMBINAÇÃO */}
 
                   <div className="user-form-field">
-
-                    <label htmlFor="product-category">
-                      Categoria
+                    <label htmlFor="product-combination">
+                      Nome da combinação
                     </label>
 
                     <div className="user-input-wrapper">
+                      <i className="bi bi-layers" />
 
-                      <i className="bi bi-grid" />
+                      <input
+                        id="product-combination"
+                        name="nomeCombinacao"
+                        type="text"
+                        value={
+                          form.nomeCombinacao
+                        }
+                        onChange={
+                          handleFormChange
+                        }
+                        placeholder="Ex.: Essential Premium Preto M"
+                        maxLength={255}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* GÊNERO */}
+
+                  <div className="user-form-field">
+                    <label htmlFor="product-gender">
+                      Gênero
+                    </label>
+
+                    <div className="user-input-wrapper">
+                      <i className="bi bi-person" />
 
                       <select
-                        id="product-category"
-                        name="category"
+                        id="product-gender"
+                        name="genero"
                         value={
-                          form.category
+                          form.genero
                         }
                         onChange={
                           handleFormChange
                         }
                       >
-
-                        <option value="Camisetas">
-                          Camisetas
+                        <option value="Unissex">
+                          Unissex
                         </option>
 
-                        <option value="Camisas">
-                          Camisas
+                        <option value="Masculino">
+                          Masculino
                         </option>
 
-                        <option value="Calças">
-                          Calças
+                        <option value="Feminino">
+                          Feminino
                         </option>
-
-                        <option value="Moletons">
-                          Moletons
-                        </option>
-
-                        <option value="Acessórios">
-                          Acessórios
-                        </option>
-
                       </select>
-
                     </div>
-
                   </div>
 
-                  {/* PRICE */}
+                  {/* CATEGORIA */}
 
                   <div className="user-form-field">
+                    <label htmlFor="product-category">
+                      Categoria
+                    </label>
 
+                    <div className="user-input-wrapper">
+                      <i className="bi bi-grid" />
+
+                      <select
+                        id="product-category"
+                        name="idCategoria"
+                        value={
+                          form.idCategoria
+                        }
+                        onChange={
+                          handleFormChange
+                        }
+                        required
+                      >
+                        <option value="">
+                          Selecionar categoria
+                        </option>
+
+                        {categorias.map(
+                          (
+                            categoria
+                          ) => {
+                            const id =
+                              getOptionId(
+                                categoria,
+                                [
+                                  'idCategoria',
+                                ]
+                              );
+
+                            return (
+                              <option
+                                key={
+                                  id
+                                }
+                                value={
+                                  id
+                                }
+                              >
+                                {
+                                  categoria.nomeCategoria
+                                }
+                              </option>
+                            );
+                          }
+                        )}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* SUBCATEGORIA */}
+
+                  <div className="user-form-field">
+                    <label htmlFor="product-subcategory">
+                      Subcategoria
+                    </label>
+
+                    <div className="user-input-wrapper">
+                      <i className="bi bi-diagram-3" />
+
+                      <select
+                        id="product-subcategory"
+                        name="idSubcategoria"
+                        value={
+                          form.idSubcategoria
+                        }
+                        onChange={
+                          handleFormChange
+                        }
+                        required
+                      >
+                        <option value="">
+                          Selecionar subcategoria
+                        </option>
+
+                        {subcategorias.map(
+                          (
+                            subcategoria
+                          ) => {
+                            const id =
+                              getOptionId(
+                                subcategoria,
+                                [
+                                  'idSubcategoria',
+                                ]
+                              );
+
+                            return (
+                              <option
+                                key={
+                                  id
+                                }
+                                value={
+                                  id
+                                }
+                              >
+                                {
+                                  subcategoria.nomeSubcategoria
+                                }
+                              </option>
+                            );
+                          }
+                        )}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* COR */}
+
+                  <div className="user-form-field">
+                    <label htmlFor="product-color">
+                      Cor
+                    </label>
+
+                    <div className="user-input-wrapper">
+                      <i className="bi bi-palette" />
+
+                      <select
+                        id="product-color"
+                        name="idCor"
+                        value={
+                          form.idCor
+                        }
+                        onChange={
+                          handleFormChange
+                        }
+                        required
+                      >
+                        <option value="">
+                          Selecionar cor
+                        </option>
+
+                        {cores.map(
+                          (cor) => {
+                            const id =
+                              getOptionId(
+                                cor,
+                                [
+                                  'idCor',
+                                ]
+                              );
+
+                            return (
+                              <option
+                                key={
+                                  id
+                                }
+                                value={
+                                  id
+                                }
+                              >
+                                {
+                                  cor.nomeCor
+                                }
+                              </option>
+                            );
+                          }
+                        )}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* TAMANHO */}
+
+                  <div className="user-form-field">
+                    <label htmlFor="product-size">
+                      Tamanho
+                    </label>
+
+                    <div className="user-input-wrapper">
+                      <i className="bi bi-rulers" />
+
+                      <select
+                        id="product-size"
+                        name="idTamanho"
+                        value={
+                          form.idTamanho
+                        }
+                        onChange={
+                          handleFormChange
+                        }
+                        required
+                      >
+                        <option value="">
+                          Selecionar tamanho
+                        </option>
+
+                        {tamanhos.map(
+                          (
+                            tamanho
+                          ) => {
+                            const id =
+                              getOptionId(
+                                tamanho,
+                                [
+                                  'idTamanho',
+                                ]
+                              );
+
+                            return (
+                              <option
+                                key={
+                                  id
+                                }
+                                value={
+                                  id
+                                }
+                              >
+                                {
+                                  tamanho.codigoTamanho
+                                }
+                              </option>
+                            );
+                          }
+                        )}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* MODELO */}
+
+                  <div className="user-form-field">
+                    <label htmlFor="product-model">
+                      Modelo
+                    </label>
+
+                    <div className="user-input-wrapper">
+                      <i className="bi bi-bounding-box" />
+
+                      <select
+                        id="product-model"
+                        name="idModelo"
+                        value={
+                          form.idModelo
+                        }
+                        onChange={
+                          handleFormChange
+                        }
+                        required
+                      >
+                        <option value="">
+                          Selecionar modelo
+                        </option>
+
+                        {modelos.map(
+                          (
+                            modelo
+                          ) => {
+                            const id =
+                              getOptionId(
+                                modelo,
+                                [
+                                  'idModelo',
+                                ]
+                              );
+
+                            return (
+                              <option
+                                key={
+                                  id
+                                }
+                                value={
+                                  id
+                                }
+                              >
+                                {
+                                  modelo.nomeModelo
+                                }
+                              </option>
+                            );
+                          }
+                        )}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* PREÇO */}
+
+                  <div className="user-form-field">
                     <label htmlFor="product-price">
                       Preço
                     </label>
 
                     <div className="user-input-wrapper">
-
                       <i className="bi bi-currency-dollar" />
 
                       <input
                         id="product-price"
-                        name="price"
+                        name="preco"
                         type="number"
                         value={
-                          form.price
+                          form.preco
                         }
                         onChange={
                           handleFormChange
@@ -1076,29 +2196,25 @@ export default function ProdutosPage() {
                         step="0.01"
                         required
                       />
-
                     </div>
-
                   </div>
 
-                  {/* STOCK */}
+                  {/* ESTOQUE */}
 
                   <div className="user-form-field">
-
                     <label htmlFor="product-stock">
                       Estoque
                     </label>
 
                     <div className="user-input-wrapper">
-
                       <i className="bi bi-boxes" />
 
                       <input
                         id="product-stock"
-                        name="stock"
+                        name="estoque"
                         type="number"
                         value={
-                          form.stock
+                          form.estoque
                         }
                         onChange={
                           handleFormChange
@@ -1108,116 +2224,45 @@ export default function ProdutosPage() {
                         step="1"
                         required
                       />
-
                     </div>
-
                   </div>
 
-                  {/* STATUS */}
-
-                  <div className="user-form-field">
-
-                    <label htmlFor="product-status">
-                      Status
-                    </label>
-
-                    <div className="user-input-wrapper">
-
-                      <i className="bi bi-circle-half" />
-
-                      <select
-                        id="product-status"
-                        name="status"
-                        value={
-                          form.status
-                        }
-                        onChange={
-                          handleFormChange
-                        }
-                      >
-
-                        <option value="Ativo">
-                          Ativo
-                        </option>
-
-                        <option value="Inativo">
-                          Inativo
-                        </option>
-
-                      </select>
-
-                    </div>
-
-                  </div>
-
-                  {/* IMAGE */}
-
-                  <div className="user-form-field">
-
-                    <label htmlFor="product-image">
-                      Imagem
-                    </label>
-
-                    <div className="user-input-wrapper">
-
-                      <i className="bi bi-image" />
-
-                      <input
-                        id="product-image"
-                        name="image"
-                        type="text"
-                        value=""
-                        placeholder="Adicionar imagem depois"
-                        disabled
-                        readOnly
-                      />
-
-                    </div>
-
-                  </div>
-
-                  {/* DESCRIPTION */}
+                  {/* DESCRIÇÃO */}
 
                   <div className="user-form-field full">
-
                     <label htmlFor="product-description">
                       Descrição
                     </label>
 
                     <div className="user-input-wrapper textarea-wrapper">
-
                       <i className="bi bi-card-text" />
 
                       <textarea
                         id="product-description"
-                        name="description"
+                        name="descricao"
                         value={
-                          form.description
+                          form.descricao
                         }
                         onChange={
                           handleFormChange
                         }
                         placeholder="Descreva este produto..."
-                        rows={4}
-                        maxLength={255}
+                        rows={5}
+                        required
                       />
-
                     </div>
-
                   </div>
-
                 </div>
-
               </div>
 
               {/* FOOTER */}
 
               <div className="users-modal-footer">
-
                 <button
                   type="button"
                   className="users-modal-btn secondary"
                   onClick={closeModal}
+                  disabled={submitting}
                 >
                   Cancelar
                 </button>
@@ -1225,30 +2270,36 @@ export default function ProdutosPage() {
                 <button
                   type="submit"
                   className="users-modal-btn primary"
+                  disabled={submitting}
                 >
+                  {submitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm" />
 
-                  <i
-                    className={
-                      modal === 'create'
-                        ? 'bi bi-plus-lg'
-                        : 'bi bi-check-lg'
-                    }
-                  />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <i
+                        className={
+                          modal ===
+                          'create'
+                            ? 'bi bi-plus-lg'
+                            : 'bi bi-check-lg'
+                        }
+                      />
 
-                  {modal === 'create'
-                    ? 'Criar produto'
-                    : 'Salvar alterações'}
-
+                      {modal ===
+                      'create'
+                        ? 'Criar produto'
+                        : 'Salvar alterações'}
+                    </>
+                  )}
                 </button>
-
               </div>
-
             </form>
-
           </div>
-
         </div>
-
       )}
 
       {/* ===================================================
@@ -1257,7 +2308,6 @@ export default function ProdutosPage() {
 
       {modal === 'delete' &&
         selectedProduct && (
-
           <div
             className="users-modal-backdrop"
             onMouseDown={(event) => {
@@ -1269,16 +2319,13 @@ export default function ProdutosPage() {
               }
             }}
           >
-
             <div
               className="users-modal users-delete-modal"
               role="dialog"
               aria-modal="true"
               aria-labelledby="delete-product-title"
             >
-
               <div className="users-delete-content">
-
                 <div className="users-delete-icon">
                   <i className="bi bi-trash3" />
                 </div>
@@ -1288,31 +2335,28 @@ export default function ProdutosPage() {
                 </span>
 
                 <h2 id="delete-product-title">
-                  Excluir produto?
+                  Desativar produto?
                 </h2>
 
                 <p>
-
-                  Você está prestes a excluir o
-                  produto{' '}
-
+                  Você está prestes a
+                  desativar o produto{' '}
                   <strong>
-                    {selectedProduct.name}
+                    {
+                      selectedProduct.nome
+                    }
                   </strong>
-
-                  . Essa ação não poderá ser
-                  desfeita.
-
+                  . Ele deixará de aparecer
+                  no catálogo ativo.
                 </p>
-
               </div>
 
               <div className="users-modal-footer">
-
                 <button
                   type="button"
                   className="users-modal-btn secondary"
                   onClick={closeModal}
+                  disabled={submitting}
                 >
                   Cancelar
                 </button>
@@ -1320,20 +2364,29 @@ export default function ProdutosPage() {
                 <button
                   type="button"
                   className="users-modal-btn danger"
-                  onClick={handleDelete}
+                  onClick={
+                    handleDelete
+                  }
+                  disabled={submitting}
                 >
-                  <i className="bi bi-trash" />
-                  Excluir produto
+                  {submitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm" />
+
+                      Desativando...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-trash" />
+
+                      Desativar produto
+                    </>
+                  )}
                 </button>
-
               </div>
-
             </div>
-
           </div>
-
         )}
-
     </>
   );
-}   
+}
