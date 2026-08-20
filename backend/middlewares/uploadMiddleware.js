@@ -51,7 +51,7 @@ const isImage = (mimetype) => {
 const fileFilterImagens = (req, file, cb) => {
     const tiposPermitidos = process.env.ALLOWED_FILE_TYPES ? 
         process.env.ALLOWED_FILE_TYPES.split(',').map(t => t.trim()) : 
-        ['image/jpeg', 'image/png', 'image/gif'];
+        ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     
     if (tiposPermitidos.includes(file.mimetype)) {
         cb(null, true);

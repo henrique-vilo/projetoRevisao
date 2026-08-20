@@ -1,17 +1,8 @@
 import express from 'express';
 import ProdutoController from '../controllers/produtoController.js';
 import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
-import { upload } from '../middlewares/uploadMiddleware.js'; 
 
 const router = express.Router();
-
-// Configuração para múltiplos arquivos de imagens do produto
-const cpUpload = upload.fields([
-    { name: 'imagem1', maxCount: 1 },
-    { name: 'imagem2', maxCount: 1 },
-    { name: 'imagem3', maxCount: 1 },
-    { name: 'imagem4', maxCount: 1 }
-]);
 
 // ------------------------------------------
 // Rotas Públicas (Filtro e Busca sem exigência de Login)
@@ -22,8 +13,8 @@ router.get('/:id', ProdutoController.buscarPorId);
 // ------------------------------------------
 // Rotas de Administração (Protegidas)
 // ------------------------------------------
-router.post('/', authMiddleware, adminMiddleware, cpUpload, ProdutoController.criar);
-router.put('/:id', authMiddleware, adminMiddleware, cpUpload, ProdutoController.atualizar);
+router.post('/', authMiddleware, adminMiddleware, ProdutoController.criar);
+router.put('/:id', authMiddleware, adminMiddleware, ProdutoController.atualizar);
 router.delete('/:id', authMiddleware, adminMiddleware, ProdutoController.excluir);
 
 // ------------------------------------------
