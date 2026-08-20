@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get('/', authMiddleware, adminMiddleware, SuporteController.listarTodos);
 router.get('/meus', authMiddleware, SuporteController.listarMeus);
-router.post('/', authMiddleware, SuporteController.criar);
+router.post('/' , SuporteController.criar);
 router.put('/:idSuporte/responder', authMiddleware, adminMiddleware, SuporteController.responder);
 router.put('/:idSuporte/status', authMiddleware, adminMiddleware, SuporteController.atualizarStatus);
 

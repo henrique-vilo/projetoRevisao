@@ -15,6 +15,7 @@ import subcategoriaRotas from './routes/subcategoriaRotas.js';
 import corRotas from './routes/corRotas.js';
 import tamanhoRotas from './routes/tamanhoRotas.js';
 import modeloRotas from './routes/modeloRotas.js';
+import suporteRotas from './routes/suporteRotas.js'
 
 //importar middlewares
 import { logMiddleware } from './middlewares/logMiddleware.js';
@@ -63,6 +64,7 @@ app.use('/api/subcategorias', subcategoriaRotas);
 app.use('/api/cores', corRotas);
 app.use('/api/tamanhos', tamanhoRotas);
 app.use('/api/modelos', modeloRotas);
+app.use('/api/suporte', suporteRotas);
 
 //rota raiz
 app.get('/', (req, res) => {
