@@ -179,7 +179,7 @@ class AuthController {
                 })
             }
 
-            const telRegex = /^\(?[1-9]{2}\)?\s?[9]?[0-9]{4}-?[0-9]{4}$/;
+            const telRegex = /^\(\d{2}\)\s\d{5}-\d{4}$/;
 
             if (!telRegex.test(telefone)) {
                 return res.status(400).json({
@@ -251,7 +251,7 @@ class AuthController {
                 telefone: telefone.trim(),
                 cep: cep.trim(),
                 senha: senha.toString().trim(),
-                tipo: tipo || 'comum'
+                tipo: 'cliente'
             };
 
             // Criar usuário
@@ -495,7 +495,7 @@ class AuthController {
                 })
             }
 
-            const telRegex = /^\(?[1-9]{2}\)?\s?[9]?[0-9]{4}-?[0-9]{4}$/;
+            const telRegex = /^\(\d{2}\)\s\d{5}-\d{4}$/;
 
             if (!telRegex.test(telefone)) {
                 return res.status(400).json({
@@ -567,7 +567,7 @@ class AuthController {
                 telefone: telefone.trim(),
                 cep: cep.trim(),
                 senha: senha,
-                tipo: tipo || 'comum'
+                tipo: tipo || 'cliente'
             };
 
             // Criar usuário
@@ -705,7 +705,7 @@ class AuthController {
                     })
                 }
 
-                const telRegex = /^\(?[1-9]{2}\)?\s?[9]?[0-9]{4}-?[0-9]{4}$/;
+                const telRegex = /^\(\d{2}\)\s\d{5}-\d{4}$/;
 
                 if (!telRegex.test(telefone)) {
                     return res.status(400).json({
@@ -753,7 +753,17 @@ class AuthController {
             }
 
             if (tipo !== undefined) {
-                dadosAtualizacao.tipo = tipo;
+                const tiposPermitidos = ['comum', 'admin'];
+                const tipoFormatado = tipo.toLowerCase();
+                
+                if (!tiposPermitidos.includes(tipoFormatado)) {
+                    return res.status(400).json({
+                        sucesso: false,
+                        erro: 'Tipo inválido',
+                        mensagem: `O tipo deve ser: ${tiposPermitidos.join(', ')}`
+                    });
+                }
+                dadosAtualizacao.tipo = tipoFormatado;
             }
 
             // Verificar se há dados para atualizar

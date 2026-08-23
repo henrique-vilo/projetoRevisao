@@ -11,12 +11,11 @@ FOREIGN KEY (idUsuario)
 REFERENCES usuarios(idUsuario) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-ALTER TABLE suporte(
+ALTER TABLE suporte
     ADD COLUMN respostaAdmin TEXT,
-    ADD COLUMN INT NULL AFTER respostaAdmin,
-    ADD CONSTRAINT fkSuporteAdminResposta
-    FOREIGN KEY (idAdminResposta)
+    ADD COLUMN idAdminResposta INT NULL AFTER respostaAdmin,
+    ADD CONSTRAINT fkSuporteAdminResposta 
+    FOREIGN KEY (idAdminResposta) 
     REFERENCES usuarios(idUsuario)
     ON UPDATE CASCADE
     ON DELETE SET NULL;
-)

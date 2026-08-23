@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 export default function Cadastro() {
+  const router = useRouter();
+  
   const [form, setForm] = useState({
     nome: "",
     cpf: "",
@@ -15,6 +18,7 @@ export default function Cadastro() {
     senha: "",
     confirmarSenha: "",
     termos: false,
+    privacidade: false,
   });
 
   const [erro, setErro] = useState("");
@@ -167,7 +171,11 @@ export default function Cadastro() {
     }
 
     if (!form.termos) {
-      return "Você precisa aceitar os termos para continuar.";
+      return "Você precisa aceitar os termos de uso para continuar.";
+    }
+    
+    if (!form.privacidade) {
+      return "Você precisa aceitar os termos de privacidade para continuar.";
     }
 
     return null;
@@ -208,7 +216,6 @@ export default function Cadastro() {
       try {
         dados = await resposta.json();
       } catch (e) {
-        // Trata respostas que não vem em JSON (como páginas de erro 500/404 em HTML)
       }
 
       if (!resposta.ok) {
@@ -221,7 +228,7 @@ export default function Cadastro() {
       }
 
       setSucesso(
-        dados?.mensagem || "Usuário criado com sucesso!"
+        dados?.mensagem || "Usuário criado com sucesso! Redirecionando..."
       );
 
       setForm({
@@ -233,10 +240,14 @@ export default function Cadastro() {
         senha: "",
         confirmarSenha: "",
         termos: false,
+        privacidade: false,
       });
-    } catch (error) {
-      console.error("Erro ao cadastrar usuário:", error);
 
+      setTimeout(() => {
+        router.push('/login');
+      }, 1500);
+
+    } catch (error) {
       setErro(
         "Não foi possível conectar ao servidor. Verifique sua conexão e se o backend está online."
       );
@@ -247,6 +258,11 @@ export default function Cadastro() {
 
   return (
     <main className="min-vh-100 d-flex align-items-center py-5 bg-light">
+      <style>{`
+        input::placeholder {
+          opacity: 0.5 !important;
+        }
+      `}</style>
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-12 col-md-10 col-lg-8 col-xl-7">
@@ -272,7 +288,7 @@ export default function Cadastro() {
                     className="alert alert-danger d-flex align-items-center"
                     role="alert"
                   >
-                    <span className="me-2">⚠</span>
+                    <span className="me-2">Erro:</span>
                     <div>{erro}</div>
                   </div>
                 )}
@@ -289,7 +305,6 @@ export default function Cadastro() {
 
                 <form onSubmit={handleSubmit} noValidate>
                   <div className="row g-3">
-                    {/* Nome */}
                     <div className="col-12">
                       <label
                         htmlFor="nome"
@@ -312,7 +327,6 @@ export default function Cadastro() {
                       />
                     </div>
 
-                    {/* CPF */}
                     <div className="col-12 col-md-6">
                       <label
                         htmlFor="cpf"
@@ -335,7 +349,6 @@ export default function Cadastro() {
                       />
                     </div>
 
-                    {/* CEP */}
                     <div className="col-12 col-md-6">
                       <label
                         htmlFor="cep"
@@ -358,7 +371,6 @@ export default function Cadastro() {
                       />
                     </div>
 
-                    {/* E-mail */}
                     <div className="col-12">
                       <label
                         htmlFor="email"
@@ -380,7 +392,6 @@ export default function Cadastro() {
                       />
                     </div>
 
-                    {/* Telefone */}
                     <div className="col-12">
                       <label
                         htmlFor="telefone"
@@ -403,7 +414,6 @@ export default function Cadastro() {
                       />
                     </div>
 
-                    {/* Senha */}
                     <div className="col-12 col-md-6">
                       <label
                         htmlFor="senha"
@@ -426,7 +436,6 @@ export default function Cadastro() {
                       />
                     </div>
 
-                    {/* Confirmar senha */}
                     <div className="col-12 col-md-6">
                       <label
                         htmlFor="confirmarSenha"
@@ -449,7 +458,6 @@ export default function Cadastro() {
                       />
                     </div>
 
-                    {/* Termos */}
                     <div className="col-12 mt-3">
                       <div className="form-check">
                         <input
@@ -467,18 +475,47 @@ export default function Cadastro() {
                           className="form-check-label text-secondary"
                         >
                           Eu li e aceito os{" "}
-                          <Link
-                            href="/termos"
+                          <a
+                            href="/documentos/termos-de-uso.pdf"
+                            target="_blank"
                             className="text-primary fw-semibold text-decoration-none"
                           >
                             termos de uso
-                          </Link>
+                          </a>
                           .
                         </label>
                       </div>
                     </div>
 
-                    {/* Botão */}
+                    <div className="col-12 mt-2">
+                      <div className="form-check">
+                        <input
+                          type="checkbox"
+                          id="privacidade"
+                          name="privacidade"
+                          checked={form.privacidade}
+                          onChange={handleChange}
+                          className="form-check-input"
+                          required
+                        />
+
+                        <label
+                          htmlFor="privacidade"
+                          className="form-check-label text-secondary"
+                        >
+                          Eu li e aceito os{" "}
+                          <a
+                            href="/documentos/politica-de-privacidade.pdf"
+                            target="_blank"
+                            className="text-primary fw-semibold text-decoration-none"
+                          >
+                            termos de privacidade
+                          </a>
+                          .
+                        </label>
+                      </div>
+                    </div>
+
                     <div className="col-12 mt-4">
                       <button
                         type="submit"
@@ -499,7 +536,6 @@ export default function Cadastro() {
                       </button>
                     </div>
 
-                    {/* Login */}
                     <div className="col-12 text-center mt-3">
                       <span className="text-secondary">
                         Já possui uma conta?{" "}
@@ -516,10 +552,6 @@ export default function Cadastro() {
                 </form>
               </div>
             </div>
-
-            <p className="text-center text-secondary small mt-4 mb-0">
-              Seus dados serão enviados com segurança para nossa API.
-            </p>
           </div>
         </div>
       </div>
