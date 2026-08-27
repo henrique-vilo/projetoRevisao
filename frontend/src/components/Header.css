@@ -1,11 +1,18 @@
+/* =========================================
+   BUSCA
+========================================= */
+
 .search-form {
-  width: fit-content;
+  flex: 1;
+  display: flex;
+  min-width: 160px;
+  margin-left: 40px;
 }
 
 .search-box {
   position: relative;
-  margin-right: 1350px;
-  width: 160px; /* largura inicial */
+  width: 140px;
+  transition: width 0.35s ease;
 }
 
 .search-icon {
@@ -15,14 +22,15 @@
   transform: translateY(-50%);
   color: #00a9d4;
   pointer-events: none;
+  z-index: 2;
 }
 
 .search-input {
   width: 100%;
   padding-left: 38px;
   border-radius: 25px;
-  transition: width .35s ease;
-  transform-origin: left center; /* ancora na esquerda */
+  transition: width 0.35s ease;
+  transform-origin: left center;
 }
 
 .search-input:focus,
@@ -30,20 +38,41 @@
   width: 320px;
 }
 
+
+/* =========================================
+   NAVBAR
+========================================= */
+
 .navbar {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.navbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.navbar-nav .nav-link {
+  white-space: nowrap;
+  font-size: 14px;
+  padding: 8px 7px !important;
 }
 
 
-
+/* =========================================
+   AÇÕES DO HEADER
+========================================= */
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-left: -200px;
+  gap: 6px;
+  margin-left: auto;
   padding-right: 20px;
+  flex-shrink: 0;
 }
 
 .header-action {
@@ -61,6 +90,10 @@
   border-radius: 50%;
 
   transition: all 0.25s ease;
+
+  position: relative;
+  border: none;
+  cursor: pointer;
 }
 
 .header-action i {
@@ -79,31 +112,19 @@
   color: #008db3;
 }
 
+
 /* Todos os ícones ficam iguais */
+
 .header-action .bi-person-fill,
 .header-action .bi-geo-alt-fill,
-.header-action .bi-cart3 {
+.header-action .bi-cart3,
+.header-action .bi-cart {
   position: static;
   color: #00a9d4;
   font-size: 21px;
 }
 
-/* Mobile */
-@media (max-width: 768px) {
-  .header-actions {
-    gap: 5px;
-    padding-right: 10px;
-  }
 
-  .header-action {
-    width: 38px;
-    height: 38px;
-  }
-
-  .header-action i {
-    font-size: 19px;
-  }
-}
 /* =========================================
    BOTÃO DO CARRINHO NO HEADER
 ========================================= */
@@ -215,7 +236,7 @@
 
 
 /* =========================================
-   CABEÇALHO
+   CABEÇALHO DO CARRINHO
 ========================================= */
 
 .cart-header {
@@ -257,7 +278,9 @@
 }
 
 
-/* Botão fechar */
+/* =========================================
+   BOTÃO FECHAR
+========================================= */
 
 .cart-close {
   width: 40px;
@@ -311,7 +334,9 @@
 }
 
 
-/* Card */
+/* =========================================
+   CARD DO PRODUTO
+========================================= */
 
 .cart-product {
   position: relative;
@@ -344,7 +369,9 @@
 }
 
 
-/* Imagem */
+/* =========================================
+   IMAGEM
+========================================= */
 
 .cart-product-image {
   width: 80px;
@@ -368,13 +395,14 @@
   transition: 0.35s;
 }
 
-.cart-product:hover
-.cart-product-image img {
+.cart-product:hover .cart-product-image img {
   transform: scale(1.06);
 }
 
 
-/* Informações */
+/* =========================================
+   INFORMAÇÕES
+========================================= */
 
 .cart-product-info {
   flex: 1;
@@ -402,7 +430,9 @@
 }
 
 
-/* Parte inferior */
+/* =========================================
+   PARTE INFERIOR
+========================================= */
 
 .cart-product-bottom {
   display: flex;
@@ -548,7 +578,9 @@
 }
 
 
-/* Total */
+/* =========================================
+   TOTAL
+========================================= */
 
 .cart-total {
   display: flex;
@@ -573,7 +605,9 @@
 }
 
 
-/* Finalizar */
+/* =========================================
+   FINALIZAR
+========================================= */
 
 .cart-checkout {
   width: 100%;
@@ -615,7 +649,9 @@
 }
 
 
-/* Continuar */
+/* =========================================
+   CONTINUAR
+========================================= */
 
 .cart-continue {
   width: 100%;
@@ -644,70 +680,82 @@
 
 
 /* =========================================
-   MOBILE
-========================================= */
-
-@media (max-width: 500px) {
-
-  .cart-modal {
-    width: 100%;
-    max-width: 100%;
-  }
-
-}
-
-
-/* =========================================
    PAINÉIS DOS BOTÕES DO HEADER
 ========================================= */
 
 .header-panel {
   position: fixed;
+
   top: 82px;
   right: 25px;
+
   width: 360px;
+
   background: #ffffff;
+
   border: 1px solid #d9e0e5;
+
   border-radius: 8px;
-  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.15);
+
+  box-shadow:
+    0 5px 18px rgba(0, 0, 0, 0.15);
+
   z-index: 9999;
+
   color: #1c3166;
 }
 
-/* Cabeçalho */
+
+/* =========================================
+   CABEÇALHO DOS PAINÉIS
+========================================= */
 
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+
   padding: 18px;
-  border-bottom: 1px solid #e5e5e5;
+
+  border-bottom:
+    1px solid #e5e5e5;
 }
 
 .panel-header h3 {
   margin: 0;
+
   font-size: 18px;
+
   font-weight: 600;
+
   color: #1c3166;
 }
 
 .panel-header h3 i {
   margin-right: 8px;
+
   color: #00a9d4;
 }
 
 .panel-header span {
   display: block;
+
   margin-top: 5px;
+
   font-size: 13px;
+
   color: #777;
 }
 
 .panel-header > button {
   border: none;
+
   background: transparent;
+
   font-size: 22px;
+
   color: #666;
+
   cursor: pointer;
 }
 
@@ -722,14 +770,19 @@
 
 .notification-list {
   max-height: 260px;
+
   overflow-y: auto;
 }
 
 .notification-item {
   display: flex;
+
   gap: 12px;
+
   padding: 14px 18px;
-  border-bottom: 1px solid #eeeeee;
+
+  border-bottom:
+    1px solid #eeeeee;
 }
 
 .notification-item:hover {
@@ -739,38 +792,50 @@
 .notification-icon {
   min-width: 34px;
   height: 34px;
+
   display: flex;
+
   align-items: center;
   justify-content: center;
+
   border-radius: 50%;
+
   background: #e8f8fb;
+
   color: #00a9d4;
 }
 
 .notification-item strong {
   display: block;
+
   font-size: 14px;
 }
 
 .notification-item p {
   margin: 3px 0;
+
   font-size: 13px;
+
   color: #666;
 }
 
 .notification-item small {
   color: #999;
+
   font-size: 11px;
 }
 
 .notification-empty {
   text-align: center;
+
   padding: 30px 15px;
+
   color: #777;
 }
 
 .notification-empty i {
   font-size: 30px;
+
   color: #aaa;
 }
 
@@ -779,25 +844,36 @@
 }
 
 
-/* Preferências */
+/* =========================================
+   PREFERÊNCIAS
+========================================= */
 
 .notification-settings {
   padding: 15px 18px;
-  border-top: 1px solid #eeeeee;
+
+  border-top:
+    1px solid #eeeeee;
 }
 
 .notification-settings h4 {
   margin: 0 0 10px;
+
   font-size: 14px;
+
   color: #1c3166;
 }
 
 .notification-settings label {
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
   padding: 7px 0;
+
   font-size: 13px;
+
   color: #555;
 }
 
@@ -807,12 +883,19 @@
 
 .panel-secondary-button {
   width: calc(100% - 36px);
+
   margin: 0 18px 18px;
+
   padding: 9px;
+
   border: 1px solid #d5dce0;
+
   background: #f8f8f8;
+
   border-radius: 5px;
+
   color: #555;
+
   cursor: pointer;
 }
 
@@ -841,21 +924,33 @@
 
 .panel-field label {
   display: block;
+
   margin-bottom: 5px;
+
   font-size: 13px;
+
   font-weight: 600;
+
   color: #444;
 }
 
 .panel-field input {
   width: 100%;
+
   height: 38px;
+
   padding: 7px 10px;
+
   border: 1px solid #ccd4d9;
+
   border-radius: 5px;
+
   outline: none;
+
   font-size: 14px;
+
   color: #333;
+
   background: #fff;
 }
 
@@ -865,6 +960,7 @@
 
 .panel-row {
   display: flex;
+
   gap: 10px;
 }
 
@@ -873,16 +969,25 @@
 }
 
 
-/* Botão salvar */
+/* =========================================
+   BOTÃO SALVAR
+========================================= */
 
 .panel-save-button {
   width: 100%;
+
   padding: 10px;
+
   border: none;
+
   border-radius: 5px;
+
   background: #00a9d4;
+
   color: white;
+
   font-size: 14px;
+
   cursor: pointer;
 }
 
@@ -901,6 +1006,7 @@
 
 .notification-badge {
   position: absolute;
+
   top: -5px;
   right: -5px;
 
@@ -908,6 +1014,7 @@
   height: 17px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -916,21 +1023,264 @@
   border-radius: 50%;
 
   background: #e63946;
+
   color: white;
 
   font-size: 10px;
+
   font-weight: bold;
 
   border: 2px solid white;
 }
 
 
-/* Garante que o botão possa receber o badge */
+/* =========================================
+   RESPONSIVIDADE
+========================================= */
 
-.header-action {
-  position: relative;
-  border: none;
-  background: transparent;
-  cursor: pointer;
+@media (max-width: 1200px) {
+
+  .navbar-nav {
+    gap: 0;
+  }
+
+  .navbar-nav .nav-link {
+    font-size: 13px;
+
+    padding:
+      8px 5px !important;
+  }
+
+  .search-form {
+    margin:
+      0 15px;
+  }
+
+  .search-box {
+    width: 130px;
+  }
+
+  .search-input:focus,
+  .search-input:not(:placeholder-shown) {
+    width: 220px;
+  }
+
+  .header-actions {
+    gap: 4px;
+
+    padding-right: 10px;
+  }
+
 }
 
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 991px) {
+
+  .navbar-nav {
+    width: 100%;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    margin-top: 10px;
+  }
+
+  .navbar-nav .nav-link {
+    width: 100%;
+
+    padding:
+      10px 15px !important;
+  }
+
+  .search-form {
+    width: 100%;
+
+    margin:
+      15px 0;
+
+    justify-content: flex-start;
+  }
+
+  .search-box {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .search-input:focus,
+  .search-input:not(:placeholder-shown) {
+    width: 100%;
+  }
+
+  .header-actions {
+    width: 100%;
+
+    justify-content: flex-start;
+
+    margin-left: 0;
+
+    padding:
+      10px 0;
+  }
+
+}
+
+
+/* =========================================
+   MOBILE PEQUENO
+========================================= */
+
+@media (max-width: 768px) {
+
+  .header-actions {
+    gap: 5px;
+
+    padding-right: 10px;
+  }
+
+  .header-action {
+    width: 38px;
+
+    height: 38px;
+  }
+
+  .header-action i {
+    font-size: 19px;
+  }
+
+}
+
+
+/* =========================================
+   CARRINHO MOBILE
+========================================= */
+
+@media (max-width: 500px) {
+
+  .cart-modal {
+    width: 100%;
+
+    max-width: 100%;
+  }
+
+}
+
+
+/* =========================================
+   CATEGORIAS + SUBCATEGORIAS
+========================================= */
+
+.category-dropdown {
+  position: relative;
+}
+
+.category-dropdown > .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Setinha */
+.category-arrow {
+  font-size: 9px;
+  transition: transform 0.25s ease;
+}
+
+/* Gira a setinha quando passa o mouse */
+.category-dropdown:hover .category-arrow {
+  transform: rotate(180deg);
+}
+
+/* =========================================
+   DROPDOWN
+========================================= */
+
+.subcategory-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+
+  min-width: 210px;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 8px 0;
+
+  background: white;
+
+  border: 1px solid #dce4e8;
+  border-radius: 8px;
+
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.12);
+
+  opacity: 0;
+  visibility: hidden;
+
+  transform: translateY(-8px);
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    visibility 0.2s ease;
+
+  z-index: 9999;
+}
+
+/* Área invisível para evitar o dropdown sumir
+   quando o mouse passa do menu para o dropdown */
+.subcategory-dropdown::before {
+  content: "";
+
+  position: absolute;
+
+  top: -8px;
+  left: 0;
+
+  width: 100%;
+  height: 8px;
+}
+
+/* Mostrar dropdown */
+.category-dropdown:hover .subcategory-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* =========================================
+   ITENS DAS SUBCATEGORIAS
+========================================= */
+
+.subcategory-item {
+  display: block;
+
+  width: 100%;
+
+  padding: 10px 16px;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  color: #1c3166;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    padding-left 0.2s ease;
+}
+
+.subcategory-item:hover {
+  background: rgba(0, 169, 212, 0.08);
+
+  color: #00a9d4;
+
+  padding-left: 20px;
+}
