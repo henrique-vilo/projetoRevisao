@@ -1,32 +1,29 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+
 import Footer from "./Footer";
 import Header from "@/components/Header";
-import Sidebar from "./Sidebar";
 
 export default function LayoutWrapper({ children }) {
-
   const pathname = usePathname();
 
-  const hideLayout =
-    pathname.startsWith("/admin")
+  const isAdminRoute =
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/");
+
+
+  if (isAdminRoute) {
+    return children;
+  }
 
   return (
     <>
-      {!hideLayout && <Header/>}
-    {hideLayout &&
-        <div className="app-layout d-flex">
-        <Sidebar />
-        <div className="app-content flex-grow-1 overflow-hidden">
-            {children}
-        </div>
-        </div>
+      <Header />
 
-        }
-      {!hideLayout && children}
+      <main>{children}</main>
 
-      {!hideLayout && <Footer />}
+      <Footer />
     </>
   );
 }
