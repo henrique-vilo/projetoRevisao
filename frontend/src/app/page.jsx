@@ -60,7 +60,7 @@ export default function Home() {
       precoOriginal: "R$ 359,90",
       precoAtual: "R$ 299,90",
       imagem: "/akin.png",
-      tag: "15% OFF",
+      tag: "Destaque",
     },
     {
       id: 4,
@@ -95,7 +95,7 @@ export default function Home() {
       precoOriginal: "R$ 229,90",
       precoAtual: "R$ 179,90",
       imagem: "/calças.jpg",
-      badge: "Oferta",
+      badge: "Tendência",
     },
     {
       id: 8,
@@ -131,7 +131,7 @@ export default function Home() {
                 <div className="hero-overlay">
                   <div className="container h-100">
                     <div className="row h-100 align-items-center">
-                      <div className="col-12 col-md-7 text-start">
+                      <div className="col-12 col-md-8 text-start">
                         <span className="hero-subtitle">COLEÇÃO DE INVERNO</span>
                         <h1 className="hero-title">
                           os favoritos da <br />
@@ -140,22 +140,6 @@ export default function Home() {
                         <Link href="/produtos" className="btn-hero-pill">
                           Conferir Produtos
                         </Link>
-                      </div>
-
-                      <div className="col-12 col-md-5 text-md-end mt-4 mt-md-0">
-                        <div className="promo-box-hero d-inline-block">
-                          <span className="promo-small">até</span>
-                          <div className="promo-main-number">
-                            50<span className="promo-percent">% OFF</span>
-                          </div>
-                          <div className="promo-secondary-number">
-                            + 30<span className="promo-percent">% OFF</span>
-                          </div>
-                          <div className="coupon-pill mt-3">
-                            <span className="coupon-label">cupom</span>
-                            <span className="coupon-code">QUERO30</span>
-                          </div>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -220,7 +204,7 @@ export default function Home() {
                           <strong>para seu dia a dia</strong>
                         </h1>
                         <Link href="/produtos" className="btn-hero-pill">
-                          Aproveitar
+                          Ver Produtos
                         </Link>
                       </div>
                     </div>
@@ -305,16 +289,6 @@ export default function Home() {
                   <div className="product-card-clean h-100">
                     <div className="product-image-box">
                       {prod.tag && <span className="product-tag-pill">{prod.tag}</span>}
-                      <button
-                        className="wishlist-btn"
-                        aria-label="Favoritar"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                      >
-                        <i className="bi bi-heart"></i>
-                      </button>
                       <img src={prod.imagem} alt={prod.nome} />
                     </div>
                     <div className="product-details">
@@ -336,33 +310,6 @@ export default function Home() {
                 </Link>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* BANNER INTERMEDIÁRIO DE CUPOM */}
-      <section className="promo-banner-middle py-5">
-        <div className="container">
-          <div className="promo-banner-card text-center text-md-start">
-            <div className="row align-items-center p-4 p-md-5">
-              <div className="col-12 col-md-8">
-                <span className="text-uppercase tracking-wider text-muted fw-semibold small">
-                  OFERTA EXCLUSIVA NO SITE
-                </span>
-                <h2 className="display-6 fw-bold mt-1 mb-2">
-                  10% OFF na sua primeira compra
-                </h2>
-                <p className="text-secondary mb-3 mb-md-0">
-                  Use o cupom na finalização do seu pedido. Válido para todo o site Everett.
-                </p>
-              </div>
-              <div className="col-12 col-md-4 text-md-end">
-                <div className="d-inline-flex align-items-center gap-2 border p-2 px-3 rounded-pill bg-white shadow-sm">
-                  <span className="fw-bold text-dark">CUPOM:</span>
-                  <span className="fw-bold text-success fs-5">EVERETT10</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -389,16 +336,6 @@ export default function Home() {
                   <div className="product-card-clean h-100">
                     <div className="product-image-box">
                       {prod.badge && <span className="product-tag-pill badge-dark">{prod.badge}</span>}
-                      <button
-                        className="wishlist-btn"
-                        aria-label="Favoritar"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                      >
-                        <i className="bi bi-heart"></i>
-                      </button>
                       <img src={prod.imagem} alt={prod.nome} />
                     </div>
                     <div className="product-details">
