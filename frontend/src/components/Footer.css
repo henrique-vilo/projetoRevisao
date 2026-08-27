@@ -5,11 +5,11 @@
     #e6effd 100%
   );
   color: #111;
-  font-family: Arial, sans-serif; /* Ajuste para a fonte do seu projeto */
+  font-family: Arial, sans-serif;
 }
 
 .brand-text-top {
-  font-family: serif; /* Estilo serifado como na imagem */
+  font-family: serif;
   font-size: 1.2rem;
   color: #333;
 }
@@ -25,10 +25,14 @@
   font-size: 1rem;
 }
 
+/* Reduz a área clicável dos ícones sociais estritamente ao tamanho do ícone */
 .social-link {
   color: #111;
   font-size: 1.5rem;
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: color 0.3s ease;
 }
 
@@ -47,6 +51,11 @@
   margin: 0 auto;
 }
 
+/* Garante o espaçamento entre as linhas da lista de links */
+.footer-columns ul li {
+  margin-bottom: 6px;
+}
+
 .column-header {
   font-size: 1.1rem;
   letter-spacing: 1px;
@@ -54,11 +63,12 @@
   color: #000;
 }
 
+/* Hitbox ajustada: 'inline-block' limita a área de clique ao tamanho do texto */
 .footer-link {
   color: #333;
   text-decoration: none;
-  display: block;
-  padding: 3px 0;
+  display: inline-block;
+  padding: 2px 0;
   transition: color 0.2s ease;
 }
 
