@@ -65,25 +65,24 @@ export default function Footer() {
 
         {/* Colunas do Footer */}
         <div className="row text-start footer-columns">
-          {/* Categoria Feminino */}
+          {/* Categoria: Roupas */}
           <div className="col-6 col-md-3 mb-4">
-            <h6 className="column-header fw-bold mb-3">FEMININO</h6>
+            <h6 className="column-header fw-bold mb-3">VESTUÁRIO</h6>
             <ul className="list-unstyled">
-              <li><a href="/feminino?categoria=blusas" className="footer-link">Blusas & Tops</a></li>
-              <li><a href="/feminino?categoria=calcas-fem" className="footer-link">Calças</a></li>
-              <li><a href="/feminino?categoria=vestidos" className="footer-link">Vestidos & Saias</a></li>
-              <li><a href="/feminino?categoria=casacos-fem" className="footer-link">Casacos & Jaquetas</a></li>
+              <li><a href="/produtos?categoria=roupas-masculinas" className="footer-link">Roupas Masculinas</a></li>
+              <li><a href="/produtos?categoria=roupas-femininas" className="footer-link">Roupas Femininas</a></li>
+              <li><a href="/produtos?categoria=roupas-infantis" className="footer-link">Roupas Infantis</a></li>
             </ul>
           </div>
 
-          {/* Categoria Masculino */}
+          {/* Categoria: Coleções & Estilos */}
           <div className="col-6 col-md-3 mb-4">
-            <h6 className="column-header fw-bold mb-3">MASCULINO</h6>
+            <h6 className="column-header fw-bold mb-3">COLEÇÕES</h6>
             <ul className="list-unstyled">
-              <li><a href="/masculino?categoria=camisetas" className="footer-link">Camisetas & Polos</a></li>
-              <li><a href="/masculino?categoria=camisas" className="footer-link">Camisas</a></li>
-              <li><a href="/masculino?categoria=bermudas" className="footer-link">Bermudas & Shorts</a></li>
-              <li><a href="/masculino?categoria=calcas-masc" className="footer-link">Calças</a></li>
+              <li><a href="/produtos?categoria=acessorios" className="footer-link">Acessórios</a></li>
+              <li><a href="/produtos?categoria=moda-esportiva" className="footer-link">Moda Esportiva</a></li>
+              <li><a href="/produtos?categoria=moda-praia" className="footer-link">Moda Praia</a></li>
+              <li><a href="/produtos?categoria=inverno" className="footer-link">Inverno</a></li>
             </ul>
           </div>
 
