@@ -40,7 +40,8 @@ export default function Page() {
           );
         }
 
-        setProducts(data.dados || []);
+        // FORÇADO PARA TESTAR O ESTADO "SEM RESULTADOS"
+        setProducts([]);
       } catch (error) {
         console.error('Erro ao buscar produtos:', error);
         setErro(error.message || 'Erro ao carregar produtos.');
@@ -98,9 +99,57 @@ export default function Page() {
           <small className="text-danger">{erro}</small>
         </div>
       ) : products.length === 0 ? (
-        <div className="text-center py-5">
-          <p className="text-secondary mb-0">
-            Nenhum produto encontrado.
+        <div
+          className="text-center py-5"
+          style={{
+            minHeight: '400px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <div
+            style={{
+              width: '100px',
+              height: '100px',
+              borderRadius: '50%',
+              backgroundColor: '#f5f5f5',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '24px',
+            }}
+          >
+            <span
+              style={{
+                fontSize: '45px',
+                lineHeight: '1',
+              }}
+            >
+              🔍
+            </span>
+          </div>
+
+          <h3
+            style={{
+              fontSize: '21px',
+              fontWeight: '500',
+              color: '#333',
+              marginBottom: '8px',
+            }}
+          >
+            Nenhum produto encontrado
+          </h3>
+
+          <p
+            style={{
+              fontSize: '14px',
+              color: '#888',
+              margin: 0,
+            }}
+          >
+            Não encontramos produtos disponíveis no momento.
           </p>
         </div>
       ) : (
@@ -129,7 +178,6 @@ export default function Page() {
                     cursor: 'pointer',
                   }}
                 >
-                  {/* Box de Imagem com Arredondamento */}
                   <div
                     className="position-relative w-100 bg-light overflow-hidden mb-3 rounded-3"
                     style={{ height: '320px' }}
@@ -150,9 +198,7 @@ export default function Page() {
                     )}
                   </div>
 
-                  {/* Container de Informações Centralizadas */}
                   <div className="d-flex flex-column flex-grow-1 text-center px-1">
-                    {/* Título com Altura Fixa */}
                     <div
                       className="d-flex align-items-start justify-content-center"
                       style={{ height: '2.5rem' }}
@@ -162,7 +208,6 @@ export default function Page() {
                       </h3>
                     </div>
 
-                    {/* Bloco de Preço + Parcelamento */}
                     <div className="mt-3 d-flex flex-column gap-1">
                       <p className="fs-6 fw-bold text-dark mb-0">
                         R$ {precoFormatado}
