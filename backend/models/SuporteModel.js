@@ -7,10 +7,10 @@ class SuporteModel {
 
         try {
             const [tickets] = await connection.query(
-                `SELECT st.*, u.nome, u.email
-                 FROM suporte_tickets st
-                 LEFT JOIN usuario u ON  = su.idUsuario.idUsuario
-                 ORDER BY st.dataCriacao DESC, st.idTicket DESC
+                `SELECT s.*, u.nome, u.email
+                 FROM suporte s
+                 LEFT JOIN usuarios u ON u.idUsuario = s.idUsuario
+                 ORDER BY s.idSuporte DESC
                  LIMIT ? OFFSET ?`,
                 [parseInt(limite), parseInt(offset)]
             );
@@ -30,24 +30,24 @@ class SuporteModel {
         }
     }
 
-    static async listarPorUsuario(id_user, pagina = 1, limite = 10) {
+    static async listarPorUsuario(idUsuario, pagina = 1, limite = 10) {
         const offset = (pagina - 1) * limite;
         const connection = await getConnection();
 
         try {
             const [tickets] = await connection.query(
-                `SELECT st.*, u.nome, u.email
-                 FROM suporte_tickets st
-                 LEFT JOIN usuario u ON u.idUsuario = st.idUsuario
-                WHERE st.id_user = ?
-                 ORDER BY st.data_criacao DESC, st.idTicket DESC
+                `SELECT s.*, u.nome, u.email
+                 FROM suporte s
+                 LEFT JOIN usuarios u ON u.idUsuario = s.idUsuario
+                 WHERE s.idUsuario = ?
+                 ORDER BY s.idSuporte DESC
                  LIMIT ? OFFSET ?`,
-                [parseInt(id_user), parseInt(limite), parseInt(offset)]
+                [parseInt(idUsuario), parseInt(limite), parseInt(offset)]
             );
 
             const [totalResult] = await connection.query(
                 'SELECT COUNT(*) as total FROM suporte WHERE idUsuario = ?',
-                [parseInt(id_user)]
+                [parseInt(idUsuario)]
             );
             const total = totalResult[0].total;
 
@@ -63,8 +63,27 @@ class SuporteModel {
         }
     }
 
-    static async buscarPorId(Sisi) {
-        const rows = await read('suporte', 'idTicket = ?', [idSuporte]);
+    static async listarAdministradores() {
+        const connection = await getConnection();
+        try {
+            // ATENÇÃO: Ajuste a cláusula WHERE ('tipo = "admin"') 
+            // de acordo com como o seu banco identifica um administrador.
+            const [admins] = await connection.query(
+                `SELECT idUsuario, nome, email 
+                 FROM usuarios 
+                 WHERE tipo = 'admin'`
+            );
+            return admins;
+        } catch (error) {
+            console.error('Erro ao listar administradores:', error);
+            return [];
+        } finally {
+            if (connection) connection.release();
+        }
+    }
+
+    static async buscarPorId(idSuporte) {
+        const rows = await read('suporte', 'idSuporte = ?', [idSuporte]);
         return rows[0] || null;
     }
 
@@ -72,8 +91,8 @@ class SuporteModel {
         return create('suporte', dadosTicket);
     }
 
-    static async atualizar(idTc, dadosTicket) {
-        return update('suport', dadosTicket, 'idSuporte = ?', [idSuporte]);
+    static async atualizar(idSuporte, dadosTicket) {
+        return update('suporte', dadosTicket, 'idSuporte = ?', [idSuporte]);
     }
 }
 

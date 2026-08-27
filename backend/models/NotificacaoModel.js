@@ -10,20 +10,16 @@ class NotificacaoModel {
                 `
                 SELECT
                     n.*,
-
                     s.idSuporte,
                     s.titulo AS suporte_titulo,
                     s.assunto AS suporte_assunto,
                     s.texto AS mensagem_original,
                     s.respostaAdmin AS resposta_admin,
-
-                    -- Nota: Ajuste "nome" e "email" de acordo com as colunas reais da sua tabela "usuarios"
                     admin.nome AS nome_admin_resposta,
                     admin.email AS email_admin_resposta
                 FROM notificacoes n
                 LEFT JOIN suporte s
                     ON s.idSuporte = n.idSuporte
-                   AND s.idUsuario = n.idUsuario
                 LEFT JOIN usuarios admin
                     ON admin.idUsuario = s.idAdminResposta
                 WHERE n.idUsuario = ?

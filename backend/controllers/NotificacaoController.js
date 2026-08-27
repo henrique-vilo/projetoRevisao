@@ -23,8 +23,19 @@ class NotificacaoController {
                 });
             }
 
-            // Ajustado para req.usuario.idUsuario
-            const resultado = await NotificacaoModel.listarPorUsuario(req.usuario.idUsuario, pagina, limite);
+            // NOVA VALIDAÇÃO: Pega o ID (testando idUsuario ou id) e verifica se é válido
+            const idUsuario = req.usuario?.idUsuario || req.usuario?.id; 
+
+            if (!idUsuario || isNaN(parseInt(idUsuario))) {
+                return res.status(401).json({
+                    sucesso: false,
+                    erro: 'Usuário não identificado',
+                    mensagem: 'Não foi possível identificar o usuário autenticado.'
+                });
+            }
+
+            // Passa a variável validada 'idUsuario' em vez de req.usuario.idUsuario direto
+            const resultado = await NotificacaoModel.listarPorUsuario(idUsuario, pagina, limite);
 
             res.status(200).json({
                 sucesso: true,
@@ -96,8 +107,18 @@ class NotificacaoController {
 
     static async marcarTodasLidas(req, res) {
         try {
-            // Ajustado para req.usuario.idUsuario
-            const resultado = await NotificacaoModel.marcarTodasComoLidas(req.usuario.idUsuario);
+            const idUsuario = req.usuario?.idUsuario || req.usuario?.id;
+
+            if (!idUsuario) {
+                return res.status(401).json({
+                    sucesso: false,
+                    erro: 'Usuário não identificado',
+                    mensagem: 'Não foi possível identificar o usuário autenticado.'
+                });
+            }
+
+            // 2. Passa a variável segura para o model
+            const resultado = await NotificacaoModel.marcarTodasComoLidas(idUsuario);
 
             res.status(200).json({
                 sucesso: true,

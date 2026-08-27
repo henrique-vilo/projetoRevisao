@@ -4,10 +4,12 @@ import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.j
 
 const router = express.Router();
 
+// Rotas exclusivas de Administradores
 router.get('/', authMiddleware, adminMiddleware, SuporteController.listarTodos);
-router.get('/meus', authMiddleware, SuporteController.listarMeus);
-router.post('/' , SuporteController.criar);
 router.put('/:idSuporte/responder', authMiddleware, adminMiddleware, SuporteController.responder);
-router.put('/:idSuporte/status', authMiddleware, adminMiddleware, SuporteController.atualizarStatus);
+
+// Rotas de Usuários/Clientes
+router.get('/meus', authMiddleware, SuporteController.listarMeus);
+router.post('/', authMiddleware, SuporteController.criar);
 
 export default router;
