@@ -1,5 +1,5 @@
 import express from 'express';
-import VendaController from '../controllers/vendaController.js';
+import VendaController from '../controllers/vendasController.js';
 import { authMiddleware, adminMiddleware, selfMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();

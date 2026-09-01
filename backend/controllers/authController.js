@@ -753,7 +753,7 @@ class AuthController {
             }
 
             if (tipo !== undefined) {
-                const tiposPermitidos = ['comum', 'admin'];
+                const tiposPermitidos = ['cliente', 'admin'];
                 const tipoFormatado = tipo.toLowerCase();
                 
                 if (!tiposPermitidos.includes(tipoFormatado)) {

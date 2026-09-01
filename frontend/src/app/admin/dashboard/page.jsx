@@ -2,6 +2,7 @@
 
 import './dashboard.css';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -33,75 +34,61 @@ ChartJS.register(
 
 /* =====================================================
    CONFIGURAÇÃO DA API
+   Mesmo contrato usado nas páginas de Pedidos e Produtos:
+   { sucesso, dados: [...], paginacao: { total, totalPaginas, pagina } }
 ===================================================== */
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+const MONTH_LABELS = [
+  'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+  'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
+];
+
+const STATUS_CONFIG = {
+  carrinho: { label: 'Carrinho', className: 'warning' },
+  pendente: { label: 'Pendente', className: 'warning' },
+  processando: { label: 'Processando', className: 'info' },
+  enviado: { label: 'Enviado', className: 'info' },
+  entregue: { label: 'Entregue', className: 'success' },
+  cancelado: { label: 'Cancelado', className: 'danger' },
+};
 
 /* =====================================================
    HELPERS
 ===================================================== */
 
 function getToken() {
-  if (typeof window === 'undefined') {
-    return null;
-  }
+  if (typeof window === 'undefined') return null;
 
   return (
     localStorage.getItem('token') ||
-    localStorage.getItem('authToken') ||
-    localStorage.getItem('jwt')
+    localStorage.getItem('accessToken') ||
+    localStorage.getItem('authToken')
   );
 }
 
-function getValue(object, keys, fallback = null) {
-  if (!object) return fallback;
-
-  for (const key of keys) {
-    if (
-      object[key] !== undefined &&
-      object[key] !== null
-    ) {
-      return object[key];
-    }
-  }
-
-  return fallback;
+function getHeaders() {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-function getArrayFromResponse(response) {
-  if (Array.isArray(response)) {
-    return response;
-  }
-
-  if (Array.isArray(response?.dados)) {
-    return response.dados;
-  }
-
-  if (Array.isArray(response?.data)) {
-    return response.data;
-  }
-
-  if (Array.isArray(response?.resultados)) {
-    return response.resultados;
-  }
-
-  return [];
-}
-
-function getPaginationFromResponse(response) {
+function getStatusConfig(status) {
   return (
-    response?.paginacao ||
-    response?.pagination ||
-    response?.meta ||
-    {}
+    STATUS_CONFIG[status] || {
+      label: status || 'Desconhecido',
+      className: 'warning',
+    }
   );
+}
+
+function getUserName(user) {
+  if (!user) return null;
+  return user.nome || user.nomeUsuario || user.nomeCompleto || user.name || null;
 }
 
 function formatCurrency(value) {
-  const number = Number(value) || 0;
-
-  return number.toLocaleString('pt-BR', {
+  return (Number(value) || 0).toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   });
@@ -111,24 +98,9 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString('pt-BR');
 }
 
-function normalizeDate(value) {
-  if (!value) return null;
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return date;
-}
-
 function formatDate(value) {
-  const date = normalizeDate(value);
-
-  if (!date) {
-    return '—';
-  }
+  const date = parseDate(value);
+  if (!date) return '—';
 
   return date.toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -137,179 +109,35 @@ function formatDate(value) {
   });
 }
 
-function getOrderValue(order) {
-  const directValue = getValue(order, [
-    'valor_total',
-    'valorTotal',
-    'valor',
-    'total',
-    'preco_total',
-    'precoTotal',
-    'preco_produto',
-    'precoProduto',
-  ]);
-
-  if (directValue !== null) {
-    return Number(directValue) || 0;
-  }
-
-  const quantity = Number(
-    getValue(order, [
-      'quantidade',
-      'qtd',
-      'quantity',
-    ], 1)
-  );
-
-  const price = Number(
-    getValue(order, [
-      'preco',
-      'preco_produto',
-      'precoProduto',
-      'valor_unitario',
-      'valorUnitario',
-    ], 0)
-  );
-
-  return quantity * price;
+function parseDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function getOrderStatus(order) {
-  const status = String(
-    getValue(order, [
-      'status',
-      'situacao',
-      'estado',
-      'statusPedido',
-    ], 'Pendente')
-  );
+function getInitials(name) {
+  const clean = String(name || '').replace(/^Usuário\s*#?/i, 'Usuário ');
+  const parts = clean.trim().split(' ').filter(Boolean);
 
-  const normalized = status
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+  if (parts.length === 0) return 'US';
 
-  if (
-    normalized.includes('conclu') ||
-    normalized.includes('entreg') ||
-    normalized.includes('finaliz') ||
-    normalized.includes('pago')
-  ) {
-    return {
-      label: 'Concluído',
-      className: 'success',
-    };
-  }
-
-  if (
-    normalized.includes('cancel') ||
-    normalized.includes('recus') ||
-    normalized.includes('negad')
-  ) {
-    return {
-      label: 'Cancelado',
-      className: 'danger',
-    };
-  }
-
-  if (
-    normalized.includes('andamento') ||
-    normalized.includes('process') ||
-    normalized.includes('enviado') ||
-    normalized.includes('separ')
-  ) {
-    return {
-      label: 'Em andamento',
-      className: 'info',
-    };
-  }
-
-  return {
-    label: 'Pendente',
-    className: 'warning',
-  };
-}
-
-function getOrderId(order) {
-  return getValue(order, [
-    'idPedido',
-    'id_pedido',
-    'id',
-    'codigo',
-    'numeroPedido',
-  ], '—');
-}
-
-function getCustomerName(order) {
-  return getValue(order, [
-    'nomeUsuario',
-    'nome_usuario',
-    'nomeCliente',
-    'nome_cliente',
-    'clienteNome',
-    'cliente',
-    'usuarioNome',
-    'usuario_nome',
-  ], 'Cliente');
-}
-
-function getProductName(order) {
-  return getValue(order, [
-    'nomeProduto',
-    'nome_produto',
-    'produtoNome',
-    'produto_nome',
-    'produto',
-  ], 'Produto');
-}
-
-function getOrderDate(order) {
-  return getValue(order, [
-    'dataPedido',
-    'data_pedido',
-    'dataCriacao',
-    'data_criacao',
-    'createdAt',
-    'created_at',
-    'data',
-  ]);
-}
-
-function getProductCategory(product) {
-  return getValue(product, [
-    'nomeCategoria',
-    'nome_categoria',
-    'categoriaNome',
-    'categoria_nome',
-    'categoria',
-    'categoriaProduto',
-  ], 'Sem categoria');
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
 }
 
 /* =====================================================
-   FETCH DA API
+   FETCH DA API (somente dados reais do backend)
 ===================================================== */
 
-async function apiFetch(endpoint, options = {}) {
-  const token = getToken();
-
-  const headers = {
-    Accept: 'application/json',
-    ...options.headers,
-  };
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const response = await fetch(
-    `${API_URL}${endpoint}`,
-    {
-      ...options,
-      headers,
-      cache: 'no-store',
-    }
-  );
+async function apiFetch(endpoint) {
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    method: 'GET',
+    headers: { ...getHeaders() },
+    cache: 'no-store',
+  });
 
   let data = null;
 
@@ -319,11 +147,10 @@ async function apiFetch(endpoint, options = {}) {
     data = null;
   }
 
-  if (!response.ok) {
+  if (!response.ok || (data && data.sucesso === false)) {
     const message =
-      data?.mensagem ||
       data?.erro ||
-      data?.detalhes ||
+      data?.mensagem ||
       `Erro HTTP ${response.status}`;
 
     throw new Error(message);
@@ -332,76 +159,35 @@ async function apiFetch(endpoint, options = {}) {
   return data;
 }
 
-/* =====================================================
-   BUSCA TODOS OS REGISTROS PAGINADOS
-===================================================== */
+async function fetchAllPages(endpoint, limit = 100) {
+  const first = await apiFetch(`${endpoint}?pagina=1&limite=${limit}`);
 
-async function fetchPaginated(endpoint, limit = 100) {
-  const firstResponse = await apiFetch(
-    `${endpoint}?pagina=1&limite=${limit}`
+  const firstData = Array.isArray(first?.dados) ? first.dados : [];
+
+  const total = Number(first?.paginacao?.total) || firstData.length;
+
+  const totalPaginas = Math.max(
+    1,
+    Number(first?.paginacao?.totalPaginas) || 1
   );
 
-  const firstData = getArrayFromResponse(firstResponse);
-
-  const pagination = getPaginationFromResponse(
-    firstResponse
-  );
-
-  const total = Number(
-    pagination.total ||
-    pagination.totalRegistros ||
-    pagination.totalItens ||
-    firstData.length
-  );
-
-  const currentPage = Number(
-    pagination.pagina ||
-    pagination.page ||
-    1
-  );
-
-  const totalPages = Number(
-    pagination.totalPaginas ||
-    pagination.total_pages ||
-    Math.ceil(total / limit)
-  );
-
-  if (totalPages <= currentPage) {
-    return {
-      data: firstData,
-      total,
-    };
+  if (totalPaginas <= 1) {
+    return { data: firstData, total };
   }
 
-  const remainingRequests = [];
+  const requests = [];
 
-  for (
-    let page = currentPage + 1;
-    page <= totalPages;
-    page++
-  ) {
-    remainingRequests.push(
-      apiFetch(
-        `${endpoint}?pagina=${page}&limite=${limit}`
-      )
-    );
+  for (let page = 2; page <= totalPaginas; page += 1) {
+    requests.push(apiFetch(`${endpoint}?pagina=${page}&limite=${limit}`));
   }
 
-  const responses = await Promise.all(
-    remainingRequests
+  const rest = await Promise.all(requests);
+
+  const restData = rest.flatMap((response) =>
+    Array.isArray(response?.dados) ? response.dados : []
   );
 
-  const remainingData = responses.flatMap(
-    getArrayFromResponse
-  );
-
-  return {
-    data: [
-      ...firstData,
-      ...remainingData,
-    ],
-    total,
-  };
+  return { data: [...firstData, ...restData], total };
 }
 
 /* =====================================================
@@ -409,243 +195,239 @@ async function fetchPaginated(endpoint, limit = 100) {
 ===================================================== */
 
 export default function DashboardPage() {
-  const [dashboardData, setDashboardData] = useState({
-    pedidos: [],
-    produtos: [],
-    usuarios: [],
-    totalPedidos: 0,
-    totalProdutos: 0,
-    totalUsuarios: 0,
+  const [vendas, setVendas] = useState([]);
+  const [produtos, setProdutos] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+
+  const [totals, setTotals] = useState({
+    vendas: 0,
+    produtos: 0,
+    usuarios: 0,
   });
 
   const [loading, setLoading] = useState(true);
-
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [updatedAt, setUpdatedAt] = useState(null);
 
   /* ===================================================
      CARREGAR DASHBOARD
   =================================================== */
 
-  const carregarDashboard = useCallback(
-    async () => {
-      try {
+  const carregarDashboard = useCallback(async (showRefresh = false) => {
+    try {
+      if (showRefresh) {
+        setRefreshing(true);
+      } else {
         setLoading(true);
-        setError('');
-
-        const [
-          pedidosResponse,
-          produtosResponse,
-          usuariosResponse,
-        ] = await Promise.all([
-          fetchPaginated('/api/pedidos', 100),
-          fetchPaginated('/api/produtos', 100),
-          fetchPaginated('/api/usuarios', 100),
-        ]);
-
-        setDashboardData({
-          pedidos: pedidosResponse.data,
-          produtos: produtosResponse.data,
-          usuarios: usuariosResponse.data,
-
-          totalPedidos:
-            pedidosResponse.total,
-
-          totalProdutos:
-            produtosResponse.total,
-
-          totalUsuarios:
-            usuariosResponse.total,
-        });
-      } catch (err) {
-        console.error(
-          'Erro ao carregar dashboard:',
-          err
-        );
-
-        setError(
-          err?.message ||
-          'Não foi possível carregar os dados do dashboard.'
-        );
-      } finally {
-        setLoading(false);
       }
-    },
-    []
-  );
+
+      setError('');
+
+      const [vendasResult, produtosResult, usuariosResult] = await Promise.all([
+        fetchAllPages('/vendas', 100),
+        fetchAllPages('/produtos', 100),
+        fetchAllPages('/usuarios', 100),
+      ]);
+
+      setVendas(vendasResult.data);
+      setProdutos(produtosResult.data);
+      setUsuarios(usuariosResult.data);
+
+      setTotals({
+        vendas: vendasResult.total,
+        produtos: produtosResult.total,
+        usuarios: usuariosResult.total,
+      });
+
+      setUpdatedAt(new Date());
+    } catch (err) {
+      console.error('Erro ao carregar dashboard:', err);
+
+      setError(
+        err?.message || 'Não foi possível carregar os dados do dashboard.'
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
     carregarDashboard();
   }, [carregarDashboard]);
 
   /* ===================================================
-     PEDIDOS NORMALIZADOS
+     MAPAS DE APOIO (produto e usuário por id)
   =================================================== */
 
-  const normalizedOrders = useMemo(() => {
-    return dashboardData.pedidos
-      .map((order) => {
-        const status = getOrderStatus(order);
+  const produtosMap = useMemo(() => {
+    const map = new Map();
+    produtos.forEach((produto) => map.set(String(produto.idProduto), produto));
+    return map;
+  }, [produtos]);
+
+  const usuariosMap = useMemo(() => {
+    const map = new Map();
+    usuarios.forEach((usuario) => map.set(String(usuario.idUsuario), usuario));
+    return map;
+  }, [usuarios]);
+
+  /* ===================================================
+     VENDAS NORMALIZADAS (join com produto e usuário reais)
+  =================================================== */
+
+  const normalizedSales = useMemo(() => {
+    return vendas
+      .map((sale) => {
+        const produto = produtosMap.get(String(sale.idProduto));
+        const usuario = usuariosMap.get(String(sale.idUsuario));
+        const status = getStatusConfig(sale.status);
+        const rawDate = parseDate(sale.dataPedido);
 
         return {
-          original: order,
-
-          id: `#PED-${getOrderId(order)}`,
-
-          customer:
-            getCustomerName(order),
-
-          product:
-            getProductName(order),
-
-          date:
-            formatDate(
-              getOrderDate(order)
-            ),
-
-          rawDate:
-            normalizeDate(
-              getOrderDate(order)
-            ),
-
-          value:
-            getOrderValue(order),
-
-          status:
-            status.label,
-
-          statusClass:
-            status.className,
+          id: `#ORD-${sale.idVendas}`,
+          idVendas: sale.idVendas,
+          customer: getUserName(usuario) || `Usuário #${sale.idUsuario}`,
+          product: produto?.nome || `Produto #${sale.idProduto}`,
+          date: formatDate(sale.dataPedido),
+          rawDate,
+          value: Number(produto?.preco) || 0,
+          status: status.label,
+          statusClass: status.className,
         };
       })
       .sort((a, b) => {
         if (!a.rawDate) return 1;
         if (!b.rawDate) return -1;
-
-        return (
-          b.rawDate.getTime() -
-          a.rawDate.getTime()
-        );
+        return b.rawDate.getTime() - a.rawDate.getTime();
       });
-  }, [dashboardData.pedidos]);
+  }, [vendas, produtosMap, usuariosMap]);
 
   /* ===================================================
-     RECEITA TOTAL
+     RECEITA
   =================================================== */
 
-  const totalRevenue = useMemo(() => {
-    return dashboardData.pedidos.reduce(
-      (total, order) =>
-        total + getOrderValue(order),
-      0
-    );
-  }, [dashboardData.pedidos]);
+  const totalRevenue = useMemo(
+    () => normalizedSales.reduce((sum, sale) => sum + sale.value, 0),
+    [normalizedSales]
+  );
+
+  const averageTicket = useMemo(() => {
+    if (normalizedSales.length === 0) return 0;
+    return totalRevenue / normalizedSales.length;
+  }, [totalRevenue, normalizedSales.length]);
 
   /* ===================================================
-     PEDIDOS POR MÊS
+     SÉRIES MENSAIS (ano corrente, dados reais das vendas)
   =================================================== */
+
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth();
+  const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
 
   const monthlyOrders = useMemo(() => {
     const result = new Array(12).fill(0);
 
-    dashboardData.pedidos.forEach((order) => {
-      const date = normalizeDate(
-        getOrderDate(order)
-      );
-
-      if (!date) return;
-
-      const month = date.getMonth();
-
-      result[month] += 1;
+    normalizedSales.forEach((sale) => {
+      if (!sale.rawDate || sale.rawDate.getFullYear() !== currentYear) return;
+      result[sale.rawDate.getMonth()] += 1;
     });
 
     return result;
-  }, [dashboardData.pedidos]);
-
-  /* ===================================================
-     RECEITA POR MÊS
-  =================================================== */
+  }, [normalizedSales, currentYear]);
 
   const monthlyRevenue = useMemo(() => {
     const result = new Array(12).fill(0);
 
-    dashboardData.pedidos.forEach((order) => {
-      const date = normalizeDate(
-        getOrderDate(order)
-      );
-
-      if (!date) return;
-
-      const month = date.getMonth();
-
-      result[month] += getOrderValue(order);
+    normalizedSales.forEach((sale) => {
+      if (!sale.rawDate || sale.rawDate.getFullYear() !== currentYear) return;
+      result[sale.rawDate.getMonth()] += sale.value;
     });
 
     return result;
-  }, [dashboardData.pedidos]);
+  }, [normalizedSales, currentYear]);
+
+  const revenueGrowth = useMemo(() => {
+    const current = monthlyRevenue[currentMonth];
+    const previous = monthlyRevenue[previousMonth];
+
+    if (!previous) return null;
+
+    return ((current - previous) / previous) * 100;
+  }, [monthlyRevenue, currentMonth, previousMonth]);
+
+  const ordersGrowth = useMemo(() => {
+    const current = monthlyOrders[currentMonth];
+    const previous = monthlyOrders[previousMonth];
+
+    if (!previous) return null;
+
+    return ((current - previous) / previous) * 100;
+  }, [monthlyOrders, currentMonth, previousMonth]);
 
   /* ===================================================
-     CATEGORIAS
+     CATEGORIAS (dados reais dos produtos)
   =================================================== */
 
   const categoryDistribution = useMemo(() => {
     const categories = {};
 
-    dashboardData.produtos.forEach(
-      (product) => {
-        const category =
-          getProductCategory(product);
-
-        categories[category] =
-          (categories[category] || 0) + 1;
-      }
-    );
+    produtos.forEach((produto) => {
+      const category = produto.categoriaNome || 'Sem categoria';
+      categories[category] = (categories[category] || 0) + 1;
+    });
 
     return Object.entries(categories)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
-  }, [dashboardData.produtos]);
+  }, [produtos]);
+
+  const lowStockCount = useMemo(
+    () =>
+      produtos.filter(
+        (produto) => Number(produto.ativo) === 1 && Number(produto.estoque) <= 10
+      ).length,
+    [produtos]
+  );
 
   /* ===================================================
-     DATA DO GRÁFICO DE RECEITA
+     STATUS DOS PEDIDOS (dados reais)
+  =================================================== */
+
+  const statusBreakdown = useMemo(() => {
+    const counts = {};
+
+    normalizedSales.forEach((sale) => {
+      counts[sale.status] = (counts[sale.status] || 0) + 1;
+    });
+
+    return Object.entries(STATUS_CONFIG)
+      .map(([key, config]) => ({
+        label: config.label,
+        className: config.className,
+        total: counts[config.label] || 0,
+      }))
+      .filter((item) => item.total > 0);
+  }, [normalizedSales]);
+
+  /* ===================================================
+     GRÁFICO DE RECEITA
   =================================================== */
 
   const revenueData = useMemo(
     () => ({
-      labels: [
-        'Jan',
-        'Fev',
-        'Mar',
-        'Abr',
-        'Mai',
-        'Jun',
-        'Jul',
-        'Ago',
-        'Set',
-        'Out',
-        'Nov',
-        'Dez',
-      ],
-
+      labels: MONTH_LABELS,
       datasets: [
         {
           label: 'Receita',
-
           data: monthlyRevenue,
-
-          borderColor: '#2563eb',
-
-          backgroundColor:
-            'rgba(37, 99, 235, 0.08)',
-
+          borderColor: '#4f46e5',
+          backgroundColor: 'rgba(79, 70, 229, 0.08)',
           borderWidth: 2,
-
           pointRadius: 0,
-
           pointHoverRadius: 5,
-
           tension: 0.4,
-
           fill: true,
         },
       ],
@@ -653,83 +435,36 @@ export default function DashboardPage() {
     [monthlyRevenue]
   );
 
-  /* ===================================================
-     OPÇÕES RECEITA
-  =================================================== */
-
   const revenueOptions = useMemo(
     () => ({
       responsive: true,
-
       maintainAspectRatio: false,
-
-      interaction: {
-        intersect: false,
-        mode: 'index',
-      },
-
+      interaction: { intersect: false, mode: 'index' },
       plugins: {
-        legend: {
-          display: false,
-        },
-
+        legend: { display: false },
         tooltip: {
-          backgroundColor: '#172033',
-
+          backgroundColor: '#1e1b3a',
           padding: 12,
-
           cornerRadius: 8,
-
           displayColors: false,
-
           callbacks: {
-            label: (context) =>
-              ` ${formatCurrency(
-                context.raw
-              )}`,
+            label: (context) => ` ${formatCurrency(context.raw)}`,
           },
         },
       },
-
       scales: {
         x: {
-          border: {
-            display: false,
-          },
-
-          grid: {
-            display: false,
-          },
-
-          ticks: {
-            color: '#94a3b8',
-
-            font: {
-              size: 11,
-            },
-          },
+          border: { display: false },
+          grid: { display: false },
+          ticks: { color: '#94a3b8', font: { size: 11 } },
         },
-
         y: {
-          border: {
-            display: false,
-          },
-
-          grid: {
-            color: '#eef2f6',
-          },
-
+          border: { display: false },
+          grid: { color: '#eef2f6' },
           ticks: {
             color: '#94a3b8',
-
-            font: {
-              size: 11,
-            },
-
-            callback: (value) =>
-              `R$ ${(value / 1000).toFixed(
-                0
-              )}k`,
+            font: { size: 11 },
+            callback: (value) => `R$ ${(value / 1000).toFixed(0)}k`,
           },
         },
       },
@@ -738,40 +473,20 @@ export default function DashboardPage() {
   );
 
   /* ===================================================
-     DATA PEDIDOS
+     GRÁFICO DE PEDIDOS
   =================================================== */
 
   const ordersData = useMemo(
     () => ({
-      labels: [
-        'Jan',
-        'Fev',
-        'Mar',
-        'Abr',
-        'Mai',
-        'Jun',
-        'Jul',
-        'Ago',
-        'Set',
-        'Out',
-        'Nov',
-        'Dez',
-      ],
-
+      labels: MONTH_LABELS,
       datasets: [
         {
           label: 'Pedidos',
-
           data: monthlyOrders,
-
-          backgroundColor: '#dbeafe',
-
-          hoverBackgroundColor: '#2563eb',
-
+          backgroundColor: '#e0e7ff',
+          hoverBackgroundColor: '#4f46e5',
           borderRadius: 6,
-
           borderSkipped: false,
-
           barThickness: 18,
         },
       ],
@@ -779,65 +494,28 @@ export default function DashboardPage() {
     [monthlyOrders]
   );
 
-  /* ===================================================
-     OPÇÕES PEDIDOS
-  =================================================== */
-
   const ordersOptions = useMemo(
     () => ({
       responsive: true,
-
       maintainAspectRatio: false,
-
       plugins: {
-        legend: {
-          display: false,
-        },
-
+        legend: { display: false },
         tooltip: {
-          backgroundColor: '#172033',
-
+          backgroundColor: '#1e1b3a',
           padding: 10,
-
           cornerRadius: 8,
         },
       },
-
       scales: {
         x: {
-          border: {
-            display: false,
-          },
-
-          grid: {
-            display: false,
-          },
-
-          ticks: {
-            color: '#94a3b8',
-
-            font: {
-              size: 11,
-            },
-          },
+          border: { display: false },
+          grid: { display: false },
+          ticks: { color: '#94a3b8', font: { size: 11 } },
         },
-
         y: {
-          border: {
-            display: false,
-          },
-
-          grid: {
-            color: '#eef2f6',
-          },
-
-          ticks: {
-            color: '#94a3b8',
-
-            font: {
-              size: 11,
-            },
-          },
+          border: { display: false },
+          grid: { color: '#eef2f6' },
+          ticks: { color: '#94a3b8', font: { size: 11 } },
         },
       },
     }),
@@ -845,37 +523,19 @@ export default function DashboardPage() {
   );
 
   /* ===================================================
-     DONUT
+     DONUT DE CATEGORIAS
   =================================================== */
 
   const categoryData = useMemo(() => {
-    const colors = [
-      '#2563eb',
-      '#60a5fa',
-      '#93c5fd',
-      '#dbeafe',
-      '#bfdbfe',
-    ];
+    const colors = ['#4f46e5', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff'];
 
     return {
-      labels: categoryDistribution.map(
-        ([category]) => category
-      ),
-
+      labels: categoryDistribution.map(([category]) => category),
       datasets: [
         {
-          data: categoryDistribution.map(
-            ([, total]) => total
-          ),
-
-          backgroundColor:
-            colors.slice(
-              0,
-              categoryDistribution.length
-            ),
-
+          data: categoryDistribution.map(([, total]) => total),
+          backgroundColor: colors.slice(0, categoryDistribution.length),
           borderWidth: 0,
-
           hoverOffset: 4,
         },
       ],
@@ -885,60 +545,70 @@ export default function DashboardPage() {
   const categoryOptions = useMemo(
     () => ({
       responsive: true,
-
       maintainAspectRatio: false,
-
       cutout: '72%',
-
       plugins: {
-        legend: {
-          display: false,
-        },
-
-        tooltip: {
-          backgroundColor: '#172033',
-
-          padding: 10,
-
-          cornerRadius: 8,
-        },
+        legend: { display: false },
+        tooltip: { backgroundColor: '#1e1b3a', padding: 10, cornerRadius: 8 },
       },
     }),
     []
   );
 
   /* ===================================================
-     ATIVIDADES
+     ATIVIDADES RECENTES (últimas vendas reais)
   =================================================== */
 
   const activities = useMemo(() => {
-    return normalizedOrders
-      .slice(0, 4)
-      .map((order) => ({
-        initials:
-          order.customer
-            ?.split(' ')
-            .slice(0, 2)
-            .map(
-              (name) =>
-                name[0]
-            )
-            .join('')
-            .toUpperCase() || 'CL',
+    return normalizedSales.slice(0, 4).map((sale) => ({
+      key: sale.id,
+      initials: getInitials(sale.customer),
+      name: sale.customer,
+      context: `${sale.id} · ${sale.product}`,
+      time: sale.date,
+      statusClass: sale.statusClass,
+      statusLabel: sale.status,
+    }));
+  }, [normalizedSales]);
 
-        name:
-          order.customer,
+  /* ===================================================
+     EXPORTAR RELATÓRIO (CSV com os dados reais carregados)
+  =================================================== */
 
-        action:
-          'realizou um novo pedido',
+  const handleExport = useCallback(() => {
+    const header = ['Pedido', 'Cliente', 'Produto', 'Data', 'Valor', 'Status'];
 
-        context:
-          order.id,
+    const rows = normalizedSales.map((sale) => [
+      sale.id,
+      sale.customer,
+      sale.product,
+      sale.date,
+      sale.value.toFixed(2).replace('.', ','),
+      sale.status,
+    ]);
 
-        time:
-          order.date,
-      }));
-  }, [normalizedOrders]);
+    const csv = [header, ...rows]
+      .map((row) =>
+        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';')
+      )
+      .join('\n');
+
+    const blob = new Blob(['\uFEFF' + csv], {
+      type: 'text/csv;charset=utf-8;',
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = `relatorio-pedidos-${new Date().toISOString().slice(0, 10)}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+  }, [normalizedSales]);
 
   /* ===================================================
      LOADING
@@ -947,24 +617,10 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <main className="dashboard-page">
-
-        <div className="d-flex justify-content-center align-items-center py-5">
-
-          <div
-            className="spinner-border text-primary"
-            role="status"
-          >
-            <span className="visually-hidden">
-              Carregando...
-            </span>
-          </div>
-
-          <span className="ms-3 text-secondary">
-            Carregando dashboard...
-          </span>
-
+        <div className="dashboard-loading">
+          <div className="dashboard-spinner" />
+          <span>Carregando dashboard...</span>
         </div>
-
       </main>
     );
   }
@@ -976,35 +632,24 @@ export default function DashboardPage() {
   if (error) {
     return (
       <main className="dashboard-page">
-
-        <div
-          className="alert alert-danger d-flex align-items-center justify-content-between"
-          role="alert"
-        >
-
+        <div className="dashboard-error" role="alert">
           <div>
-            <i className="bi bi-exclamation-triangle me-2" />
-
-            <strong>
-              Não foi possível carregar o dashboard.
-            </strong>
-
-            <div className="small mt-1">
-              {error}
+            <i className="bi bi-exclamation-triangle" />
+            <div>
+              <strong>Não foi possível carregar o dashboard.</strong>
+              <p>{error}</p>
             </div>
           </div>
 
           <button
             type="button"
-            className="btn btn-outline-danger btn-sm"
-            onClick={carregarDashboard}
+            className="dashboard-btn dashboard-btn-outline"
+            onClick={() => carregarDashboard()}
           >
-            <i className="bi bi-arrow-clockwise me-1" />
+            <i className="bi bi-arrow-clockwise" />
             Tentar novamente
           </button>
-
         </div>
-
       </main>
     );
   }
@@ -1015,964 +660,376 @@ export default function DashboardPage() {
 
   return (
     <main className="dashboard-page">
-
-      {/* =================================================
-          HEADER
-      ================================================= */}
-
+      {/* HEADER */}
       <section className="dashboard-heading">
-
         <div>
-
           <span className="dashboard-eyebrow">
+            <i className="bi bi-graph-up-arrow" />
             Visão geral
           </span>
 
-          <h1 className="h2 fw-semibold mb-2">
-            Dashboard
-          </h1>
+          <h1>Dashboard</h1>
 
-          <p className="text-secondary mb-0">
-            Acompanhe o desempenho da sua operação
-            em tempo real.
+          <p>
+            {updatedAt
+              ? `Atualizado às ${updatedAt.toLocaleTimeString('pt-BR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}`
+              : 'Acompanhe o desempenho da sua operação em tempo real.'}
           </p>
-
         </div>
 
-        <div className="d-flex flex-wrap gap-2">
-
+        <div className="dashboard-actions">
           <button
             type="button"
-            className="btn btn-light border"
+            className="dashboard-btn dashboard-btn-outline"
+            onClick={() => carregarDashboard(true)}
+            disabled={refreshing}
           >
-            <i className="bi bi-calendar3 me-2" />
-
-            Últimos 30 dias
-
-            <i className="bi bi-chevron-down ms-2" />
+            <i className={`bi ${refreshing ? 'bi-arrow-repeat spin' : 'bi-arrow-clockwise'}`} />
+            {refreshing ? 'Atualizando...' : 'Atualizar'}
           </button>
 
           <button
             type="button"
-            className="btn btn-primary"
+            className="dashboard-btn dashboard-btn-primary"
+            onClick={handleExport}
+            disabled={normalizedSales.length === 0}
           >
-            <i className="bi bi-download me-2" />
-
+            <i className="bi bi-download" />
             Exportar
           </button>
-
         </div>
-
       </section>
 
-      {/* =================================================
-          MÉTRICAS
-      ================================================= */}
+      {/* MÉTRICAS */}
+      <section className="dashboard-metrics" aria-label="Principais métricas">
+        <article className="dashboard-card metric-card">
+          <div className="metric-icon revenue">
+            <i className="bi bi-currency-dollar" />
+          </div>
 
-      <section
-        className="row g-3 mb-4"
-        aria-label="Principais métricas"
-      >
+          <span className="metric-label">Receita total</span>
+          <strong className="metric-value">{formatCurrency(totalRevenue)}</strong>
 
-        {/* RECEITA */}
-
-        <div className="col-12 col-sm-6 col-xl-3">
-
-          <article className="dashboard-card metric-card h-100">
-
-            <div className="d-flex justify-content-between align-items-start">
-
-              <div className="metric-icon">
-                <i className="bi bi-currency-dollar" />
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-sm btn-light border-0"
-                aria-label="Mais opções para receita"
-              >
-                <i className="bi bi-three-dots" />
-              </button>
-
-            </div>
-
-            <div className="mt-3">
-
-              <span className="d-block text-secondary small mb-1">
-                Receita total
+          <div className="metric-footer">
+            {revenueGrowth === null ? (
+              <span className="metric-trend neutral">Sem histórico do mês anterior</span>
+            ) : (
+              <span className={`metric-trend ${revenueGrowth >= 0 ? 'up' : 'down'}`}>
+                <i className={`bi ${revenueGrowth >= 0 ? 'bi-arrow-up-right' : 'bi-arrow-down-right'}`} />
+                {Math.abs(revenueGrowth).toFixed(1)}% vs mês anterior
               </span>
+            )}
+          </div>
+        </article>
 
-              <strong className="metric-value">
-                {formatCurrency(totalRevenue)}
-              </strong>
+        <article className="dashboard-card metric-card">
+          <div className="metric-icon orders">
+            <i className="bi bi-bag-check" />
+          </div>
 
-            </div>
+          <span className="metric-label">Pedidos</span>
+          <strong className="metric-value">{formatNumber(totals.vendas)}</strong>
 
-            <div className="mt-3">
-
-              <span className="text-secondary small">
-                Valor calculado a partir dos pedidos
+          <div className="metric-footer">
+            {ordersGrowth === null ? (
+              <span className="metric-trend neutral">Sem histórico do mês anterior</span>
+            ) : (
+              <span className={`metric-trend ${ordersGrowth >= 0 ? 'up' : 'down'}`}>
+                <i className={`bi ${ordersGrowth >= 0 ? 'bi-arrow-up-right' : 'bi-arrow-down-right'}`} />
+                {Math.abs(ordersGrowth).toFixed(1)}% vs mês anterior
               </span>
+            )}
+          </div>
+        </article>
 
-            </div>
+        <article className="dashboard-card metric-card">
+          <div className="metric-icon products">
+            <i className="bi bi-box-seam" />
+          </div>
 
-          </article>
+          <span className="metric-label">Produtos</span>
+          <strong className="metric-value">{formatNumber(totals.produtos)}</strong>
 
-        </div>
-
-        {/* PEDIDOS */}
-
-        <div className="col-12 col-sm-6 col-xl-3">
-
-          <article className="dashboard-card metric-card h-100">
-
-            <div className="d-flex justify-content-between align-items-start">
-
-              <div className="metric-icon">
-                <i className="bi bi-bag-check" />
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-sm btn-light border-0"
-                aria-label="Mais opções para pedidos"
-              >
-                <i className="bi bi-three-dots" />
-              </button>
-
-            </div>
-
-            <div className="mt-3">
-
-              <span className="d-block text-secondary small mb-1">
-                Pedidos
+          <div className="metric-footer">
+            {lowStockCount > 0 ? (
+              <span className="metric-trend down">
+                <i className="bi bi-exclamation-triangle" />
+                {lowStockCount} com estoque baixo
               </span>
+            ) : (
+              <span className="metric-trend neutral">Estoque saudável</span>
+            )}
+          </div>
+        </article>
 
-              <strong className="metric-value">
-                {formatNumber(
-                  dashboardData.totalPedidos
-                )}
-              </strong>
+        <article className="dashboard-card metric-card">
+          <div className="metric-icon users">
+            <i className="bi bi-people" />
+          </div>
 
-            </div>
+          <span className="metric-label">Usuários</span>
+          <strong className="metric-value">{formatNumber(totals.usuarios)}</strong>
 
-            <div className="mt-3">
-
-              <span className="text-secondary small">
-                pedidos cadastrados
-              </span>
-
-            </div>
-
-          </article>
-
-        </div>
-
-        {/* PRODUTOS */}
-
-        <div className="col-12 col-sm-6 col-xl-3">
-
-          <article className="dashboard-card metric-card h-100">
-
-            <div className="d-flex justify-content-between align-items-start">
-
-              <div className="metric-icon">
-                <i className="bi bi-box-seam" />
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-sm btn-light border-0"
-                aria-label="Mais opções para produtos"
-              >
-                <i className="bi bi-three-dots" />
-              </button>
-
-            </div>
-
-            <div className="mt-3">
-
-              <span className="d-block text-secondary small mb-1">
-                Produtos
-              </span>
-
-              <strong className="metric-value">
-                {formatNumber(
-                  dashboardData.totalProdutos
-                )}
-              </strong>
-
-            </div>
-
-            <div className="mt-3">
-
-              <span className="text-secondary small">
-                produtos cadastrados
-              </span>
-
-            </div>
-
-          </article>
-
-        </div>
-
-        {/* USUÁRIOS */}
-
-        <div className="col-12 col-sm-6 col-xl-3">
-
-          <article className="dashboard-card metric-card h-100">
-
-            <div className="d-flex justify-content-between align-items-start">
-
-              <div className="metric-icon">
-                <i className="bi bi-people" />
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-sm btn-light border-0"
-                aria-label="Mais opções para usuários"
-              >
-                <i className="bi bi-three-dots" />
-              </button>
-
-            </div>
-
-            <div className="mt-3">
-
-              <span className="d-block text-secondary small mb-1">
-                Usuários
-              </span>
-
-              <strong className="metric-value">
-                {formatNumber(
-                  dashboardData.totalUsuarios
-                )}
-              </strong>
-
-            </div>
-
-            <div className="mt-3">
-
-              <span className="text-secondary small">
-                clientes cadastrados
-              </span>
-
-            </div>
-
-          </article>
-
-        </div>
-
+          <div className="metric-footer">
+            <span className="metric-trend neutral">
+              Ticket médio {formatCurrency(averageTicket)}
+            </span>
+          </div>
+        </article>
       </section>
 
-      {/* =================================================
-          GRÁFICOS
-      ================================================= */}
+      {/* GRÁFICOS */}
+      <section className="dashboard-grid">
+        <article className="dashboard-card span-8">
+          <div className="dashboard-card-header">
+            <div>
+              <span className="dashboard-card-label">Desempenho financeiro</span>
+              <h2>Receita em {currentYear}</h2>
+            </div>
 
-      <section className="row g-3 mb-4">
+            <span className="chart-summary-pill">
+              {MONTH_LABELS[currentMonth]}: {formatCurrency(monthlyRevenue[currentMonth])}
+            </span>
+          </div>
 
-        {/* RECEITA */}
+          <div className="chart-container chart-large">
+            <Line data={revenueData} options={revenueOptions} />
+          </div>
+        </article>
 
-        <div className="col-12 col-xl-8">
+        <article className="dashboard-card span-4">
+          <div className="dashboard-card-header">
+            <div>
+              <span className="dashboard-card-label">Distribuição</span>
+              <h2>Produtos por categoria</h2>
+            </div>
+          </div>
 
-          <article className="dashboard-card h-100">
-
-            <div className="dashboard-card-header">
-
-              <div>
-
-                <span className="dashboard-card-label">
-                  Desempenho financeiro
-                </span>
-
-                <h2 className="h5 fw-semibold mb-0">
-                  Receita
-                </h2>
-
+          <div className="donut-wrapper">
+            <div className="donut-chart">
+              <Doughnut data={categoryData} options={categoryOptions} />
+              <div className="donut-center">
+                <strong>{formatNumber(totals.produtos)}</strong>
+                <span>produtos</span>
               </div>
-
-              <button
-                type="button"
-                className="btn btn-sm btn-light border"
-              >
-                Mensal
-                <i className="bi bi-chevron-down ms-2" />
-              </button>
-
             </div>
+          </div>
 
-            <div className="d-flex align-items-center gap-2 mt-3">
+          <div className="distribution-legend">
+            {categoryDistribution.map(([category, total], index) => {
+              const percentage = produtos.length
+                ? Math.round((total / produtos.length) * 100)
+                : 0;
 
-              <strong className="chart-summary-value">
-                {formatCurrency(totalRevenue)}
-              </strong>
-
-            </div>
-
-            <div className="chart-container chart-large mt-3">
-
-              <Line
-                data={revenueData}
-                options={revenueOptions}
-              />
-
-            </div>
-
-          </article>
-
-        </div>
-
-        {/* CATEGORIAS */}
-
-        <div className="col-12 col-xl-4">
-
-          <article className="dashboard-card h-100">
-
-            <div className="dashboard-card-header">
-
-              <div>
-
-                <span className="dashboard-card-label">
-                  Distribuição
-                </span>
-
-                <h2 className="h5 fw-semibold mb-0">
-                  Produtos
-                </h2>
-
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-sm btn-light border"
-              >
-                <i className="bi bi-three-dots" />
-              </button>
-
-            </div>
-
-            <div className="donut-wrapper mt-3">
-
-              <div className="donut-chart">
-
-                <Doughnut
-                  data={categoryData}
-                  options={categoryOptions}
-                />
-
-                <div className="donut-center">
-
-                  <strong>
-                    {formatNumber(
-                      dashboardData.totalProdutos
-                    )}
-                  </strong>
-
+              return (
+                <div className="legend-item" key={category}>
                   <span>
-                    produtos
+                    <i className={`legend-dot category-${index}`} />
+                    {category}
                   </span>
-
+                  <strong>{percentage}%</strong>
                 </div>
+              );
+            })}
 
-              </div>
+            {categoryDistribution.length === 0 && (
+              <div className="dashboard-empty-inline">Nenhuma categoria encontrada.</div>
+            )}
+          </div>
+        </article>
 
+        <article className="dashboard-card span-8">
+          <div className="dashboard-card-header">
+            <div>
+              <span className="dashboard-card-label">Volume operacional</span>
+              <h2>Pedidos em {currentYear}</h2>
             </div>
 
-            <div className="distribution-legend mt-3">
+            <span className="chart-summary-pill">{formatNumber(totals.vendas)} pedidos</span>
+          </div>
 
-              {categoryDistribution.map(
-                ([category, total], index) => {
+          <div className="chart-container chart-medium">
+            <Bar data={ordersData} options={ordersOptions} />
+          </div>
+        </article>
 
-                  const percentage =
-                    dashboardData.produtos.length
-                      ? Math.round(
-                          (total /
-                            dashboardData.produtos.length) *
-                            100
-                        )
-                      : 0;
-
-                  return (
-                    <div
-                      className="legend-item"
-                      key={category}
-                    >
-
-                      <span>
-
-                        <i
-                          className={`legend-dot category-${index}`}
-                        />
-
-                        {category}
-
-                      </span>
-
-                      <strong>
-                        {percentage}%
-                      </strong>
-
-                    </div>
-                  );
-                }
-              )}
-
-              {categoryDistribution.length === 0 && (
-                <div className="text-secondary small text-center py-3">
-                  Nenhuma categoria encontrada.
-                </div>
-              )}
-
+        <article className="dashboard-card span-4">
+          <div className="dashboard-card-header">
+            <div>
+              <span className="dashboard-card-label">Atalhos</span>
+              <h2>Ações rápidas</h2>
             </div>
+          </div>
 
-          </article>
-
-        </div>
-
-        {/* PEDIDOS */}
-
-        <div className="col-12 col-xl-8">
-
-          <article className="dashboard-card h-100">
-
-            <div className="dashboard-card-header">
-
-              <div>
-
-                <span className="dashboard-card-label">
-                  Volume operacional
-                </span>
-
-                <h2 className="h5 fw-semibold mb-0">
-                  Pedidos
-                </h2>
-
-              </div>
-
-              <span className="text-secondary small">
-                {formatNumber(
-                  dashboardData.totalPedidos
-                )}{' '}
-                pedidos
+          <div className="quick-actions">
+            <Link href="/pedidos" className="quick-action">
+              <span className="quick-action-icon blue">
+                <i className="bi bi-plus-lg" />
               </span>
-
-            </div>
-
-            <div className="chart-container chart-medium mt-3">
-
-              <Bar
-                data={ordersData}
-                options={ordersOptions}
-              />
-
-            </div>
-
-          </article>
-
-        </div>
-
-        {/* AÇÕES */}
-
-        <div className="col-12 col-xl-4">
-
-          <article className="dashboard-card h-100">
-
-            <div className="dashboard-card-header">
-
-              <div>
-
-                <span className="dashboard-card-label">
-                  Atalhos
-                </span>
-
-                <h2 className="h5 fw-semibold mb-0">
-                  Ações rápidas
-                </h2>
-
-              </div>
-
-            </div>
-
-            <div className="list-group list-group-flush mt-2">
-
-              <button
-                type="button"
-                className="list-group-item list-group-item-action px-0 quick-action"
-              >
-
-                <span className="quick-action-icon blue">
-                  <i className="bi bi-plus-lg" />
-                </span>
-
-                <span>
-                  <strong>
-                    Novo pedido
-                  </strong>
-
-                  <small>
-                    Criar uma nova venda
-                  </small>
-                </span>
-
-                <i className="bi bi-chevron-right ms-auto" />
-
-              </button>
-
-              <button
-                type="button"
-                className="list-group-item list-group-item-action px-0 quick-action"
-              >
-
-                <span className="quick-action-icon purple">
-                  <i className="bi bi-box-seam" />
-                </span>
-
-                <span>
-                  <strong>
-                    Adicionar produto
-                  </strong>
-
-                  <small>
-                    Cadastrar novo produto
-                  </small>
-                </span>
-
-                <i className="bi bi-chevron-right ms-auto" />
-
-              </button>
-
-              <button
-                type="button"
-                className="list-group-item list-group-item-action px-0 quick-action"
-              >
-
-                <span className="quick-action-icon green">
-                  <i className="bi bi-file-earmark-arrow-down" />
-                </span>
-
-                <span>
-                  <strong>
-                    Exportar relatório
-                  </strong>
-
-                  <small>
-                    Baixar dados do período
-                  </small>
-                </span>
-
-                <i className="bi bi-chevron-right ms-auto" />
-
-              </button>
-
-              <button
-                type="button"
-                className="list-group-item list-group-item-action px-0 quick-action"
-              >
-
-                <span className="quick-action-icon orange">
-                  <i className="bi bi-person-plus" />
-                </span>
-
-                <span>
-                  <strong>
-                    Ver usuários
-                  </strong>
-
-                  <small>
-                    Gerenciar clientes
-                  </small>
-                </span>
-
-                <i className="bi bi-chevron-right ms-auto" />
-
-              </button>
-
-            </div>
-
-          </article>
-
-        </div>
-
-      </section>
-
-      {/* =================================================
-          PEDIDOS + ATIVIDADES
-      ================================================= */}
-
-      <section className="row g-3">
-
-        {/* PEDIDOS */}
-
-        <div className="col-12 col-xl-8">
-
-          <article className="dashboard-card">
-
-            <div className="dashboard-card-header">
-
-              <div>
-
-                <span className="dashboard-card-label">
-                  Operação
-                </span>
-
-                <h2 className="h5 fw-semibold mb-0">
-                  Pedidos recentes
-                </h2>
-
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-link btn-sm text-decoration-none"
-              >
-                Ver todos
-                <i className="bi bi-arrow-right ms-1" />
-              </button>
-
-            </div>
-
-            <div className="table-responsive mt-3">
-
-              <table className="table table-hover align-middle mb-0 dashboard-table">
-
-                <thead>
-
-                  <tr>
-                    <th>Pedido</th>
-                    <th>Cliente</th>
-                    <th>Produto</th>
-                    <th>Data</th>
-                    <th>Valor</th>
-                    <th>Status</th>
-                    <th />
-                  </tr>
-
-                </thead>
-
-                <tbody>
-
-                  {normalizedOrders
-                    .slice(0, 5)
-                    .map((order) => (
-
-                      <tr key={order.id}>
-
-                        <td>
-                          <span className="order-id">
-                            {order.id}
-                          </span>
-                        </td>
-
-                        <td>
-                          <span className="customer-name">
-                            {order.customer}
-                          </span>
-                        </td>
-
-                        <td>
-                          <span className="product-name">
-                            {order.product}
-                          </span>
-                        </td>
-
-                        <td>
-                          <span className="table-muted">
-                            {order.date}
-                          </span>
-                        </td>
-
-                        <td>
-                          <strong className="order-value">
-                            {formatCurrency(
-                              order.value
-                            )}
-                          </strong>
-                        </td>
-
-                        <td>
-
-                          <span
-                            className={`status-badge ${order.statusClass}`}
-                          >
-                            <span />
-                            {order.status}
-                          </span>
-
-                        </td>
-
-                        <td>
-
-                          <div className="dropdown">
-
-                            <button
-                              className="btn btn-sm btn-light border-0"
-                              type="button"
-                              data-bs-toggle="dropdown"
-                              aria-expanded="false"
-                              aria-label={`Ações do pedido ${order.id}`}
-                            >
-                              <i className="bi bi-three-dots" />
-                            </button>
-
-                            <ul className="dropdown-menu dropdown-menu-end shadow-sm">
-
-                              <li>
-
-                                <button className="dropdown-item">
-
-                                  <i className="bi bi-eye me-2" />
-
-                                  Visualizar
-
-                                </button>
-
-                              </li>
-
-                              <li>
-
-                                <button className="dropdown-item">
-
-                                  <i className="bi bi-pencil me-2" />
-
-                                  Editar
-
-                                </button>
-
-                              </li>
-
-                              <li>
-
-                                <hr className="dropdown-divider" />
-
-                              </li>
-
-                              <li>
-
-                                <button className="dropdown-item text-danger">
-
-                                  <i className="bi bi-trash me-2" />
-
-                                  Excluir
-
-                                </button>
-
-                              </li>
-
-                            </ul>
-
-                          </div>
-
-                        </td>
-
-                      </tr>
-
-                    ))}
-
-                  {normalizedOrders.length === 0 && (
-
-                    <tr>
-
-                      <td
-                        colSpan="7"
-                        className="text-center py-5 text-secondary"
-                      >
-                        <i className="bi bi-inbox fs-3 d-block mb-2" />
-
-                        Nenhum pedido encontrado.
-
-                      </td>
-
-                    </tr>
-
-                  )}
-
-                </tbody>
-
-              </table>
-
-            </div>
-
-            <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 pt-3 mt-2 border-top">
-
-              <span className="text-secondary small">
-
-                Mostrando{' '}
-
-                <strong>
-                  {Math.min(
-                    5,
-                    normalizedOrders.length
-                  )}
-                </strong>{' '}
-
-                de{' '}
-
-                <strong>
-                  {formatNumber(
-                    dashboardData.totalPedidos
-                  )}
-                </strong>{' '}
-
-                pedidos
-
+              <span>
+                <strong>Novo pedido</strong>
+                <small>Criar uma nova venda</small>
               </span>
+              <i className="bi bi-chevron-right" />
+            </Link>
 
-              <nav aria-label="Paginação de pedidos">
+            <Link href="/produtos" className="quick-action">
+              <span className="quick-action-icon purple">
+                <i className="bi bi-box-seam" />
+              </span>
+              <span>
+                <strong>Adicionar produto</strong>
+                <small>Cadastrar novo produto</small>
+              </span>
+              <i className="bi bi-chevron-right" />
+            </Link>
 
-                <ul className="pagination pagination-sm mb-0">
-
-                  <li className="page-item disabled">
-
-                    <button className="page-link">
-                      <i className="bi bi-chevron-left" />
-                    </button>
-
-                  </li>
-
-                  <li className="page-item active">
-
-                    <button className="page-link">
-                      1
-                    </button>
-
-                  </li>
-
-                  <li className="page-item">
-
-                    <button className="page-link">
-                      2
-                    </button>
-
-                  </li>
-
-                  <li className="page-item">
-
-                    <button className="page-link">
-                      3
-                    </button>
-
-                  </li>
-
-                  <li className="page-item">
-
-                    <button className="page-link">
-                      <i className="bi bi-chevron-right" />
-                    </button>
-
-                  </li>
-
-                </ul>
-
-              </nav>
-
-            </div>
-
-          </article>
-
-        </div>
-
-        {/* ATIVIDADES */}
-
-        <div className="col-12 col-xl-4">
-
-          <article className="dashboard-card h-100">
-
-            <div className="dashboard-card-header">
-
-              <div>
-
-                <span className="dashboard-card-label">
-                  Timeline
-                </span>
-
-                <h2 className="h5 fw-semibold mb-0">
-                  Atividades recentes
-                </h2>
-
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-sm btn-light border"
-                aria-label="Mais opções"
-              >
-                <i className="bi bi-three-dots" />
-              </button>
-
-            </div>
-
-            <div className="activity-list mt-3">
-
-              {activities.map(
-                (activity) => (
-
-                  <div
-                    className="activity-item"
-                    key={`${activity.name}-${activity.context}`}
-                  >
-
-                    <div className="activity-avatar">
-                      {activity.initials}
-                    </div>
-
-                    <div className="activity-content">
-
-                      <p>
-
-                        <strong>
-                          {activity.name}
-                        </strong>{' '}
-
-                        {activity.action}
-
-                      </p>
-
-                      <span>
-                        {activity.context}
-                      </span>
-
-                      <small>
-                        {activity.time}
-                      </small>
-
-                    </div>
-
-                  </div>
-
-                )
-              )}
-
-              {activities.length === 0 && (
-
-                <div className="text-center text-secondary py-4">
-
-                  <i className="bi bi-clock-history fs-3 d-block mb-2" />
-
-                  Nenhuma atividade recente.
-
-                </div>
-
-              )}
-
-            </div>
-
-            <button
-              type="button"
-              className="btn btn-link text-decoration-none px-0 mt-3"
-            >
-              Ver todas as atividades
-
-              <i className="bi bi-arrow-right ms-1" />
-
+            <button type="button" className="quick-action" onClick={handleExport}>
+              <span className="quick-action-icon green">
+                <i className="bi bi-file-earmark-arrow-down" />
+              </span>
+              <span>
+                <strong>Exportar relatório</strong>
+                <small>Baixar pedidos em CSV</small>
+              </span>
+              <i className="bi bi-chevron-right" />
             </button>
 
-          </article>
+            <Link href="/usuarios" className="quick-action">
+              <span className="quick-action-icon orange">
+                <i className="bi bi-person-plus" />
+              </span>
+              <span>
+                <strong>Ver usuários</strong>
+                <small>Gerenciar clientes</small>
+              </span>
+              <i className="bi bi-chevron-right" />
+            </Link>
+          </div>
 
-        </div>
-
+          {statusBreakdown.length > 0 && (
+            <div className="status-breakdown">
+              {statusBreakdown.map((item) => (
+                <div className="status-breakdown-item" key={item.label}>
+                  <span className={`status-badge ${item.className}`}>
+                    <span />
+                    {item.label}
+                  </span>
+                  <strong>{item.total}</strong>
+                </div>
+              ))}
+            </div>
+          )}
+        </article>
       </section>
 
+      {/* PEDIDOS + ATIVIDADES */}
+      <section className="dashboard-grid">
+        <article className="dashboard-card span-8">
+          <div className="dashboard-card-header">
+            <div>
+              <span className="dashboard-card-label">Operação</span>
+              <h2>Pedidos recentes</h2>
+            </div>
+
+            <Link href="/pedidos" className="dashboard-link">
+              Ver todos
+              <i className="bi bi-arrow-right" />
+            </Link>
+          </div>
+
+          <div className="table-responsive">
+            <table className="dashboard-table">
+              <thead>
+                <tr>
+                  <th>Pedido</th>
+                  <th>Cliente</th>
+                  <th>Produto</th>
+                  <th>Data</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {normalizedSales.slice(0, 5).map((sale) => (
+                  <tr key={sale.id}>
+                    <td>
+                      <span className="order-id">{sale.id}</span>
+                    </td>
+                    <td>{sale.customer}</td>
+                    <td>{sale.product}</td>
+                    <td className="table-muted">{sale.date}</td>
+                    <td>
+                      <strong className="order-value">{formatCurrency(sale.value)}</strong>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${sale.statusClass}`}>
+                        <span />
+                        {sale.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+
+                {normalizedSales.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="dashboard-empty">
+                      <i className="bi bi-inbox" />
+                      Nenhum pedido encontrado.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article className="dashboard-card span-4">
+          <div className="dashboard-card-header">
+            <div>
+              <span className="dashboard-card-label">Timeline</span>
+              <h2>Atividades recentes</h2>
+            </div>
+          </div>
+
+          <div className="activity-list">
+            {activities.map((activity) => (
+              <div className="activity-item" key={activity.key}>
+                <div className="activity-avatar">{activity.initials}</div>
+
+                <div className="activity-content">
+                  <p>
+                    <strong>{activity.name}</strong> realizou um novo pedido
+                  </p>
+                  <span>{activity.context}</span>
+                  <div className="activity-meta">
+                    <small>{activity.time}</small>
+                    <span className={`status-badge sm ${activity.statusClass}`}>
+                      {activity.statusLabel}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {activities.length === 0 && (
+              <div className="dashboard-empty">
+                <i className="bi bi-clock-history" />
+                Nenhuma atividade recente.
+              </div>
+            )}
+          </div>
+
+          <Link href="/pedidos" className="dashboard-link block">
+            Ver todas as atividades
+            <i className="bi bi-arrow-right" />
+          </Link>
+        </article>
+      </section>
     </main>
   );
 }

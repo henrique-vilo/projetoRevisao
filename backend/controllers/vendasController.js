@@ -1,51 +1,48 @@
-import VendaModel from '../models/vendaModel.js';
+import VendaModel from '../models/vendasModel.js';
 
 const STATUS_PERMITIDOS = ['carrinho', 'pendente', 'processando', 'enviado', 'entregue', 'cancelado'];
 
-// --- UTILITÁRIOS INTERNOS ---
-
-// Formatação para Padrão Brasileiro (DD/MM/YYYY)
 const formatarDataBR = (dataSql) => {
     if (!dataSql) return null;
     const data = new Date(dataSql);
     return data.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 };
 
-// Gera Data no formato YYYY-MM-DD para o MySQL
 const formatarDataSQL = (data) => {
     return data.toISOString().split('T')[0];
 };
 
-// Cálculo fictício de tempo de entrega usando o 1º dígito do CEP
 const simularDiasEntregaCEP = (cep) => {
     const digitoRegiao = parseInt(cep.charAt(0));
-    // Ex: Se começar com 0 (SP Capital) = 2 dias. Outros = digito + 2 dias (Máximo 11 dias)
     return digitoRegiao === 0 ? 2 : digitoRegiao + 2; 
 };
 
-// Lógica Principal de Progresso da Venda (Avaliação Dinâmica)
 const sincronizarProgressoVenda = async (venda) => {
-    if (venda.status === 'carrinho' || venda.status === 'entregue' || venda.status === 'cancelado') {
-        return venda; // Estados estáticos não mudam sozinhos
+    // Normaliza a string do status removendo espaços
+    const statusLimpo = venda.status ? String(venda.status).trim().toLowerCase() : '';
+    venda.status = statusLimpo;
+
+    if (statusLimpo === 'carrinho' || statusLimpo === 'entregue' || statusLimpo === 'cancelado') {
+        venda.dataPedidoBR = formatarDataBR(venda.dataPedido);
+        venda.dataEntregaBR = formatarDataBR(venda.dataEntrega);
+        return venda;
     }
 
     const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0); // Zera as horas para comparar apenas os dias
+    hoje.setHours(0, 0, 0, 0);
     
-    let novoStatus = venda.status;
+    let novoStatus = statusLimpo;
     let atualizou = false;
     let dadosAtualizacao = {};
 
     const dataPedidoObj = venda.dataPedido ? new Date(venda.dataPedido) : null;
     const dataEntregaObj = venda.dataEntrega ? new Date(venda.dataEntrega) : null;
 
-    // Regra 1: Pendente -> Processando (Se tem data de entrega definida, já começa a processar)
     if (novoStatus === 'pendente' && venda.dataEntrega) {
         novoStatus = 'processando';
         atualizou = true;
     }
 
-    // Regra 2: Processando -> Enviado (Simularemos que leva metade do tempo de entrega para enviar)
     if (novoStatus === 'processando' && dataPedidoObj && dataEntregaObj) {
         const diasTotais = (dataEntregaObj - dataPedidoObj) / (1000 * 60 * 60 * 24);
         const diasPassados = (hoje - dataPedidoObj) / (1000 * 60 * 60 * 24);
@@ -56,7 +53,6 @@ const sincronizarProgressoVenda = async (venda) => {
         }
     }
 
-    // Regra 3: Qualquer etapa em transporte -> Entregue (Se a data de hoje passou ou chegou na data de entrega)
     if ((novoStatus === 'processando' || novoStatus === 'enviado') && dataEntregaObj) {
         if (hoje >= dataEntregaObj) {
             novoStatus = 'entregue';
@@ -64,14 +60,12 @@ const sincronizarProgressoVenda = async (venda) => {
         }
     }
 
-    // Se houve mudança nas regras de simulação temporal, salva no BD
     if (atualizou) {
         dadosAtualizacao.status = novoStatus;
         await VendaModel.atualizar(venda.idVendas, dadosAtualizacao);
         venda.status = novoStatus; 
     }
 
-    // Formata as datas para o Frontend (BR)
     venda.dataPedidoBR = formatarDataBR(venda.dataPedido);
     venda.dataEntregaBR = formatarDataBR(venda.dataEntrega);
 
@@ -80,7 +74,6 @@ const sincronizarProgressoVenda = async (venda) => {
 
 class VendaController {
 
-    // POST /vendas/carrinho - Adicionar ao carrinho (Sem datas)
     static async adicionarCarrinho(req, res) {
         try {
             const { idUsuario, idProduto } = req.body;
@@ -92,7 +85,7 @@ class VendaController {
             const dadosVenda = {
                 idUsuario: parseInt(idUsuario),
                 idProduto: parseInt(idProduto),
-                dataPedido: null, // Fica nulo pois está no carrinho
+                dataPedido: null,
                 dataEntrega: null,
                 status: 'carrinho'
             };
@@ -105,30 +98,29 @@ class VendaController {
         }
     }
 
-    // POST /vendas/:id/confirmar - Confirmação de Compra
     static async confirmarCompra(req, res) {
         try {
             const { id } = req.params;
             const venda = await VendaModel.buscarPorId(id);
 
             if (!venda) return res.status(404).json({ sucesso: false, mensagem: 'Venda não encontrada' });
-            if (venda.status !== 'carrinho') return res.status(400).json({ sucesso: false, mensagem: 'Esta venda já passou da fase de carrinho' });
+            
+            const statusAtual = String(venda.status).trim().toLowerCase();
+            if (statusAtual !== 'carrinho') return res.status(400).json({ sucesso: false, mensagem: 'Esta venda já passou da fase de carrinho' });
 
             const usuario = await VendaModel.buscarUsuarioVenda(venda.idUsuario);
             if (!usuario || !usuario.cep) return res.status(400).json({ sucesso: false, mensagem: 'Usuário sem CEP cadastrado' });
 
-            // Cálculos de datas
             const hoje = new Date();
             const diasParaEntrega = simularDiasEntregaCEP(usuario.cep);
             
             const dataEntrega = new Date(hoje);
             dataEntrega.setDate(hoje.getDate() + diasParaEntrega);
 
-            // Ao definir a data de entrega, a regra do sistema já joga o status para 'processando'
             const dadosAtualizacao = {
                 dataPedido: formatarDataSQL(hoje),
                 dataEntrega: formatarDataSQL(dataEntrega),
-                status: 'processando' // O sistema salta 'pendente' por já ter a estimativa feita automaticamente
+                status: 'processando'
             };
 
             await VendaModel.atualizar(id, dadosAtualizacao);
@@ -150,7 +142,6 @@ class VendaController {
         }
     }
 
-    // GET /vendas - Listar todas (Com atualização dinâmica de status)
     static async listarTodos(req, res) {
         try {
             const pagina = parseInt(req.query.pagina) || 1;
@@ -159,7 +150,6 @@ class VendaController {
 
             const resultado = await VendaModel.listarTodos(limite, offset);
 
-            // Aplica a regra de avaliação de tempo em todas as vendas retornadas
             const vendasAtualizadas = await Promise.all(
                 resultado.vendas.map(v => sincronizarProgressoVenda(v))
             );
@@ -180,7 +170,6 @@ class VendaController {
         }
     }
 
-    // GET /vendas/:id - Buscar venda por ID
     static async buscarPorId(req, res) {
         try {
             const { id } = req.params;
@@ -196,7 +185,6 @@ class VendaController {
         }
     }
 
-    // GET /vendas/usuario/:idUsuario
     static async buscarPorUsuario(req, res) {
         try {
             const { idUsuario } = req.params;
@@ -212,13 +200,61 @@ class VendaController {
         }
     }
 
-    // Métodos PADRÃO: Atualizar e Excluir
+    // ATUALIZAR PEDIDO (ADMIN)
     static async atualizar(req, res) {
-        // ... (Mesma lógica da resposta anterior, mantida para atualizações manuais por Admins)
+        try {
+            const { id } = req.params;
+            const { idUsuario, idProduto, status } = req.body;
+
+            const vendaExistente = await VendaModel.buscarPorId(id);
+            if (!vendaExistente) {
+                return res.status(404).json({ sucesso: false, mensagem: 'Pedido não encontrado.' });
+            }
+
+            const statusFormatado = status ? String(status).trim().toLowerCase() : vendaExistente.status;
+
+            if (status && !STATUS_PERMITIDOS.includes(statusFormatado)) {
+                return res.status(400).json({ sucesso: false, mensagem: 'Status inválido informado.' });
+            }
+
+            const dadosAtualizacao = {
+                idUsuario: parseInt(idUsuario),
+                idProduto: parseInt(idProduto),
+                status: statusFormatado
+            };
+
+            await VendaModel.atualizar(id, dadosAtualizacao);
+
+            res.status(200).json({
+                sucesso: true,
+                mensagem: 'Pedido atualizado com sucesso.'
+            });
+        } catch (error) {
+            console.error('Erro ao atualizar pedido:', error);
+            res.status(500).json({ sucesso: false, erro: 'Erro interno ao atualizar pedido.' });
+        }
     }
 
+    // EXCLUIR PEDIDO (ADMIN)
     static async excluir(req, res) {
-         // ... (Mesma lógica da resposta anterior)
+        try {
+            const { id } = req.params;
+
+            const vendaExistente = await VendaModel.buscarPorId(id);
+            if (!vendaExistente) {
+                return res.status(404).json({ sucesso: false, mensagem: 'Pedido não encontrado.' });
+            }
+
+            await VendaModel.excluir(id);
+
+            res.status(200).json({
+                sucesso: true,
+                mensagem: 'Pedido excluído com sucesso.'
+            });
+        } catch (error) {
+            console.error('Erro ao excluir pedido:', error);
+            res.status(500).json({ sucesso: false, erro: 'Erro interno ao excluir pedido.' });
+        }
     }
 }
 

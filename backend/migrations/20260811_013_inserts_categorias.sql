@@ -6,5 +6,4 @@ INSERT INTO categorias (nomeCategoria) VALUES
 ('Roupas Infantis'),
 ('Acessórios'),
 ('Moda Esportiva'),
-('Moda Praia'),
 ('Inverno');

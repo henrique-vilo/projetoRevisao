@@ -39,7 +39,7 @@ export default function SuportePage() {
   const [activeTab, setActiveTab] = useState('todos');
 
   // Conexão exclusiva com a API
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  const API_URL = process.env.PORT || 'http://localhost:3001/api';
 
   const fetchTickets = async () => {
     try {

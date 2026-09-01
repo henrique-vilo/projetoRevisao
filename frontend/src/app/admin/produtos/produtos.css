@@ -117,8 +117,7 @@
 .products-filter-grid {
   display: grid;
 
-  grid-template-columns:
-    repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 
   gap: 16px;
 }
@@ -166,9 +165,7 @@
 .products-filter-field select:focus {
   border-color: #7da7f8;
 
-  box-shadow:
-    0 0 0 3px
-    rgba(37, 99, 235, 0.08);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
 }
 
 .products-filter-footer {
@@ -247,10 +244,7 @@
 }
 
 .product-price {
-  color: var(
-    --text-primary,
-    #172033
-  );
+  color: var(--text-primary, #172033);
 
   font-size: 12px;
   font-weight: 650;
@@ -287,14 +281,11 @@
 }
 
 /* =====================================================
-   MODAL
+   MODAL & FORM
 ===================================================== */
 
 .products-modal {
-  width: min(
-    900px,
-    calc(100vw - 32px)
-  );
+  width: min(900px, calc(100vw - 32px));
 
   max-height: calc(100vh - 40px);
 
@@ -314,6 +305,38 @@
 
 .products-modal .users-modal-body {
   overflow-y: auto;
+}
+
+.products-modal .user-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.products-modal .user-form-field.full {
+  grid-column: 1 / -1;
+}
+
+/* Ajustes da área de descrição no Modal */
+.products-modal .user-input-wrapper.textarea-wrapper {
+  height: auto;
+  min-height: 120px;
+  align-items: flex-start;
+  padding: 10px 12px;
+}
+
+.products-modal .user-input-wrapper.textarea-wrapper i {
+  margin-top: 2px;
+}
+
+.products-modal .user-input-wrapper textarea {
+  min-height: 100px;
+  resize: vertical;
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  color: #172033;
 }
 
 /* =====================================================
@@ -364,8 +387,7 @@
 .products-image-grid {
   display: grid;
 
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 
   gap: 12px;
 }
@@ -447,12 +469,7 @@
 
   opacity: 0;
 
-  background: rgba(
-    15,
-    23,
-    42,
-    0.45
-  );
+  background: rgba(15, 23, 42, 0.45);
 
   color: #ffffff;
 
@@ -461,31 +478,8 @@
   transition: opacity 0.2s ease;
 }
 
-.product-image-upload:hover
-  .product-image-overlay {
+.product-image-upload:hover .product-image-overlay {
   opacity: 1;
-}
-
-/* =====================================================
-   FORM
-===================================================== */
-
-.products-modal
-  .user-form-grid {
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
-}
-
-.products-modal
-  .user-form-field.full {
-  grid-column: 1 / -1;
-}
-
-.products-modal
-  .user-input-wrapper
-  textarea {
-  min-height: 120px;
-  resize: vertical;
 }
 
 /* =====================================================
@@ -512,44 +506,35 @@
 
 @media (max-width: 1200px) {
   .products-filter-grid {
-    grid-template-columns:
-      repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 900px) {
   .products-modal {
-    width: min(
-      760px,
-      calc(100vw - 24px)
-    );
+    width: min(760px, calc(100vw - 24px));
   }
 
   .products-image-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 768px) {
   .products-filter-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .products-modal
-    .user-form-grid {
+  .products-modal .user-form-grid {
     grid-template-columns: 1fr;
   }
 
-  .products-modal
-    .user-form-field.full {
+  .products-modal .user-form-field.full {
     grid-column: auto;
   }
 
   .products-image-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -559,8 +544,7 @@
   }
 
   .products-image-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .product-image-upload {
