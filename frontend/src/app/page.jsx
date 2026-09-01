@@ -247,7 +247,7 @@ export default function Home() {
 
           id="heroCarousel"
 
-          className="carousel slide carousel-fade"
+          className="carousel slide"
 
           data-bs-ride="carousel"
 
@@ -256,16 +256,29 @@ export default function Home() {
         >
 
           <div className="carousel-indicators">
+  <button
+    type="button"
+    data-bs-target="#heroCarousel"
+    data-bs-slide-to="0"
+    className="active"
+    aria-current="true"
+    aria-label="Slide 1"
+  ></button>
 
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" className="active" aria-current="true"></button>
+  <button
+    type="button"
+    data-bs-target="#heroCarousel"
+    data-bs-slide-to="1"
+    aria-label="Slide 2"
+  ></button>
 
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
-
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
-
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="3"></button>
-
-          </div>
+  <button
+    type="button"
+    data-bs-target="#heroCarousel"
+    data-bs-slide-to="2"
+    aria-label="Slide 3"
+  ></button>
+</div>
 
           <div className="carousel-inner">
 
@@ -311,47 +324,7 @@ export default function Home() {
 
             </div>
 
-            <div className="carousel-item">
-
-              <div className="hero-slide-content">
-
-                <img src="/imagem1.png" alt="Lançamentos Streetwear" />
-
-                <div className="hero-overlay">
-
-                  <div className="container h-100">
-
-                    <div className="row h-100 align-items-center">
-
-                      <div className="col-12 col-md-7 text-start">
-
-                        <span className="hero-subtitle">URBAN ESSENTIALS</span>
-
-                        <h1 className="hero-title">
-
-                          design moderno & <br />
-
-                          <strong>conforto absoluto</strong>
-
-                        </h1>
-
-                        <Link href="/produtos" className="btn-hero-pill">
-
-                          Ver Produtos
-
-                        </Link>
-
-                      </div>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
+           
 
             <div className="carousel-item">
 
@@ -769,41 +742,7 @@ export default function Home() {
       </section>
       <section className="newsletter-section py-5 text-center">
 
-        <div className="container max-w-600">
-
-          <i className="bi bi-envelope-open fs-1 text-dark mb-2 d-block"></i>
-
-          <h2 className="fw-bold mb-2">Fique por dentro do universo Everett</h2>
-
-          <p className="text-secondary mb-4">
-
-            Assine nossa newsletter e receba novidades em primeira mão e ofertas exclusivas.
-
-          </p>
-
-          <form className="d-flex flex-column flex-sm-row gap-2 justify-content-center" onSubmit={(e) => e.preventDefault()}>
-
-            <input
-
-              type="email"
-
-              className="form-control form-control-lg rounded-pill px-4 text-sm"
-
-              placeholder="Digite seu melhor e-mail"
-
-              required
-
-            />
-
-            <button type="submit" className="btn btn-dark btn-lg rounded-pill px-4 fw-bold fs-6">
-
-              Cadastrar
-
-            </button>
-
-          </form>
-
-        </div>
+        
 
       </section>
       {showScrollTop && (

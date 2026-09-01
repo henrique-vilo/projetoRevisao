@@ -512,3 +512,35 @@ body {
     height: 320px;
   }
 }
+
+/* =========================================
+   ANIMAÇÃO LATERAL DO CARROSSEL
+   ========================================= */
+
+#heroCarousel .carousel-item {
+  transition: transform 1s ease-in-out;
+}
+
+#heroCarousel .carousel-item-next:not(.carousel-item-start),
+#heroCarousel .active.carousel-item-end {
+  transform: translateX(100%);
+}
+
+#heroCarousel .carousel-item-prev:not(.carousel-item-end),
+#heroCarousel .active.carousel-item-start {
+  transform: translateX(-100%);
+}
+
+#heroCarousel .carousel-item-next.carousel-item-start,
+#heroCarousel .carousel-item-prev.carousel-item-end {
+  transform: translateX(0);
+}
+
+#heroCarousel .carousel-item-next,
+#heroCarousel .carousel-item-prev {
+  display: block;
+}
+
+#heroCarousel .carousel-inner {
+  overflow: hidden;
+}
