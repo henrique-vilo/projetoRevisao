@@ -6,6 +6,7 @@ const router = express.Router();
 
 // Rotas públicas
 router.get('/', ProdutoController.listarOuFiltrar);
+router.get('/filtros', ProdutoController.listarFiltros);
 router.get('/:id/detalhes', ProdutoController.buscarDetalhes);
 router.get('/:id', ProdutoController.buscarPorId);
 

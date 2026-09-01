@@ -2,6 +2,21 @@ import CategoriaModel from '../models/CategoriaModel.js';
 
 class CategoriaController {
 
+    // GET /categorias/menu - Menu público com subcategorias relacionadas
+    static async listarMenu(req, res) {
+        try {
+            const categorias = await CategoriaModel.listarMenu();
+            return res.status(200).json({ sucesso: true, dados: categorias });
+        } catch (error) {
+            console.error('Erro ao montar menu de categorias:', error);
+            return res.status(500).json({
+                sucesso: false,
+                erro: 'Erro interno',
+                mensagem: 'Não foi possível carregar o menu de categorias'
+            });
+        }
+    }
+
     // GET /categorias - Listar todas as categorias (com paginação)
     static async listarTodos(req, res) {
         try {

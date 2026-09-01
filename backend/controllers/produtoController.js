@@ -1,5 +1,100 @@
 import ProdutoModel from '../models/produtoModel.js';
 
+const GENEROS_VALIDOS = new Set(['Masculino', 'Feminino', 'Unissex', 'Infantil']);
+const ORDENACOES_VALIDAS = new Set([
+    'recente', 'preco_asc', 'preco_desc', 'nome_asc', 'antigo'
+]);
+
+class FiltroInvalidoError extends Error {}
+
+function normalizarFiltros(query) {
+    const filtros = {};
+    const pagina = Number(query.pagina ?? 1);
+    const limite = Number(query.limite ?? 12);
+
+    if (!Number.isInteger(pagina) || pagina < 1) {
+        throw new FiltroInvalidoError('A página deve ser um número inteiro maior que zero.');
+    }
+
+    if (!Number.isInteger(limite) || limite < 1 || limite > 100) {
+        throw new FiltroInvalidoError('O limite deve ser um número inteiro entre 1 e 100.');
+    }
+
+    filtros.pagina = pagina;
+    filtros.limite = limite;
+
+    if (query.busca !== undefined && String(query.busca).trim()) {
+        const busca = String(query.busca).trim();
+        if (busca.length > 100) {
+            throw new FiltroInvalidoError('A busca deve ter no máximo 100 caracteres.');
+        }
+        filtros.busca = busca;
+    }
+
+    for (const campo of ['categoria', 'tipo']) {
+        if (query[campo] !== undefined && String(query[campo]).trim()) {
+            const valor = String(query[campo]).trim();
+            if (valor.length > 100) {
+                throw new FiltroInvalidoError(`${campo} deve ter no máximo 100 caracteres.`);
+            }
+            filtros[campo] = valor;
+        }
+    }
+
+    if (query.genero !== undefined && query.genero !== '') {
+        if (!GENEROS_VALIDOS.has(query.genero)) {
+            throw new FiltroInvalidoError('Gênero inválido.');
+        }
+        filtros.genero = query.genero;
+    }
+
+    for (const campo of [
+        'idCategoria', 'idSubcategoria', 'idCor', 'idTamanho', 'idModelo'
+    ]) {
+        if (query[campo] !== undefined && query[campo] !== '') {
+            const valor = Number(query[campo]);
+            if (!Number.isInteger(valor) || valor < 1) {
+                throw new FiltroInvalidoError(`${campo} deve ser um número inteiro positivo.`);
+            }
+            filtros[campo] = valor;
+        }
+    }
+
+    for (const campo of ['precoMin', 'precoMax']) {
+        if (query[campo] !== undefined && query[campo] !== '') {
+            const valor = Number(query[campo]);
+            if (!Number.isFinite(valor) || valor < 0) {
+                throw new FiltroInvalidoError(`${campo} deve ser um valor numérico positivo.`);
+            }
+            filtros[campo] = valor;
+        }
+    }
+
+    if (
+        filtros.precoMin !== undefined &&
+        filtros.precoMax !== undefined &&
+        filtros.precoMin > filtros.precoMax
+    ) {
+        throw new FiltroInvalidoError('O preço mínimo não pode ser maior que o preço máximo.');
+    }
+
+    if (query.emEstoque !== undefined && query.emEstoque !== '') {
+        if (!['true', 'false'].includes(String(query.emEstoque))) {
+            throw new FiltroInvalidoError('O filtro de estoque deve ser true ou false.');
+        }
+        filtros.emEstoque = String(query.emEstoque);
+    }
+
+    if (query.ordenarPor !== undefined && query.ordenarPor !== '') {
+        if (!ORDENACOES_VALIDAS.has(query.ordenarPor)) {
+            throw new FiltroInvalidoError('Ordenação inválida.');
+        }
+        filtros.ordenarPor = query.ordenarPor;
+    }
+
+    return filtros;
+}
+
 const TAMANHOS_POR_TIPO = {
     roupaSuperior: new Set(['PP', 'P', 'M', 'G', 'GG', 'XG', 'XGG', 'EG', 'EGG']),
     calcado: new Set([
@@ -119,7 +214,8 @@ class ProdutoController {
     // GET /produtos
     static async listarOuFiltrar(req, res) {
         try {
-            const resultado = await ProdutoModel.buscarComFiltros(req.query);
+            const filtros = normalizarFiltros(req.query);
+            const resultado = await ProdutoModel.buscarComFiltros(filtros);
 
             res.status(200).json({
                 sucesso: true,
@@ -132,10 +228,31 @@ class ProdutoController {
                 }
             });
         } catch (error) {
+            if (error instanceof FiltroInvalidoError) {
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: error.message
+                });
+            }
+
             console.error('Erro ao buscar produtos:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 sucesso: false,
                 erro: 'Erro interno ao processar a busca'
+            });
+        }
+    }
+
+    // GET /produtos/filtros
+    static async listarFiltros(req, res) {
+        try {
+            const filtros = await ProdutoModel.buscarOpcoesFiltros();
+            return res.status(200).json({ sucesso: true, dados: filtros });
+        } catch (error) {
+            console.error('Erro ao buscar filtros de produtos:', error);
+            return res.status(500).json({
+                sucesso: false,
+                erro: 'Erro interno ao carregar os filtros'
             });
         }
     }

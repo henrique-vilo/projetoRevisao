@@ -1,0 +1,505 @@
+.page {
+  min-height: 75vh;
+  color: #29232d;
+  background: #f8f7f9;
+}
+
+.container {
+  width: min(1420px, 100%);
+  margin: 0 auto;
+  padding: 48px 28px 64px;
+}
+
+.heading {
+  margin-bottom: 30px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.eyebrow {
+  color: #00a9d4;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.heading h1 {
+  margin: 5px 0 7px;
+  color: #241b28;
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 750;
+  line-height: 1.08;
+}
+
+.heading p {
+  margin: 0;
+  color: #777079;
+  font-size: 14px;
+}
+
+.clearTop,
+.resetButton {
+  padding: 0;
+  color: #00a9d4;
+  background: none;
+  border: 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.catalogLayout {
+  display: grid;
+  grid-template-columns: 275px minmax(0, 1fr);
+  gap: 30px;
+  align-items: start;
+}
+
+.filters {
+  position: sticky;
+  top: 18px;
+  padding: 22px;
+  background: #fff;
+  border: 1px solid #ebe7ed;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(36, 18, 43, 0.05);
+}
+
+.filtersTitle,
+.filtersTitle > div {
+  display: flex;
+  align-items: center;
+}
+
+.filtersTitle {
+  margin-bottom: 22px;
+  justify-content: space-between;
+}
+
+.filtersTitle > div {
+  gap: 10px;
+}
+
+.filtersTitle i {
+  color: #00a9d4;
+  font-size: 17px;
+}
+
+.filtersTitle h2 {
+  margin: 0;
+  color: #2d2531;
+  font-size: 18px;
+  font-weight: 750;
+}
+
+.filtersTitle > span {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: #00a9d4;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.filters form,
+.field,
+.priceGroup label {
+  display: flex;
+  flex-direction: column;
+}
+
+.filters form {
+  gap: 16px;
+}
+
+.field,
+.priceGroup label {
+  gap: 6px;
+}
+
+.field > span,
+.priceGroup legend,
+.priceGroup label > span {
+  color: #605863;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.field input,
+.field select,
+.priceGroup input,
+.toolbar select {
+  width: 100%;
+  height: 42px;
+  padding: 0 11px;
+  color: #302a33;
+  background: #fbfafc;
+  border: 1px solid #dfd9e2;
+  border-radius: 9px;
+  outline: none;
+  font-size: 13px;
+}
+
+.field input:focus,
+.field select:focus,
+.priceGroup input:focus,
+.toolbar select:focus {
+  background: #fff;
+  border-color: #00a9d4;
+  box-shadow: 0 0 0 3px rgba(0, 169, 212, 0.1);
+}
+
+.twoColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.priceGroup {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.priceGroup legend {
+  margin-bottom: 7px;
+}
+
+.priceGroup label > span {
+  margin-bottom: 6px;
+  color: #8a828d;
+  font-size: 9px;
+}
+
+.stockCheck {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #4c454f;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.stockCheck input {
+  width: 17px;
+  height: 17px;
+  accent-color: #00a9d4;
+}
+
+.applyButton {
+  height: 44px;
+  margin-top: 2px;
+  color: #fff;
+  background: #00a9d4;
+  border: 0;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.applyButton:hover:not(:disabled) {
+  background: #00a9d4;
+  filter: brightness(0.9);
+}
+
+.applyButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.resetButton {
+  align-self: center;
+  text-decoration: none;
+}
+
+.results {
+  min-width: 0;
+}
+
+.toolbar {
+  min-height: 44px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  color: #777079;
+  font-size: 12px;
+}
+
+.toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toolbar label > span {
+  white-space: nowrap;
+}
+
+.toolbar select {
+  width: 170px;
+  background: #fff;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px 18px;
+}
+
+.card {
+  min-width: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #ece8ee;
+  border-radius: 15px;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 32px rgba(43, 25, 50, 0.1);
+}
+
+.imageLink {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  display: block;
+  overflow: hidden;
+  background: #f0edf2;
+}
+
+.imageLink img {
+  object-fit: cover;
+  transition: transform 450ms ease;
+}
+
+.card:hover .imageLink img {
+  transform: scale(1.045);
+}
+
+.imageFallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: #918995;
+  font-size: 12px;
+}
+
+.imageFallback i {
+  font-size: 30px;
+}
+
+.outOfStock {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 5px 9px;
+  color: #fff;
+  background: #373039;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.cardBody {
+  padding: 16px 16px 18px;
+}
+
+.meta {
+  margin: 0 0 7px;
+  overflow: hidden;
+  color: #847b87;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cardBody h2 {
+  min-height: 42px;
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.cardBody h2 a:hover {
+  color: #00a9d4;
+}
+
+.cardBody strong,
+.cardBody small {
+  display: block;
+}
+
+.cardBody strong {
+  color: #211923;
+  font-size: 17px;
+}
+
+.cardBody small {
+  margin-top: 4px;
+  color: #89818c;
+  font-size: 11px;
+}
+
+.feedback,
+.initialLoading {
+  min-height: 420px;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.feedback i {
+  margin-bottom: 16px;
+  color: #00a9d4;
+  font-size: 44px;
+}
+
+.feedback h2 {
+  margin: 0 0 8px;
+  font-size: 21px;
+}
+
+.feedback p {
+  margin: 0 0 20px;
+  color: #7c747f;
+  font-size: 13px;
+}
+
+.feedback button {
+  padding: 10px 18px;
+  color: #fff;
+  background: #00a9d4;
+  border: 0;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.initialLoading {
+  flex-direction: row;
+  gap: 12px;
+  color: #6d6570;
+}
+
+.skeleton {
+  padding-bottom: 18px;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 15px;
+}
+
+.skeleton > span {
+  width: 70%;
+  height: 13px;
+  margin: 12px 16px 0;
+  display: block;
+  background: linear-gradient(90deg, #eeeaf0 25%, #f8f6f9 50%, #eeeaf0 75%);
+  background-size: 200% 100%;
+  border-radius: 5px;
+  animation: shimmer 1.3s infinite linear;
+}
+
+.skeleton > span:last-child {
+  width: 42%;
+}
+
+.skeleton .skeletonImage {
+  width: 100%;
+  height: auto;
+  margin: 0;
+  aspect-ratio: 4 / 5;
+  border-radius: 0;
+}
+
+@keyframes shimmer {
+  to { background-position: -200% 0; }
+}
+
+.pagination {
+  margin-top: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.pagination button {
+  min-height: 40px;
+  padding: 0 15px;
+  color: #00a9d4;
+  background: #fff;
+  border: 1px solid #dcd4e0;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  color: #aaa3ac;
+  background: #f0edf1;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  color: #6d6570;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 1100px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 800px) {
+  .container { padding: 34px 18px 50px; }
+  .catalogLayout { grid-template-columns: 1fr; }
+  .filters { position: static; }
+  .filters form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filtersTitle, .applyButton, .resetButton, .priceGroup, .stockCheck { grid-column: 1 / -1; }
+}
+
+@media (max-width: 560px) {
+  .heading { align-items: start; flex-direction: column; }
+  .filters form, .grid { grid-template-columns: 1fr; }
+  .toolbar { align-items: start; flex-direction: column; }
+  .toolbar label { width: 100%; justify-content: space-between; }
+  .toolbar select { width: min(210px, 60%); }
+  .pagination { gap: 9px; }
+  .pagination button { padding: 0 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .imageLink img { transition: none; }
+  .skeleton > span { animation: none; }
+}

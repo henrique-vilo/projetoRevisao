@@ -6,6 +6,7 @@ const router = express.Router();
 
 // Rotas públicas / autenticadas
 router.get('/',  CategoriaController.listarTodos);
+router.get('/menu', CategoriaController.listarMenu);
 router.get('/:id',  CategoriaController.buscarPorId);
 
 // Rotas protegidas por admin

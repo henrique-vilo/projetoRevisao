@@ -2,6 +2,63 @@
 
     // Model para operações com categorias
     class CategoriaModel {
+        static async listarMenu() {
+            const connection = await getConnection();
+
+            try {
+                const sql = `
+                    SELECT
+                        c.idCategoria,
+                        c.nomeCategoria,
+                        s.idSubcategoria,
+                        s.nomeSubcategoria,
+                        COUNT(DISTINCT p.idProduto) AS totalProdutos
+                    FROM categorias c
+                    LEFT JOIN produtos p
+                        ON p.idCategoria = c.idCategoria
+                        AND p.ativo = 1
+                    LEFT JOIN subcategorias s
+                        ON s.idSubcategoria = p.idSubcategoria
+                    GROUP BY
+                        c.idCategoria,
+                        c.nomeCategoria,
+                        s.idSubcategoria,
+                        s.nomeSubcategoria
+                    ORDER BY c.nomeCategoria ASC, s.nomeSubcategoria ASC
+                `;
+
+                const [rows] = await connection.query(sql);
+                const categorias = new Map();
+
+                for (const row of rows) {
+                    if (!categorias.has(row.idCategoria)) {
+                        categorias.set(row.idCategoria, {
+                            idCategoria: row.idCategoria,
+                            nomeCategoria: row.nomeCategoria,
+                            totalProdutos: 0,
+                            subcategorias: []
+                        });
+                    }
+
+                    const categoria = categorias.get(row.idCategoria);
+                    const totalProdutos = Number(row.totalProdutos) || 0;
+                    categoria.totalProdutos += totalProdutos;
+
+                    if (row.idSubcategoria !== null) {
+                        categoria.subcategorias.push({
+                            idSubcategoria: row.idSubcategoria,
+                            nomeSubcategoria: row.nomeSubcategoria,
+                            totalProdutos
+                        });
+                    }
+                }
+
+                return Array.from(categorias.values());
+            } finally {
+                connection.release();
+            }
+        }
+
         // Listar todas as categorias (com paginação)
         static async listarTodos(limite, offset) {
             try {

@@ -1,5 +1,30 @@
 import { getConnection } from '../config/database.js';
 
+function normalizarSlug(valor = '') {
+    return String(valor)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+}
+
+function encontrarOpcaoPorSlug(opcoes, slug, tipoPreferencial) {
+    const procurado = normalizarSlug(slug);
+    const candidatas = opcoes
+        .filter((opcao) => !tipoPreferencial || opcao.tipo === tipoPreferencial)
+        .map((opcao) => ({ ...opcao, slug: normalizarSlug(opcao.nome) }));
+
+    return candidatas.find((opcao) => opcao.slug === procurado)
+        || candidatas.find((opcao) => opcao.slug.startsWith(`${procurado}-`))
+        || candidatas.find((opcao) => opcao.slug.includes(procurado))
+        || null;
+}
+
+function slugParaBusca(valor) {
+    return String(valor).replace(/-/g, ' ').trim();
+}
+
 class ProdutoModel {
     static async buscarComFiltros(params) {
         const {
@@ -26,6 +51,49 @@ class ProdutoModel {
             const offset = (paginaNumero - 1) * limiteNumero;
             const conditions = ['p.ativo = 1'];
             const queryParams = [];
+
+            if (params.categoria || params.tipo) {
+                const [opcoesTextuais] = await connection.query(`
+                    SELECT idCategoria AS id, nomeCategoria AS nome, 'categoria' AS tipo
+                    FROM categorias
+                    UNION ALL
+                    SELECT idSubcategoria AS id, nomeSubcategoria AS nome, 'subcategoria' AS tipo
+                    FROM subCategorias
+                `);
+
+                if (params.categoria) {
+                    const opcao = encontrarOpcaoPorSlug(opcoesTextuais, params.categoria);
+
+                    if (opcao?.tipo === 'categoria') {
+                        conditions.push('p.idCategoria = ?');
+                        queryParams.push(opcao.id);
+                    } else if (opcao?.tipo === 'subcategoria') {
+                        conditions.push('p.idSubcategoria = ?');
+                        queryParams.push(opcao.id);
+                    } else {
+                        const buscaTextual = slugParaBusca(params.categoria);
+                        conditions.push('(p.nome LIKE ? OR p.descricao LIKE ?)');
+                        queryParams.push(`%${buscaTextual}%`, `%${buscaTextual}%`);
+                    }
+                }
+
+                if (params.tipo) {
+                    const opcao = encontrarOpcaoPorSlug(
+                        opcoesTextuais,
+                        params.tipo,
+                        'subcategoria'
+                    );
+
+                    if (opcao) {
+                        conditions.push('p.idSubcategoria = ?');
+                        queryParams.push(opcao.id);
+                    } else {
+                        const buscaTextual = slugParaBusca(params.tipo);
+                        conditions.push('(p.nome LIKE ? OR p.descricao LIKE ?)');
+                        queryParams.push(`%${buscaTextual}%`, `%${buscaTextual}%`);
+                    }
+                }
+            }
 
             if (busca) {
                 conditions.push(
@@ -71,6 +139,8 @@ class ProdutoModel {
 
             if (emEstoque === 'true' || emEstoque === true) {
                 conditions.push('p.estoque > 0');
+            } else if (emEstoque === 'false' || emEstoque === false) {
+                conditions.push('p.estoque <= 0');
             }
 
             const whereClause = conditions.join(' AND ');
@@ -124,6 +194,109 @@ class ProdutoModel {
                 pagina: paginaNumero,
                 limite: limiteNumero,
                 totalPaginas: Math.ceil(total / limiteNumero)
+            };
+        } finally {
+            connection.release();
+        }
+    }
+
+    static async buscarOpcoesFiltros() {
+        const connection = await getConnection();
+
+        try {
+            const sql = `
+                SELECT DISTINCT
+                    p.genero,
+                    p.preco,
+                    c.idCategoria,
+                    c.nomeCategoria,
+                    s.idSubcategoria,
+                    s.nomeSubcategoria,
+                    cr.idCor,
+                    cr.nomeCor,
+                    cr.codigoCor,
+                    t.idTamanho,
+                    t.codigoTamanho,
+                    m.idModelo,
+                    m.nomeModelo
+                FROM produtos p
+                LEFT JOIN categorias c ON p.idCategoria = c.idCategoria
+                LEFT JOIN subCategorias s ON p.idSubcategoria = s.idSubcategoria
+                LEFT JOIN cores cr ON p.idCor = cr.idCor
+                LEFT JOIN tamanhos t ON p.idTamanho = t.idTamanho
+                LEFT JOIN modelos m ON p.idModelo = m.idModelo
+                WHERE p.ativo = 1
+            `;
+
+            const [rows] = await connection.query(sql);
+            const categorias = new Map();
+            const subcategorias = new Map();
+            const cores = new Map();
+            const tamanhos = new Map();
+            const modelos = new Map();
+            const generos = new Set();
+            let precoMin = null;
+            let precoMax = null;
+
+            for (const row of rows) {
+                if (row.idCategoria !== null) {
+                    categorias.set(row.idCategoria, {
+                        idCategoria: row.idCategoria,
+                        nomeCategoria: row.nomeCategoria
+                    });
+                }
+
+                if (row.idSubcategoria !== null) {
+                    subcategorias.set(row.idSubcategoria, {
+                        idSubcategoria: row.idSubcategoria,
+                        nomeSubcategoria: row.nomeSubcategoria
+                    });
+                }
+
+                if (row.idCor !== null) {
+                    cores.set(row.idCor, {
+                        idCor: row.idCor,
+                        nomeCor: row.nomeCor,
+                        codigoCor: row.codigoCor
+                    });
+                }
+
+                if (row.idTamanho !== null) {
+                    tamanhos.set(row.idTamanho, {
+                        idTamanho: row.idTamanho,
+                        codigoTamanho: row.codigoTamanho
+                    });
+                }
+
+                if (row.idModelo !== null) {
+                    modelos.set(row.idModelo, {
+                        idModelo: row.idModelo,
+                        nomeModelo: row.nomeModelo
+                    });
+                }
+
+                if (row.genero) {
+                    generos.add(row.genero);
+                }
+
+                const preco = Number(row.preco);
+                if (Number.isFinite(preco)) {
+                    precoMin = precoMin === null ? preco : Math.min(precoMin, preco);
+                    precoMax = precoMax === null ? preco : Math.max(precoMax, preco);
+                }
+            }
+
+            const ordenarPorNome = (campo) => (a, b) =>
+                String(a[campo] || '').localeCompare(String(b[campo] || ''), 'pt-BR');
+
+            return {
+                categorias: Array.from(categorias.values()).sort(ordenarPorNome('nomeCategoria')),
+                subcategorias: Array.from(subcategorias.values()).sort(ordenarPorNome('nomeSubcategoria')),
+                cores: Array.from(cores.values()).sort(ordenarPorNome('nomeCor')),
+                tamanhos: Array.from(tamanhos.values()).sort(ordenarPorNome('codigoTamanho')),
+                modelos: Array.from(modelos.values()).sort(ordenarPorNome('nomeModelo')),
+                generos: Array.from(generos).sort((a, b) => a.localeCompare(b, 'pt-BR')),
+                faixaPreco: { minimo: precoMin, maximo: precoMax }
             };
         } finally {
             connection.release();

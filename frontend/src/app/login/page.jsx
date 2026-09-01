@@ -85,6 +85,8 @@ export default function Login() {
         );
       }
 
+      window.dispatchEvent(new Event("auth-changed"));
+
       // LOGIN CONCLUÍDO
       router.push("/");
 
