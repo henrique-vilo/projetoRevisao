@@ -184,7 +184,7 @@ export default function LoginPage() {
           className={`${styles.authCard} ${styles.loginCard}`}
           aria-labelledby="login-title"
         >
-          <header className="text-center mb-4 mb-md-5">
+          <header className="text-center mb-4 mb-md-5 d-flex flex-column">
             <AuthBrand />
             <h1 id="login-title" className={`${styles.heading} mt-4 mt-md-5`}>
               Bem-vindo de volta

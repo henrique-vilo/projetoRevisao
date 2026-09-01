@@ -10,6 +10,50 @@ const API_URL = (
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
 ).replace(/\/$/, "");
 
+const SNOWFLAKES = [
+  ["3%", "4px", "15s", "-4s", "20px", "0.28"],
+  ["9%", "7px", "18s", "-11s", "-24px", "0.2"],
+  ["16%", "5px", "13s", "-8s", "28px", "0.3"],
+  ["23%", "8px", "20s", "-2s", "-34px", "0.18"],
+  ["31%", "4px", "14s", "-10s", "18px", "0.32"],
+  ["38%", "6px", "17s", "-6s", "-20px", "0.24"],
+  ["45%", "9px", "22s", "-15s", "38px", "0.16"],
+  ["52%", "5px", "16s", "-12s", "-28px", "0.29"],
+  ["59%", "7px", "19s", "-5s", "24px", "0.21"],
+  ["65%", "4px", "13s", "-3s", "-18px", "0.34"],
+  ["71%", "8px", "21s", "-17s", "32px", "0.17"],
+  ["77%", "5px", "15s", "-9s", "-26px", "0.27"],
+  ["82%", "6px", "18s", "-14s", "22px", "0.23"],
+  ["87%", "4px", "14s", "-7s", "-16px", "0.31"],
+  ["91%", "9px", "23s", "-19s", "36px", "0.15"],
+  ["95%", "5px", "16s", "-1s", "-30px", "0.26"],
+  ["34%", "3px", "12s", "-5s", "14px", "0.35"],
+  ["68%", "3px", "11s", "-8s", "-12px", "0.36"],
+];
+
+function SnowBackground() {
+  return (
+    <div className={styles.snow} aria-hidden="true">
+      {SNOWFLAKES.map(
+        ([left, size, duration, delay, drift, opacity]) => (
+          <span
+            key={`${left}-${duration}`}
+            className={styles.snowflake}
+            style={{
+              "--snow-left": left,
+              "--snow-size": size,
+              "--snow-duration": duration,
+              "--snow-delay": delay,
+              "--snow-drift": drift,
+              "--snow-opacity": opacity,
+            }}
+          />
+        )
+      )}
+    </div>
+  );
+}
+
 function formatarCpf(valor) {
   return valor
     .replace(/\D/g, "")
@@ -218,12 +262,13 @@ export default function CadastroPage() {
 
   return (
     <main className={styles.authPage}>
-      <div className="container px-3 px-sm-4">
+      <SnowBackground />
+      <div className={`container px-3 px-sm-4 ${styles.authContent}`}>
         <section
           className={`${styles.authCard} ${styles.registerCard}`}
           aria-labelledby="cadastro-title"
         >
-          <header className="text-center mb-4 mb-md-5">
+          <header className="text-center mb-4 mb-md-5 d-flex flex-column">
             <AuthBrand />
             <h1
               id="cadastro-title"

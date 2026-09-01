@@ -1,551 +1,1186 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 const API_BASE_URL = (
-    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 ).replace(/\/$/, '');
 
 const API_ORIGIN = API_BASE_URL.replace(/\/api$/, '');
+
 const IMAGE_BASE_URL = (
-    process.env.NEXT_PUBLIC_IMAGE_BASE_URL || API_ORIGIN
+  process.env.NEXT_PUBLIC_IMAGE_BASE_URL || API_ORIGIN
 ).replace(/\/$/, '');
 
 function resolverImagem(caminho) {
-    if (!caminho) {
-        return null;
-    }
+  if (!caminho) return null;
+  if (/^https?:\/\//i.test(caminho)) return caminho;
 
-    if (/^https?:\/\//i.test(caminho)) {
-        return caminho;
-    }
+  if (caminho.startsWith('/') && !caminho.startsWith('/uploads/')) {
+    return caminho;
+  }
 
-    // Caminhos iniciados com /, exceto /uploads, continuam apontando
-    // para a pasta public do Next.js.
-    if (caminho.startsWith('/') && !caminho.startsWith('/uploads/')) {
-        return caminho;
-    }
-
-    return `${IMAGE_BASE_URL}/${caminho.replace(/^\//, '')}`;
+  return `${IMAGE_BASE_URL}/${caminho.replace(/^\//, '')}`;
 }
 
 function formatarPreco(valor) {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    }).format(Number(valor) || 0);
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(Number(valor) || 0);
 }
 
 function codigoCorSeguro(codigo) {
-    const valor = String(codigo || '').trim();
+  const valor = String(codigo || '').trim();
 
-    if (
-        /^#[0-9a-f]{3,8}$/i.test(valor) ||
-        /^(rgb|hsl)a?\([\d\s,.%]+\)$/i.test(valor) ||
-        /^[a-z]+$/i.test(valor)
-    ) {
-        return valor;
-    }
+  if (
+    /^#[0-9a-f]{3,8}$/i.test(valor) ||
+    /^(rgb|hsl)a?\([\d\s,.%]+\)$/i.test(valor) ||
+    /^[a-z]+$/i.test(valor)
+  ) {
+    return valor;
+  }
 
-    return '#d9d9d9';
+  return '#d9d9d9';
 }
 
 export default function ProductPage() {
-    const params = useParams();
-    const idProduto = params?.id || params?.slug;
+  const params = useParams();
+  const idProduto = params?.id || params?.slug;
 
-    const [detalhes, setDetalhes] = useState(null);
-    const [carregando, setCarregando] = useState(true);
-    const [erro, setErro] = useState('');
-    const [selectedColorId, setSelectedColorId] = useState('');
-    const [selectedSizeId, setSelectedSizeId] = useState('');
-    const [imagemAtiva, setImagemAtiva] = useState(0);
+  const [detalhes, setDetalhes] = useState(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
+  const [selectedColorId, setSelectedColorId] = useState('');
+  const [selectedSizeId, setSelectedSizeId] = useState('');
+  const [imagemAtiva, setImagemAtiva] = useState(0);
+  const [alertaCompra, setAlertaCompra] = useState(null);
 
-    useEffect(() => {
-        if (!idProduto) {
-            return undefined;
+  useEffect(() => {
+    if (!idProduto) return undefined;
+
+    const abortController = new AbortController();
+
+    async function carregarProduto() {
+      setCarregando(true);
+      setErro('');
+      setAlertaCompra(null);
+
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/produtos/${encodeURIComponent(idProduto)}/detalhes`,
+          {
+            method: 'GET',
+            headers: { Accept: 'application/json' },
+            signal: abortController.signal,
+          },
+        );
+
+        const resultado = await response.json().catch(() => ({}));
+
+        if (!response.ok || !resultado.sucesso) {
+          throw new Error(
+            resultado.erro ||
+              resultado.mensagem ||
+              'Não foi possível carregar o produto',
+          );
         }
 
-        const abortController = new AbortController();
+        setDetalhes(resultado.dados);
 
-        async function carregarProduto() {
-            setCarregando(true);
-            setErro('');
-
-            try {
-                const response = await fetch(
-                    `${API_BASE_URL}/produtos/${encodeURIComponent(idProduto)}/detalhes`,
-                    {
-                        method: 'GET',
-                        headers: { Accept: 'application/json' },
-                        signal: abortController.signal
-                    }
-                );
-
-                const resultado = await response.json().catch(() => ({}));
-
-                if (!response.ok || !resultado.sucesso) {
-                    throw new Error(
-                        resultado.erro || resultado.mensagem || 'Não foi possível carregar o produto'
-                    );
-                }
-
-                setDetalhes(resultado.dados);
-
-                const variacaoInicial = resultado.dados.variacoes.find(
-                    (variacao) =>
-                        String(variacao.idProduto) === String(resultado.dados.produto.idProduto) &&
-                        variacao.disponivel
-                ) || resultado.dados.variacoes.find((variacao) => variacao.disponivel);
-
-                setSelectedColorId(
-                    variacaoInicial?.idCor !== undefined && variacaoInicial?.idCor !== null
-                        ? String(variacaoInicial.idCor)
-                        : ''
-                );
-                setSelectedSizeId('');
-                setImagemAtiva(0);
-            } catch (error) {
-                if (error.name !== 'AbortError') {
-                    setErro(error.message || 'Erro ao carregar o produto');
-                    setDetalhes(null);
-                }
-            } finally {
-                if (!abortController.signal.aborted) {
-                    setCarregando(false);
-                }
-            }
-        }
-
-        carregarProduto();
-        return () => abortController.abort();
-    }, [idProduto]);
-
-    const produto = detalhes?.produto;
-    const variacoes = useMemo(() => detalhes?.variacoes || [], [detalhes]);
-    const cores = detalhes?.coresDisponiveis || [];
-
-    const tamanhosDaCor = useMemo(() => {
-        if (!selectedColorId) {
-            return [];
-        }
-
-        const tamanhos = new Map();
-
-        variacoes
-            .filter((variacao) => String(variacao.idCor) === selectedColorId)
-            .forEach((variacao) => {
-                const chave = String(variacao.idTamanho);
-                const atual = tamanhos.get(chave);
-
-                tamanhos.set(chave, {
-                    idTamanho: variacao.idTamanho,
-                    codigoTamanho: variacao.tamanhoNome,
-                    disponivel: Boolean(atual?.disponivel || variacao.disponivel)
-                });
-            });
-
-        return Array.from(tamanhos.values());
-    }, [selectedColorId, variacoes]);
-
-    const variacaoSelecionada = useMemo(() => {
-        if (!selectedColorId || !selectedSizeId) {
-            return null;
-        }
-
-        return variacoes.find(
+        const variacaoInicial =
+          resultado.dados.variacoes.find(
             (variacao) =>
-                String(variacao.idCor) === selectedColorId &&
-                String(variacao.idTamanho) === selectedSizeId &&
-                variacao.disponivel
-        ) || null;
-    }, [selectedColorId, selectedSizeId, variacoes]);
+              String(variacao.idProduto) ===
+                String(resultado.dados.produto.idProduto) &&
+              variacao.disponivel,
+          ) ||
+          resultado.dados.variacoes.find((variacao) => variacao.disponivel);
 
-    const variacaoVisual = useMemo(() => {
-        if (variacaoSelecionada) {
-            return variacaoSelecionada;
-        }
-
-        return variacoes.find(
-            (variacao) => String(variacao.idCor) === selectedColorId
-        ) || produto;
-    }, [produto, selectedColorId, variacaoSelecionada, variacoes]);
-
-    const imagens = useMemo(() => {
-        if (!variacaoVisual) {
-            return [];
-        }
-
-        return [
-            variacaoVisual.imagem1,
-            variacaoVisual.imagem2,
-            variacaoVisual.imagem3,
-            variacaoVisual.imagem4
-        ]
-            .map(resolverImagem)
-            .filter(Boolean)
-            .filter((imagem, index, lista) => lista.indexOf(imagem) === index);
-    }, [variacaoVisual]);
-
-    const corSelecionada = cores.find(
-        (cor) => String(cor.idCor) === selectedColorId
-    );
-    const tamanhoSelecionado = tamanhosDaCor.find(
-        (tamanho) => String(tamanho.idTamanho) === selectedSizeId
-    );
-    const temEstoque = variacoes.some((variacao) => variacao.disponivel);
-    const precoExibido = variacaoSelecionada?.preco ?? produto?.preco ?? 0;
-    const valorParcela = Number(precoExibido) / 7;
-    const titulo = produto?.nomeCombinacao || produto?.nome || 'Produto';
-
-    function selecionarCor(idCor) {
-        setSelectedColorId(String(idCor));
+        setSelectedColorId(
+          variacaoInicial?.idCor !== undefined &&
+            variacaoInicial?.idCor !== null
+            ? String(variacaoInicial.idCor)
+            : '',
+        );
         setSelectedSizeId('');
         setImagemAtiva(0);
-    }
-
-    function selecionarTamanho(tamanho) {
-        if (!tamanho.disponivel) {
-            return;
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          setErro(error.message || 'Erro ao carregar o produto');
+          setDetalhes(null);
         }
-
-        setSelectedSizeId(String(tamanho.idTamanho));
-        setImagemAtiva(0);
+      } finally {
+        if (!abortController.signal.aborted) setCarregando(false);
+      }
     }
 
-    function handleBuy() {
-        if (!selectedColorId) {
-            window.alert('Por favor, selecione uma cor');
-            return;
-        }
+    carregarProduto();
 
-        if (!selectedSizeId) {
-            window.alert('Por favor, selecione um tamanho');
-            return;
-        }
+    return () => abortController.abort();
+  }, [idProduto]);
 
-        if (!variacaoSelecionada) {
-            window.alert('Esta combinação não está disponível em estoque');
-            return;
-        }
+  const produto = detalhes?.produto;
+  const variacoes = useMemo(() => detalhes?.variacoes || [], [detalhes]);
+  const cores = detalhes?.coresDisponiveis || [];
 
-        // Substitua este alerta pela função real do carrinho.
-        // O ID abaixo é o registro exato da combinação cor + tamanho.
-        window.alert(
-            `Produto adicionado ao carrinho! ID: ${variacaoSelecionada.idProduto}`
-        );
-    }
+  const tamanhosDaCor = useMemo(() => {
+    if (!selectedColorId) return [];
 
-    if (carregando) {
-        return (
-            <main className="min-vh-100 bg-white d-flex align-items-center justify-content-center">
-                <div className="text-center" role="status" aria-live="polite">
-                    <div className="spinner-border text-dark mb-3" />
-                    <p className="text-secondary mb-0">Carregando produto...</p>
-                </div>
-            </main>
-        );
-    }
+    const tamanhos = new Map();
 
-    if (erro || !produto) {
-        return (
-            <main className="min-vh-100 bg-white d-flex align-items-center justify-content-center px-3">
-                <div className="text-center">
-                    <h1 className="fs-3 mb-3">Produto indisponível</h1>
-                    <p className="text-secondary mb-4">
-                        {erro || 'O produto solicitado não foi encontrado.'}
-                    </p>
-                    <button
-                        type="button"
-                        className="btn btn-dark px-4"
-                        onClick={() => window.history.back()}
-                    >
-                        Voltar
-                    </button>
-                </div>
-            </main>
-        );
-    }
+    variacoes
+      .filter((variacao) => String(variacao.idCor) === selectedColorId)
+      .forEach((variacao) => {
+        const chave = String(variacao.idTamanho);
+        const atual = tamanhos.get(chave);
+
+        tamanhos.set(chave, {
+          idTamanho: variacao.idTamanho,
+          codigoTamanho: variacao.tamanhoNome,
+          disponivel: Boolean(atual?.disponivel || variacao.disponivel),
+        });
+      });
+
+    return Array.from(tamanhos.values());
+  }, [selectedColorId, variacoes]);
+
+  const variacaoSelecionada = useMemo(() => {
+    if (!selectedColorId || !selectedSizeId) return null;
 
     return (
-        <main className="min-vh-100 bg-white text-dark">
-            <div className="container py-4 py-md-5 product-container">
-                <nav className="small text-muted text-uppercase mb-4" aria-label="Breadcrumb">
-                    <span>Início</span>
-                    <span className="mx-2">/</span>
-                    <span>{produto.genero || 'Unissex'}</span>
-                    <span className="mx-2">/</span>
-                    <span>{produto.categoriaNome || 'Produtos'}</span>
-                    {produto.subcategoriaNome && (
-                        <>
-                            <span className="mx-2">/</span>
-                            <span>{produto.subcategoriaNome}</span>
-                        </>
-                    )}
-                    <span className="mx-2">/</span>
-                    <span className="fw-semibold text-dark">{titulo}</span>
-                </nav>
+      variacoes.find(
+        (variacao) =>
+          String(variacao.idCor) === selectedColorId &&
+          String(variacao.idTamanho) === selectedSizeId &&
+          variacao.disponivel,
+      ) || null
+    );
+  }, [selectedColorId, selectedSizeId, variacoes]);
 
-                <div className="row g-4 g-lg-5 align-items-start">
-                    <section className="col-12 col-lg-6 sticky-lg-top product-gallery">
-                        <div className="product-main-image bg-light overflow-hidden">
-                            {imagens[imagemAtiva] ? (
-                                <img
-                                    src={imagens[imagemAtiva]}
-                                    alt={`${titulo} - imagem ${imagemAtiva + 1}`}
-                                    className="w-100 h-100 object-fit-cover object-position-top"
-                                />
-                            ) : (
-                                <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
-                                    Imagem indisponível
-                                </div>
-                            )}
-                        </div>
+  const variacaoVisual = useMemo(() => {
+    if (variacaoSelecionada) return variacaoSelecionada;
 
-                        {imagens.length > 1 && (
-                            <div className="d-flex gap-2 mt-3 overflow-x-auto pb-1">
-                                {imagens.map((imagem, index) => (
-                                    <button
-                                        key={imagem}
-                                        type="button"
-                                        className={`thumbnail-button ${imagemAtiva === index ? 'active' : ''}`}
-                                        onClick={() => setImagemAtiva(index)}
-                                        aria-label={`Visualizar imagem ${index + 1}`}
-                                    >
-                                        <img
-                                            src={imagem}
-                                            alt=""
-                                            className="w-100 h-100 object-fit-cover"
-                                        />
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </section>
+    return (
+      variacoes.find(
+        (variacao) => String(variacao.idCor) === selectedColorId,
+      ) || produto
+    );
+  }, [produto, selectedColorId, variacaoSelecionada, variacoes]);
 
-                    <section className="col-12 col-lg-6 d-flex flex-column pt-2 pt-lg-0">
-                        <h1 className="fs-3 fs-lg-2 fw-medium text-dark mb-2 text-uppercase lh-sm">
-                            {titulo}
-                        </h1>
-                        <p className="small text-muted mb-4">
-                            Ref: {variacaoSelecionada?.sku || produto.sku || produto.idProduto}
-                        </p>
+  const imagens = useMemo(() => {
+    if (!variacaoVisual) return [];
 
-                        <div className="mb-4">
-                            <p className="fs-2 fw-bold text-dark mb-1">
-                                {formatarPreco(precoExibido)}
-                            </p>
-                            <p className="small text-secondary mb-0">
-                                ou <span className="fw-semibold">7x de {formatarPreco(valorParcela)}</span>{' '}
-                                sem juros no cartão
-                            </p>
-                        </div>
+    return [
+      variacaoVisual.imagem1,
+      variacaoVisual.imagem2,
+      variacaoVisual.imagem3,
+      variacaoVisual.imagem4,
+    ]
+      .map(resolverImagem)
+      .filter(Boolean)
+      .filter((imagem, index, lista) => lista.indexOf(imagem) === index);
+  }, [variacaoVisual]);
 
-                        <hr className="text-secondary opacity-25 mb-4" />
+  const corSelecionada = cores.find(
+    (cor) => String(cor.idCor) === selectedColorId,
+  );
 
-                        <div className="mb-4">
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                                <span className="small fw-bold text-dark text-uppercase">
-                                    Cor:{' '}
-                                    <span className="fw-normal text-muted">
-                                        {corSelecionada?.nomeCor || 'Selecione'}
-                                    </span>
-                                </span>
-                            </div>
+  const tamanhoSelecionado = tamanhosDaCor.find(
+    (tamanho) => String(tamanho.idTamanho) === selectedSizeId,
+  );
 
-                            <div className="d-flex flex-wrap gap-3">
-                                {cores.map((cor) => (
-                                    <button
-                                        key={cor.idCor}
-                                        type="button"
-                                        className={`color-option ${
-                                            selectedColorId === String(cor.idCor) ? 'active' : ''
-                                        }`}
-                                        onClick={() => selecionarCor(cor.idCor)}
-                                        disabled={!cor.disponivel}
-                                        aria-label={`Cor ${cor.nomeCor}`}
-                                        aria-pressed={selectedColorId === String(cor.idCor)}
-                                        title={cor.nomeCor}
-                                    >
-                                        <span
-                                            className="color-swatch"
-                                            style={{ backgroundColor: codigoCorSeguro(cor.codigoCor) }}
-                                        />
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+  const temEstoque = variacoes.some((variacao) => variacao.disponivel);
+  const precoExibido = variacaoSelecionada?.preco ?? produto?.preco ?? 0;
+  const valorParcela = Number(precoExibido) / 7;
+  const titulo = produto?.nomeCombinacao || produto?.nome || 'Produto';
 
-                        <div>
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                                <span className="small fw-bold text-dark text-uppercase">
-                                    Tamanho:{' '}
-                                    <span className="fw-normal text-muted">
-                                        {tamanhoSelecionado?.codigoTamanho || 'Selecione'}
-                                    </span>
-                                </span>
-                                <button
-                                    type="button"
-                                    className="btn btn-link p-0 text-dark small text-decoration-underline shadow-none"
-                                >
-                                    Guia de Medidas
-                                </button>
-                            </div>
+  function selecionarCor(idCor) {
+    setSelectedColorId(String(idCor));
+    setSelectedSizeId('');
+    setImagemAtiva(0);
+    setAlertaCompra(null);
+  }
 
-                            {!selectedColorId ? (
-                                <p className="small text-secondary mb-4">
-                                    Selecione uma cor para visualizar os tamanhos disponíveis.
-                                </p>
-                            ) : (
-                                <div className="d-flex flex-wrap gap-2 mb-4">
-                                    {tamanhosDaCor.map((tamanho) => (
-                                        <button
-                                            key={tamanho.idTamanho}
-                                            type="button"
-                                            onClick={() => selecionarTamanho(tamanho)}
-                                            disabled={!tamanho.disponivel}
-                                            className={`btn size-button rounded-circle d-flex align-items-center justify-content-center p-0 fw-medium ${
-                                                selectedSizeId === String(tamanho.idTamanho)
-                                                    ? 'btn-dark'
-                                                    : 'btn-outline-secondary text-dark'
-                                            }`}
-                                            aria-pressed={selectedSizeId === String(tamanho.idTamanho)}
-                                        >
-                                            {tamanho.codigoTamanho}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+  function selecionarTamanho(tamanho) {
+    if (!tamanho.disponivel) return;
 
-                        <button
-                            type="button"
-                            onClick={handleBuy}
-                            disabled={!temEstoque}
-                            className="btn btn-buy text-white w-100 py-3 fw-bold small text-uppercase shadow-sm mb-4"
-                        >
-                            {temEstoque ? 'Adicionar ao carrinho' : 'Produto esgotado'}
-                        </button>
+    setSelectedSizeId(String(tamanho.idTamanho));
+    setImagemAtiva(0);
+    setAlertaCompra(null);
+  }
 
-                        {variacaoSelecionada && (
-                            <p className="small text-success mb-4">
-                                {variacaoSelecionada.estoque} unidade(s) disponível(is)
-                            </p>
-                        )}
+  function mostrarAlerta(tipo, tituloAlerta, mensagem) {
+    setAlertaCompra({ tipo, titulo: tituloAlerta, mensagem });
+  }
 
-                        <div className="border-top pt-4 mt-2">
-                            <h2 className="fs-6 fw-bold text-dark mb-3 text-uppercase">
-                                Descrição do Produto
-                            </h2>
-                            <p className="small text-secondary lh-base mb-0">
-                                {produto.descricao}
-                            </p>
-                        </div>
-                    </section>
+  function handleBuy() {
+    if (!selectedColorId) {
+      mostrarAlerta(
+        'aviso',
+        'Escolha uma cor',
+        'Selecione uma das cores disponíveis antes de continuar.',
+      );
+      return;
+    }
+
+    if (!selectedSizeId) {
+      mostrarAlerta(
+        'aviso',
+        'Escolha um tamanho',
+        'Selecione o tamanho desejado para adicionar o produto.',
+      );
+      return;
+    }
+
+    if (!variacaoSelecionada) {
+      mostrarAlerta(
+        'erro',
+        'Combinação indisponível',
+        'Essa combinação de cor e tamanho está sem estoque.',
+      );
+      return;
+    }
+
+    mostrarAlerta(
+      'sucesso',
+      'Produto adicionado',
+      `${titulo} foi adicionado ao carrinho.`,
+    );
+
+    // Integre aqui a função real do carrinho usando:
+    // variacaoSelecionada.idProduto
+  }
+
+  if (carregando) {
+    return (
+      <main className="product-page loading-page">
+        <div className="loading-card" role="status" aria-live="polite">
+          <span className="spinner-border" aria-hidden="true" />
+          <div>
+            <strong>Carregando produto</strong>
+            <p>Buscando informações e opções disponíveis...</p>
+          </div>
+        </div>
+
+        <style>{pageStyles}</style>
+      </main>
+    );
+  }
+
+  if (erro || !produto) {
+    return (
+      <main className="product-page loading-page">
+        <div className="feedback-card" role="alert">
+          <span className="feedback-icon">
+            <i className="bi bi-exclamation-circle" aria-hidden="true" />
+          </span>
+          <span className="eyebrow">Catálogo Everett</span>
+          <h1>Produto indisponível</h1>
+          <p>{erro || 'O produto solicitado não foi encontrado.'}</p>
+          <button type="button" onClick={() => window.history.back()}>
+            <i className="bi bi-arrow-left" aria-hidden="true" />
+            Voltar ao catálogo
+          </button>
+        </div>
+
+        <style>{pageStyles}</style>
+      </main>
+    );
+  }
+
+  return (
+    <main className="product-page">
+      <div className="product-container">
+        <nav className="breadcrumb" aria-label="Navegação estrutural">
+          <Link href="/">Início</Link>
+          <i className="bi bi-chevron-right" aria-hidden="true" />
+          <Link href="/produtos">Produtos</Link>
+          <i className="bi bi-chevron-right" aria-hidden="true" />
+          <span>{produto.categoriaNome || produto.genero || 'Catálogo'}</span>
+          <i className="bi bi-chevron-right" aria-hidden="true" />
+          <strong>{titulo}</strong>
+        </nav>
+
+        <header className="product-heading">
+          <div>
+            <span className="eyebrow">Catálogo Everett</span>
+            <h1>{titulo}</h1>
+          </div>
+
+          <Link href="/produtos" className="back-link">
+            <i className="bi bi-grid" aria-hidden="true" />
+            Ver todos os produtos
+          </Link>
+        </header>
+
+        <div className="product-layout">
+          <section className="gallery-card" aria-label="Imagens do produto">
+            <div className="main-image">
+              {imagens[imagemAtiva] ? (
+                <img
+                  src={imagens[imagemAtiva]}
+                  alt={`${titulo} - imagem ${imagemAtiva + 1}`}
+                />
+              ) : (
+                <div className="image-fallback">
+                  <i className="bi bi-image" aria-hidden="true" />
+                  <span>Imagem indisponível</span>
                 </div>
+              )}
+
+              {!temEstoque ? <span className="stock-badge">Esgotado</span> : null}
             </div>
 
-            <style jsx>{`
-                .product-container {
-                    max-width: 1200px;
-                }
+            {imagens.length > 1 ? (
+              <div className="thumbnails" aria-label="Outras imagens">
+                {imagens.map((imagem, index) => (
+                  <button
+                    key={imagem}
+                    type="button"
+                    className={imagemAtiva === index ? 'active' : ''}
+                    onClick={() => setImagemAtiva(index)}
+                    aria-label={`Visualizar imagem ${index + 1}`}
+                    aria-pressed={imagemAtiva === index}
+                  >
+                    <img src={imagem} alt="" />
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </section>
 
-                .product-gallery {
-                    top: 2rem;
-                }
+          <section className="details-card">
+            <div className="product-meta">
+              <span>{produto.categoriaNome || produto.genero || 'Everett'}</span>
+              {produto.corNome ? <span>{produto.corNome}</span> : null}
+              <span>
+                Ref. {variacaoSelecionada?.sku || produto.sku || produto.idProduto}
+              </span>
+            </div>
 
-                .product-main-image {
-                    width: 100%;
-                    aspect-ratio: 3 / 4;
-                    border-radius: 0.25rem;
-                }
+            <h2>{titulo}</h2>
 
-                .product-main-image img {
-                    transition: transform 0.7s ease-in-out;
-                }
+            <div className="price-block">
+              <strong>{formatarPreco(precoExibido)}</strong>
+              <p>
+                ou <b>7x de {formatarPreco(valorParcela)}</b> sem juros no cartão
+              </p>
+            </div>
 
-                .product-main-image:hover img {
-                    transform: scale(1.04);
-                }
+            <div className="divider" />
 
-                .thumbnail-button {
-                    width: 76px;
-                    height: 96px;
-                    flex: 0 0 auto;
-                    padding: 0;
-                    overflow: hidden;
-                    background: #f5f5f5;
-                    border: 2px solid transparent;
-                    border-radius: 0.25rem;
-                }
+            <div className="option-group">
+              <div className="option-heading">
+                <div>
+                  <span>Cor</span>
+                  <strong>{corSelecionada?.nomeCor || 'Selecione'}</strong>
+                </div>
+              </div>
 
-                .thumbnail-button.active {
-                    border-color: #111;
-                }
+              <div className="color-list">
+                {cores.map((cor) => {
+                  const ativa = selectedColorId === String(cor.idCor);
 
-                .color-option {
-                    position: relative;
-                    width: 46px;
-                    height: 46px;
-                    padding: 4px;
-                    border: 2px solid transparent;
-                    border-radius: 50%;
-                    background: transparent;
-                }
+                  return (
+                    <button
+                      key={cor.idCor}
+                      type="button"
+                      className={ativa ? 'active' : ''}
+                      onClick={() => selecionarCor(cor.idCor)}
+                      disabled={!cor.disponivel}
+                      aria-label={`Cor ${cor.nomeCor}`}
+                      aria-pressed={ativa}
+                      title={cor.nomeCor}
+                    >
+                      <span
+                        style={{ backgroundColor: codigoCorSeguro(cor.codigoCor) }}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-                .color-option.active {
-                    border-color: #111;
-                }
+            <div className="option-group">
+              <div className="option-heading">
+                <div>
+                  <span>Tamanho</span>
+                  <strong>
+                    {tamanhoSelecionado?.codigoTamanho || 'Selecione'}
+                  </strong>
+                </div>
 
-                .color-option:disabled,
-                .size-button:disabled {
-                    cursor: not-allowed;
-                    opacity: 0.35;
-                    text-decoration: line-through;
-                }
+                <button type="button" className="size-guide">
+                  Guia de medidas
+                </button>
+              </div>
 
-                .color-swatch {
-                    display: block;
-                    width: 100%;
-                    height: 100%;
-                    border: 1px solid rgba(0, 0, 0, 0.2);
-                    border-radius: 50%;
-                }
+              {!selectedColorId ? (
+                <p className="option-help">
+                  Selecione uma cor para visualizar os tamanhos disponíveis.
+                </p>
+              ) : (
+                <div className="size-list">
+                  {tamanhosDaCor.map((tamanho) => {
+                    const ativo =
+                      selectedSizeId === String(tamanho.idTamanho);
 
-                .size-button {
-                    width: 48px;
-                    height: 48px;
-                    transition: color 0.2s ease, background-color 0.2s ease,
-                        border-color 0.2s ease;
-                }
+                    return (
+                      <button
+                        key={tamanho.idTamanho}
+                        type="button"
+                        onClick={() => selecionarTamanho(tamanho)}
+                        disabled={!tamanho.disponivel}
+                        className={ativo ? 'active' : ''}
+                        aria-pressed={ativo}
+                      >
+                        {tamanho.codigoTamanho}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
-                .btn-buy {
-                    background-color: #008542;
-                    border: none;
-                    letter-spacing: 0.1em;
-                }
+            <div className="purchase-row">
+              <button
+                type="button"
+                onClick={handleBuy}
+                disabled={!temEstoque}
+                className="buy-button"
+              >
+                <i className="bi bi-bag-plus" aria-hidden="true" />
+                {temEstoque ? 'Adicionar ao carrinho' : 'Produto esgotado'}
+              </button>
 
-                .btn-buy:hover:not(:disabled) {
-                    background-color: #006e36;
-                }
+              {alertaCompra ? (
+                <aside
+                  className={`purchase-alert ${alertaCompra.tipo}`}
+                  role={alertaCompra.tipo === 'sucesso' ? 'status' : 'alert'}
+                  aria-live="polite"
+                >
+                  <span className="alert-icon">
+                    <i
+                      className={
+                        alertaCompra.tipo === 'sucesso'
+                          ? 'bi bi-check-lg'
+                          : alertaCompra.tipo === 'erro'
+                            ? 'bi bi-x-lg'
+                            : 'bi bi-exclamation-lg'
+                      }
+                      aria-hidden="true"
+                    />
+                  </span>
 
-                .btn-buy:disabled {
-                    background-color: #7b7b7b;
-                }
+                  <div>
+                    <strong>{alertaCompra.titulo}</strong>
+                    <p>{alertaCompra.mensagem}</p>
+                  </div>
 
-                @media (max-width: 991.98px) {
-                    .product-gallery {
-                        position: static !important;
-                    }
-                }
+                  <button
+                    type="button"
+                    onClick={() => setAlertaCompra(null)}
+                    aria-label="Fechar aviso"
+                  >
+                    <i className="bi bi-x" aria-hidden="true" />
+                  </button>
+                </aside>
+              ) : null}
+            </div>
 
-                @media (max-width: 575.98px) {
-                    .product-main-image {
-                        aspect-ratio: 4 / 5;
-                    }
-                }
-            `}</style>
-        </main>
-    );
+            {variacaoSelecionada ? (
+              <p className="available-stock">
+                <i className="bi bi-check-circle" aria-hidden="true" />
+                {variacaoSelecionada.estoque} unidade(s) disponível(is)
+              </p>
+            ) : null}
+
+            <div className="description-card">
+              <div>
+                <i className="bi bi-card-text" aria-hidden="true" />
+                <h3>Descrição do produto</h3>
+              </div>
+              <p>{produto.descricao || 'Descrição não informada.'}</p>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <style>{pageStyles}</style>
+    </main>
+  );
 }
+
+const pageStyles = `
+  .product-page {
+    min-height: 100vh;
+    color: #191919;
+    background:
+      radial-gradient(circle at 8% 4%, rgba(210, 178, 112, 0.12), transparent 24rem),
+      #f6f6f3;
+    padding: 2rem 1rem 5rem;
+  }
+
+  .product-container {
+    width: min(100%, 1240px);
+    margin: 0 auto;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+    margin-bottom: 1.5rem;
+    color: #77766f;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .breadcrumb :global(a) {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .breadcrumb :global(a):hover {
+    color: #171717;
+  }
+
+  .breadcrumb :global(i) {
+    flex: 0 0 auto;
+    font-size: 0.58rem;
+  }
+
+  .breadcrumb strong {
+    color: #292929;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .product-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .eyebrow {
+    display: block;
+    margin-bottom: 0.45rem;
+    color: #8a6732;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+
+  .product-heading h1 {
+    max-width: 800px;
+    margin: 0;
+    font-size: clamp(1.65rem, 3vw, 2.5rem);
+    font-weight: 650;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex: 0 0 auto;
+    min-height: 42px;
+    padding: 0.65rem 0.95rem;
+    border: 1px solid #deded8;
+    border-radius: 10px;
+    color: #393936;
+    background: rgba(255, 255, 255, 0.7);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .back-link:hover {
+    border-color: #aaa99f;
+    background: #fff;
+  }
+
+  .product-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.03fr) minmax(380px, 0.97fr);
+    align-items: start;
+    gap: 1.75rem;
+  }
+
+  .gallery-card,
+  .details-card {
+    border: 1px solid #e3e3dd;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 18px 50px rgba(28, 28, 24, 0.06);
+  }
+
+  .gallery-card {
+    position: sticky;
+    top: 1.5rem;
+    padding: 1rem;
+  }
+
+  .main-image {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border-radius: 13px;
+    background: #f0f0ed;
+  }
+
+  .main-image > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    transition: transform 0.6s ease;
+  }
+
+  .main-image:hover > img {
+    transform: scale(1.025);
+  }
+
+  .image-fallback {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    height: 100%;
+    color: #8a8a83;
+    font-size: 0.85rem;
+  }
+
+  .image-fallback :global(i) {
+    font-size: 2rem;
+  }
+
+  .stock-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 999px;
+    color: #fff;
+    background: #252525;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .thumbnails {
+    display: flex;
+    gap: 0.7rem;
+    margin-top: 0.85rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .thumbnails button {
+    width: 74px;
+    height: 88px;
+    flex: 0 0 auto;
+    padding: 3px;
+    overflow: hidden;
+    border: 1px solid #deded8;
+    border-radius: 9px;
+    background: #f3f3f0;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .thumbnails button.active {
+    border-color: #1e1e1e;
+    box-shadow: 0 0 0 1px #1e1e1e;
+  }
+
+  .thumbnails img {
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
+    object-fit: cover;
+  }
+
+  .details-card {
+    padding: clamp(1.3rem, 3vw, 2.2rem);
+  }
+
+  .product-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .product-meta span {
+    padding: 0.35rem 0.55rem;
+    border-radius: 6px;
+    color: #686862;
+    background: #f2f2ef;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .details-card > h2 {
+    margin: 0 0 1.4rem;
+    font-size: clamp(1.55rem, 3vw, 2.25rem);
+    font-weight: 600;
+    line-height: 1.14;
+    letter-spacing: -0.035em;
+  }
+
+  .price-block strong {
+    display: block;
+    font-size: clamp(1.8rem, 3vw, 2.3rem);
+    line-height: 1;
+    letter-spacing: -0.035em;
+  }
+
+  .price-block p {
+    margin: 0.65rem 0 0;
+    color: #73736d;
+    font-size: 0.84rem;
+  }
+
+  .price-block b {
+    color: #383834;
+  }
+
+  .divider {
+    height: 1px;
+    margin: 1.6rem 0;
+    background: #e7e7e1;
+  }
+
+  .option-group + .option-group {
+    margin-top: 1.7rem;
+  }
+
+  .option-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .option-heading > div {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+  }
+
+  .option-heading span {
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .option-heading strong {
+    color: #777770;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .color-list,
+  .size-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .color-list button {
+    width: 44px;
+    height: 44px;
+    padding: 4px;
+    border: 1px solid #d7d7d1;
+    border-radius: 50%;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .color-list button.active {
+    border-color: #171717;
+    box-shadow: 0 0 0 1px #171717;
+  }
+
+  .color-list button > span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    border-radius: 50%;
+  }
+
+  .color-list button:disabled,
+  .size-list button:disabled {
+    cursor: not-allowed;
+    opacity: 0.32;
+    text-decoration: line-through;
+  }
+
+  .size-guide {
+    padding: 0;
+    border: 0;
+    color: #51514c;
+    background: none;
+    font-size: 0.76rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .size-list button {
+    min-width: 47px;
+    height: 43px;
+    padding: 0 0.75rem;
+    border: 1px solid #d2d2cc;
+    border-radius: 8px;
+    color: #30302d;
+    background: #fff;
+    font-size: 0.78rem;
+    font-weight: 750;
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .size-list button:hover:not(:disabled),
+  .size-list button.active {
+    border-color: #1b1b1b;
+    color: #fff;
+    background: #1b1b1b;
+  }
+
+  .option-help {
+    margin: 0;
+    padding: 0.8rem;
+    border: 1px dashed #d8d8d1;
+    border-radius: 8px;
+    color: #777770;
+    background: #fafaf8;
+    font-size: 0.78rem;
+  }
+
+  .purchase-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(210px, 1fr) minmax(230px, 0.9fr);
+    align-items: stretch;
+    gap: 0.75rem;
+    margin-top: 1.8rem;
+  }
+
+  .buy-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    min-height: 58px;
+    padding: 0.9rem 1rem;
+    border: 0;
+    border-radius: 10px;
+    color: #fff;
+    background: #1c1c1c;
+    box-shadow: 0 10px 22px rgba(28, 28, 28, 0.15);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+
+  .buy-button:hover:not(:disabled) {
+    background: #343431;
+    transform: translateY(-1px);
+  }
+
+  .buy-button:disabled {
+    cursor: not-allowed;
+    background: #8c8c87;
+    box-shadow: none;
+  }
+
+  .purchase-alert {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 58px;
+    padding: 0.65rem 0.7rem;
+    border: 1px solid;
+    border-radius: 10px;
+    animation: alert-in 0.25s ease both;
+  }
+
+  .purchase-alert.aviso {
+    border-color: #e7cf93;
+    color: #684b0d;
+    background: #fff8e4;
+  }
+
+  .purchase-alert.erro {
+    border-color: #e8b7b3;
+    color: #7a2420;
+    background: #fff1f0;
+  }
+
+  .purchase-alert.sucesso {
+    border-color: #acd8bd;
+    color: #176333;
+    background: #edf9f1;
+  }
+
+  .alert-icon {
+    display: grid;
+    place-items: center;
+    width: 29px;
+    height: 29px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.72);
+    font-size: 0.78rem;
+  }
+
+  .purchase-alert strong {
+    display: block;
+    margin-bottom: 0.12rem;
+    font-size: 0.76rem;
+  }
+
+  .purchase-alert p {
+    margin: 0;
+    font-size: 0.68rem;
+    line-height: 1.35;
+  }
+
+  .purchase-alert > button {
+    align-self: start;
+    padding: 0;
+    border: 0;
+    color: currentColor;
+    background: transparent;
+    font-size: 1rem;
+    opacity: 0.7;
+  }
+
+  .available-stock {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0.75rem 0 0;
+    color: #287344;
+    font-size: 0.75rem;
+  }
+
+  .description-card {
+    margin-top: 1.8rem;
+    padding: 1.2rem;
+    border: 1px solid #e2e2dc;
+    border-radius: 11px;
+    background: #fafaf8;
+  }
+
+  .description-card > div {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .description-card h3 {
+    margin: 0;
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  .description-card p {
+    margin: 0;
+    color: #666660;
+    font-size: 0.83rem;
+    line-height: 1.7;
+  }
+
+  .loading-page {
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+  }
+
+  .loading-card,
+  .feedback-card {
+    border: 1px solid #e1e1db;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 18px 50px rgba(28, 28, 24, 0.07);
+  }
+
+  .loading-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.4rem;
+  }
+
+  .loading-card :global(.spinner-border) {
+    width: 1.7rem;
+    height: 1.7rem;
+    color: #9a7135;
+  }
+
+  .loading-card strong {
+    display: block;
+    font-size: 0.9rem;
+  }
+
+  .loading-card p {
+    margin: 0.2rem 0 0;
+    color: #777770;
+    font-size: 0.75rem;
+  }
+
+  .feedback-card {
+    width: min(100%, 470px);
+    padding: 2.3rem;
+    text-align: center;
+  }
+
+  .feedback-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    color: #7a2420;
+    background: #fff1f0;
+    font-size: 1.3rem;
+  }
+
+  .feedback-card h1 {
+    margin: 0 0 0.7rem;
+    font-size: 1.55rem;
+  }
+
+  .feedback-card p {
+    margin: 0 0 1.4rem;
+    color: #71716b;
+    font-size: 0.86rem;
+  }
+
+  .feedback-card button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: 0;
+    border-radius: 9px;
+    color: #fff;
+    background: #1c1c1c;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  @keyframes alert-in {
+    from {
+      opacity: 0;
+      transform: translateX(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @media (max-width: 991.98px) {
+    .product-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .gallery-card {
+      position: static;
+    }
+
+    .main-image {
+      aspect-ratio: 4 / 4.7;
+    }
+  }
+
+  @media (max-width: 650px) {
+    .product-page {
+      padding: 1.2rem 0.75rem 3rem;
+    }
+
+    .breadcrumb {
+      margin-bottom: 1rem;
+    }
+
+    .product-heading {
+      align-items: start;
+      flex-direction: column;
+      margin-bottom: 1.35rem;
+    }
+
+    .back-link {
+      min-height: 38px;
+    }
+
+    .product-layout {
+      gap: 1rem;
+    }
+
+    .gallery-card,
+    .details-card {
+      border-radius: 13px;
+    }
+
+    .gallery-card {
+      padding: 0.65rem;
+    }
+
+    .main-image {
+      aspect-ratio: 4 / 5;
+      border-radius: 9px;
+    }
+
+    .details-card {
+      padding: 1.25rem;
+    }
+
+    .purchase-row {
+      grid-template-columns: 1fr;
+    }
+
+    .purchase-alert {
+      min-height: auto;
+    }
+
+    .size-guide {
+      font-size: 0.7rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .main-image > img,
+    .buy-button,
+    .purchase-alert {
+      transition: none;
+      animation: none;
+    }
+  }
+`;
