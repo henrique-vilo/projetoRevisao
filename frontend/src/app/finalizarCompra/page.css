@@ -1,0 +1,676 @@
+.checkoutPage {
+  min-height: 100vh;
+  background: #f8f7f9;
+  color: #29232d;
+}
+
+.checkoutContainer {
+  width: min(1420px, 100%);
+  margin: 0 auto;
+  padding: 48px 28px 70px;
+}
+
+/* =========================================
+   CABEÇALHO
+========================================= */
+
+.checkoutHeading {
+  margin-bottom: 32px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.checkoutEyebrow {
+  color: #00a9d4;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.checkoutHeading h1 {
+  margin: 5px 0 7px;
+  color: #241b28;
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 750;
+  line-height: 1.08;
+}
+
+.checkoutHeading p {
+  margin: 0;
+  color: #777079;
+  font-size: 14px;
+}
+
+.voltarCarrinho {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #00a9d4;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.voltarCarrinho:hover {
+  color: #1c3166;
+}
+
+/* =========================================
+   LAYOUT
+========================================= */
+
+.checkoutLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 390px;
+  gap: 30px;
+  align-items: start;
+}
+
+.checkoutForm {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* =========================================
+   CARDS
+========================================= */
+
+.checkoutCard,
+.summaryCard {
+  background: #ffffff;
+  border: 1px solid #ebe7ed;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(36, 18, 43, 0.05);
+}
+
+.checkoutCard {
+  padding: 28px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 25px;
+}
+
+.cardIcon {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #ffffff;
+  background: #00a9d4;
+  border-radius: 12px;
+
+  font-size: 19px;
+}
+
+.cardHeader span {
+  display: block;
+
+  color: #00a9d4;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.1em;
+}
+
+.cardHeader h2 {
+  margin: 3px 0 0;
+
+  color: #2d2531;
+
+  font-size: 19px;
+  font-weight: 750;
+}
+
+/* =========================================
+   FORMULÁRIO
+========================================= */
+
+.formGrid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 17px;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.formFieldFull {
+  grid-column: 1 / -1;
+}
+
+.formField label {
+  color: #605863;
+
+  font-size: 11px;
+  font-weight: 750;
+
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.formField input {
+  width: 100%;
+  height: 44px;
+
+  padding: 0 13px;
+
+  color: #302a33;
+  background: #fbfafc;
+
+  border: 1px solid #dfd9e2;
+  border-radius: 9px;
+
+  outline: none;
+
+  font-size: 13px;
+
+  transition: 0.2s;
+}
+
+.formField input:focus {
+  background: #ffffff;
+
+  border-color: #00a9d4;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(0, 169, 212, 0.1);
+}
+
+/* =========================================
+   CEP
+========================================= */
+
+.cepInput {
+  position: relative;
+}
+
+.cepInput input {
+  padding-right: 45px;
+}
+
+.cepLoading {
+  position: absolute;
+
+  right: 14px;
+  top: 11px;
+
+  color: #00a9d4;
+
+  font-weight: 800;
+}
+
+/* =========================================
+   PAGAMENTO
+========================================= */
+
+.paymentOptions {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+.paymentOption {
+  min-height: 105px;
+
+  padding: 16px;
+
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  background: #fbfafc;
+
+  border: 1px solid #dfd9e2;
+  border-radius: 12px;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.paymentOption:hover {
+  border-color: #00a9d4;
+}
+
+.paymentOption.selected {
+  background: rgba(0, 169, 212, 0.06);
+
+  border-color: #00a9d4;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(0, 169, 212, 0.08);
+}
+
+.paymentOption input {
+  display: none;
+}
+
+.paymentOption > i {
+  color: #00a9d4;
+  font-size: 23px;
+}
+
+.paymentOption div {
+  display: flex;
+  flex-direction: column;
+}
+
+.paymentOption strong {
+  color: #302a33;
+
+  font-size: 12px;
+}
+
+.paymentOption span {
+  margin-top: 3px;
+
+  color: #89818c;
+
+  font-size: 10px;
+}
+
+.cardFields {
+  margin-top: 22px;
+  padding-top: 22px;
+
+  border-top: 1px solid #eeeaf0;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 17px;
+}
+
+/* =========================================
+   RESUMO
+========================================= */
+
+.orderSummary {
+  position: sticky;
+  top: 20px;
+}
+
+.summaryCard {
+  padding: 24px;
+}
+
+.summaryHeader {
+  padding-bottom: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid #eeeaf0;
+}
+
+.summaryHeader span {
+  color: #00a9d4;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.1em;
+}
+
+.summaryHeader h2 {
+  margin: 4px 0 0;
+
+  color: #2d2531;
+
+  font-size: 20px;
+  font-weight: 750;
+}
+
+.summaryHeader > i {
+  color: #00a9d4;
+  font-size: 25px;
+}
+
+/* =========================================
+   PRODUTOS
+========================================= */
+
+.summaryProducts {
+  max-height: 350px;
+
+  padding: 8px 0;
+
+  overflow-y: auto;
+}
+
+.summaryProduct {
+  padding: 15px 0;
+
+  display: flex;
+  gap: 13px;
+
+  border-bottom: 1px solid #f0edf1;
+}
+
+.summaryImage {
+  position: relative;
+
+  width: 70px;
+  height: 88px;
+
+  flex-shrink: 0;
+
+  overflow: hidden;
+
+  background: #f0edf2;
+
+  border-radius: 10px;
+}
+
+.summaryImage img {
+  object-fit: cover;
+}
+
+.summaryImageFallback {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #aaa3ac;
+}
+
+.summaryProductInfo {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.summaryProductInfo h3 {
+  margin: 0 0 5px;
+
+  color: #302a33;
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.summaryProductInfo span,
+.summaryProductInfo small {
+  color: #89818c;
+  font-size: 10px;
+}
+
+.summaryProductInfo small {
+  margin-top: 3px;
+}
+
+.summaryProductInfo strong {
+  margin-top: auto;
+
+  color: #241b28;
+
+  font-size: 13px;
+}
+
+/* =========================================
+   VALORES
+========================================= */
+
+.summaryValues {
+  margin-top: 8px;
+  padding-top: 18px;
+}
+
+.summaryValues > div {
+  margin-bottom: 11px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  color: #777079;
+
+  font-size: 13px;
+}
+
+.summaryValues strong {
+  color: #302a33;
+}
+
+.summaryValues .summaryTotal {
+  margin-top: 16px;
+  padding-top: 18px;
+
+  border-top: 1px solid #e8e3e9;
+
+  color: #241b28;
+
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.summaryTotal strong {
+  color: #00a9d4;
+  font-size: 21px;
+}
+
+/* =========================================
+   BOTÃO FINALIZAR
+========================================= */
+
+.finishButton {
+  width: 100%;
+  height: 52px;
+
+  margin-top: 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  color: #ffffff;
+  background: #00a9d4;
+
+  border: 0;
+  border-radius: 11px;
+
+  font-size: 14px;
+  font-weight: 750;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.finishButton:hover:not(:disabled) {
+  filter: brightness(0.9);
+  transform: translateY(-1px);
+}
+
+.finishButton:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+/* =========================================
+   SEGURANÇA
+========================================= */
+
+.securityText {
+  margin-top: 16px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 7px;
+
+  color: #89818c;
+
+  font-size: 10px;
+  line-height: 1.5;
+
+  text-align: center;
+}
+
+.securityText i {
+  color: #00a9d4;
+}
+
+/* =========================================
+   SPINNER
+========================================= */
+
+.spinner {
+  width: 17px;
+  height: 17px;
+
+  border: 2px solid
+    rgba(255, 255, 255, 0.35);
+
+  border-top-color: #ffffff;
+
+  border-radius: 50%;
+
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================
+   CARRINHO VAZIO
+========================================= */
+
+.carrinhoVazio {
+  min-height: 400px;
+
+  padding: 50px 20px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  background: #ffffff;
+
+  border: 1px solid #ebe7ed;
+  border-radius: 18px;
+}
+
+.carrinhoVazio > i {
+  margin-bottom: 15px;
+
+  color: #00a9d4;
+
+  font-size: 52px;
+}
+
+.carrinhoVazio h2 {
+  margin: 0 0 8px;
+
+  color: #241b28;
+
+  font-size: 23px;
+}
+
+.carrinhoVazio p {
+  margin: 0 0 22px;
+
+  color: #777079;
+
+  font-size: 13px;
+}
+
+.continuarComprando {
+  padding: 12px 19px;
+
+  color: #ffffff;
+  background: #00a9d4;
+
+  border-radius: 9px;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  text-decoration: none;
+}
+
+/* =========================================
+   RESPONSIVO
+========================================= */
+
+@media (max-width: 1050px) {
+  .checkoutLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .orderSummary {
+    position: static;
+  }
+}
+
+@media (max-width: 800px) {
+  .checkoutContainer {
+    padding: 35px 18px 55px;
+  }
+
+  .paymentOptions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .checkoutHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .checkoutCard {
+    padding: 21px;
+  }
+
+  .formGrid,
+  .cardFields {
+    grid-template-columns: 1fr;
+  }
+
+  .formFieldFull {
+    grid-column: auto;
+  }
+
+  .checkoutHeading h1 {
+    font-size: 33px;
+  }
+}

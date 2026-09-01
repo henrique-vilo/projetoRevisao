@@ -385,7 +385,7 @@ export default function Header() {
             id="header-search"
             name="busca"
             type="search"
-            placeholder="O que você está procurando?"
+            placeholder="O que você procura?"
             className="search-pill-input"
           />
         </form>
@@ -508,7 +508,7 @@ export default function Header() {
                         <strong>{formatarPreco(subtotalCarrinho)}</strong>
                       </div>
                       <Link
-                        href="/checkout"
+                        href="/finalizarCompra"
                         className="cart-checkout-button"
                         onClick={() => setCarrinhoAberto(false)}
                       >
