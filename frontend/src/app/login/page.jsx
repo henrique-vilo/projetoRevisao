@@ -1,271 +1,267 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export default function Login() {
-  const router = useRouter();
+import styles from "../auth.module.css";
 
-  const [form, setForm] = useState({
-    email: "",
-    senha: "",
-  });
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
+).replace(/\/$/, "");
 
-  const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState("");
+function AuthBrand() {
+  return (
+    <Link href="/" className={styles.brand} aria-label="Everett — página inicial">
+      <span className={styles.brandMark} aria-hidden="true">
+        <span className={styles.brandLetter}>E</span>
+      </span>
+      <span>Everett</span>
+    </Link>
+  );
+}
 
-  function alterarCampo(e) {
-    const { name, value } = e.target;
-
-    setForm({
-      ...form,
-      [name]: value,
-    });
-
-    if (erro) {
-      setErro("");
-    }
+function EyeIcon({ hidden }) {
+  if (hidden) {
+    return (
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="m3 3 18 18" />
+        <path d="M10.6 10.7a2 2 0 0 0 2.7 2.7" />
+        <path d="M9.9 4.2A10.5 10.5 0 0 1 12 4c5.5 0 9.5 5.3 9.5 5.3a12.5 12.5 0 0 1-2.1 2.7" />
+        <path d="M6.6 6.6C4.1 8.1 2.5 10.3 2.5 10.3S6.5 16 12 16c1 0 1.9-.2 2.8-.5" />
+      </svg>
+    );
   }
 
-  async function realizarLogin(e) {
-    e.preventDefault();
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M2.5 12S6.5 6 12 6s9.5 6 9.5 6-4 6-9.5 6-9.5-6-9.5-6Z" />
+      <circle cx="12" cy="12" r="2.5" />
+    </svg>
+  );
+}
 
-    setErro("");
-    setCarregando(true);
+function PasswordField({ id, label, name, autoComplete }) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div>
+      <label htmlFor={id} className={styles.formLabel}>
+        {label}
+      </label>
+      <div className={styles.passwordWrap}>
+        <input
+          id={id}
+          name={name}
+          type={visible ? "text" : "password"}
+          className={`form-control ${styles.formControl} ${styles.passwordControl}`}
+          placeholder="Digite sua senha"
+          autoComplete={autoComplete}
+          minLength={6}
+          required
+        />
+        <button
+          type="button"
+          className={styles.passwordButton}
+          aria-label={visible ? "Ocultar senha" : "Mostrar senha"}
+          aria-pressed={visible}
+          onClick={() => setVisible((current) => !current)}
+        >
+          <EyeIcon hidden={visible} />
+        </button>
+        <div className="invalid-feedback">
+          A senha deve possuir pelo menos 6 caracteres.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [validated, setValidated] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+
+  useEffect(() => {
+    const mensagem = sessionStorage.getItem("authFeedback");
+
+    if (mensagem) {
+      setFeedback({ tipo: "success", mensagem });
+      sessionStorage.removeItem("authFeedback");
+    }
+  }, []);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    setValidated(true);
+    setFeedback(null);
+
+    if (!form.checkValidity()) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    const formData = new FormData(form);
+    const payload = {
+      email: formData.get("email").trim().toLowerCase(),
+      senha: formData.get("senha"),
+    };
 
     try {
-      const resposta = await fetch(
-        "http://localhost:3001/api/auth/login",
-        {
-          method: "POST",
+      setLoading(true);
 
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-          body: JSON.stringify({
-            email: form.email.trim(),
-            senha: form.senha,
-          }),
-        }
+      const resultado = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          resultado?.mensagem || resultado?.erro || "Não foi possível fazer login."
+        );
+      }
+
+      const token = resultado?.dados?.token;
+      const usuario = resultado?.dados?.usuario;
+
+      if (!token || !usuario) {
+        throw new Error("A resposta do servidor não contém os dados do login.");
+      }
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("usuario", JSON.stringify(usuario));
+
+      router.replace(
+        usuario.tipo === "admin" ? "/admin/dashboard" : "/"
       );
-
-      const dados = await resposta.json();
-
-      if (!resposta.ok) {
-        setErro(
-          dados.mensagem ||
-            dados.erro ||
-            "Email ou senha incorretos."
-        );
-
-        return;
-      }
-
-      if (!dados?.dados?.token) {
-        setErro(
-          "Login realizado, mas o servidor não retornou o token."
-        );
-
-        return;
-      }
-
-      // SALVAR TOKEN
-      localStorage.setItem(
-        "token",
-        dados.dados.token
-      );
-
-      // SALVAR USUÁRIO
-      if (dados?.dados?.usuario) {
-        localStorage.setItem(
-          "usuario",
-          JSON.stringify(dados.dados.usuario)
-        );
-      }
-
-      window.dispatchEvent(new Event("auth-changed"));
-
-      // LOGIN CONCLUÍDO
-      router.push("/");
-
+      router.refresh();
     } catch (error) {
-      console.error("Erro ao realizar login:", error);
-
-      setErro(
-        "Não foi possível conectar ao servidor. Verifique se o backend está funcionando."
-      );
-
+      setFeedback({
+        tipo: "danger",
+        mensagem:
+          error instanceof TypeError
+            ? "Não foi possível conectar ao servidor. Verifique se a API está funcionando."
+            : error.message || "Não foi possível fazer login. Tente novamente.",
+      });
     } finally {
-      setCarregando(false);
+      setLoading(false);
     }
   }
 
   return (
-    <main
-      className="d-flex justify-content-center align-items-center py-5"
-      style={{
-        background: "#f5f3ef",
-        minHeight: "100vh",
-      }}
-    >
-      <div
-        className="card border-0 shadow-lg"
-        style={{
-          width: "100%",
-          maxWidth: "750px",
-          borderRadius: "22px",
-          overflow: "hidden",
-        }}
-      >
-
-        {/* TOPO */}
-
-        <div
-          className="text-center text-white p-5"
-          style={{
-            background:
-              "linear-gradient(135deg, #012458, #023f79, #1f6197, #028da5)",
-          }}
+    <main className={styles.authPage}>
+      <div className="container px-3 px-sm-4">
+        <section
+          className={`${styles.authCard} ${styles.loginCard}`}
+          aria-labelledby="login-title"
         >
-          <h1 className="fw-bold mb-2">
-            Everett
-          </h1>
+          <header className="text-center mb-4 mb-md-5">
+            <AuthBrand />
+            <h1 id="login-title" className={`${styles.heading} mt-4 mt-md-5`}>
+              Bem-vindo de volta
+            </h1>
+            <p className={styles.supportingText}>
+              Faça login para acessar suas compras, pedidos e ofertas exclusivas.
+            </p>
+          </header>
 
-          <p className="mb-0">
-            Faça seu login
-          </p>
-        </div>
+          {feedback && (
+            <div
+              className={`alert alert-${feedback.tipo}`}
+              role="alert"
+              aria-live="polite"
+            >
+              {feedback.mensagem}
+            </div>
+          )}
 
-        {/* FORMULÁRIO */}
-
-        <div className="card-body p-5">
-
-          <form onSubmit={realizarLogin}>
-
-            {/* ERRO */}
-
-            {erro && (
-              <div
-                className="alert alert-danger"
-                role="alert"
-              >
-                {erro}
-              </div>
-            )}
-
-            <div className="row">
-
-              {/* EMAIL */}
-
-              <div className="col-12 mb-3">
-
-                <label
-                  htmlFor="email"
-                  className="form-label fw-semibold"
-                >
-                  Email
-                </label>
-
-                <input
-                  id="email"
-                  type="email"
-                  className="form-control"
-                  name="email"
-                  placeholder="Digite seu email"
-                  value={form.email}
-                  onChange={alterarCampo}
-                  disabled={carregando}
-                  required
-                />
-
-              </div>
-
-              {/* SENHA */}
-
-              <div className="col-12 mb-4">
-
-                <label
-                  htmlFor="senha"
-                  className="form-label fw-semibold"
-                >
-                  Senha
-                </label>
-
-                <input
-                  id="senha"
-                  type="password"
-                  className="form-control"
-                  name="senha"
-                  placeholder="Digite sua senha"
-                  value={form.senha}
-                  onChange={alterarCampo}
-                  disabled={carregando}
-                  required
-                />
-
-              </div>
-
+          <form
+            className={validated ? "was-validated" : ""}
+            noValidate
+            onSubmit={handleSubmit}
+            aria-busy={loading}
+          >
+            <div className="mb-3">
+              <label htmlFor="login-email" className={styles.formLabel}>
+                E-mail
+              </label>
+              <input
+                id="login-email"
+                name="email"
+                type="email"
+                className={`form-control ${styles.formControl}`}
+                placeholder="seu@email.com"
+                autoComplete="email"
+                inputMode="email"
+                required
+              />
+              <div className="invalid-feedback">Digite um e-mail válido.</div>
             </div>
 
-            {/* BOTÃO */}
+            <PasswordField
+              id="login-senha"
+              name="senha"
+              label="Senha"
+              autoComplete="current-password"
+            />
+
+            <div className="text-end mt-3">
+              <Link href="/recuperar-senha" className={styles.textLink}>
+                Esqueci minha senha
+              </Link>
+            </div>
 
             <button
               type="submit"
-              className="btn w-100 text-white fw-bold py-3"
-              disabled={carregando}
-              style={{
-                background:
-                  "linear-gradient(90deg, #00758a, #3fbcc7)",
-                border: "none",
-                borderRadius: "10px",
-                opacity: carregando ? 0.7 : 1,
-              }}
+              className={`btn w-100 mt-4 ${styles.primaryButton}`}
+              disabled={loading}
             >
-
-              {carregando ? (
-                <>
-                  <span
-                    className="spinner-border spinner-border-sm me-2"
-                    role="status"
-                    aria-hidden="true"
-                  />
-
-                  Entrando...
-                </>
-              ) : (
-                "Entrar"
+              {loading && (
+                <span
+                  className="spinner-border spinner-border-sm me-2"
+                  aria-hidden="true"
+                />
               )}
-
+              {loading ? "Entrando..." : "Entrar"}
             </button>
-
           </form>
 
-          <hr className="my-4" />
-
-          {/* CADASTRO */}
-
-          <div className="text-center">
-
-            <span className="text-secondary">
-              Ainda não possui uma conta?
-            </span>
-
-            <Link
-              href="/cadastro"
-              className="ms-2 fw-bold"
-              style={{
-                color: "#1c3166",
-                textDecoration: "none",
-              }}
-            >
-              Criar conta
+          <p className={`${styles.footerText} text-center mb-0 mt-4`}>
+            Ainda não tem uma conta?{" "}
+            <Link href="/cadastro" className={styles.textLink}>
+              Cadastre-se
             </Link>
-
-          </div>
-
-        </div>
+          </p>
+        </section>
       </div>
     </main>
   );

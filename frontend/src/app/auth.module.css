@@ -169,37 +169,6 @@
   font-weight: 700;
 }
 
-.secondaryButton {
-  min-height: 3.5rem;
-  color: var(--everett-ink);
-  background: var(--everett-surface);
-  border-color: #b9c0c8;
-  border-radius: 0.75rem;
-  font-weight: 600;
-}
-
-.secondaryButton:hover {
-  color: var(--everett-ink);
-  background: #f4f5f6;
-  border-color: #8f98a3;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  color: var(--everett-muted);
-  font-size: 0.875rem;
-}
-
-.divider::before,
-.divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--everett-border);
-}
-
 .formCheckInput {
   width: 1.2rem;
   height: 1.2rem;
