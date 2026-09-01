@@ -1,42 +1,46 @@
-
-
+/* ==========================================================================
+   1. VARIÁVEIS DE TEMA (CLARO / ESCURO)
+   ========================================================================== */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0f172a;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --input-bg: #f8fafc;
+  --border-color: #e2e8f0;
+  --accent-color: #0284c7;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html.dark,
+html[data-bs-theme="dark"] {
+  color-scheme: dark;
+  --background: #0b1120;
+  --foreground: #f8fafc;
+  --card-bg: #1e293b;
+  --card-border: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --input-bg: #0f172a;
+  --border-color: #334155;
+  --accent-color: #38bdf8;
 }
 
-html {
-  height: 100%;
-}
-
-html,
-body {
+/* ==========================================================================
+   2. ESTILOS BASE
+   ========================================================================== */
+html, body {
   max-width: 100vw;
+  min-height: 100vh;
   overflow-x: hidden;
 }
 
 body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
   color: var(--foreground);
-  background: var(--background);
+  background-color: var(--background);
   font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 a {
@@ -44,8 +48,310 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+/* ==========================================================================
+   3. HEADER - CENTRALIZAÇÃO E ESPAÇAMENTO DOS CONTEÚDOS
+   ========================================================================== */
+header,
+.header,
+.navbar {
+  width: 100%;
+  padding: 0.75rem 2rem;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1.25rem !important;
+  box-sizing: border-box;
+}
+
+.header-logo,
+header img,
+.navbar-brand {
+  flex-shrink: 0 !important;
+}
+
+.header-nav,
+.nav-links,
+header nav {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 1 !important;
+  gap: 1.25rem !important;
+  margin: 0 !important;
+  white-space: nowrap;
+}
+
+.nav-item-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-item-container > a,
+.nav-item-container > button,
+.header-nav a,
+.nav-links a {
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.2rem;
+  color: var(--foreground);
+  transition: color 0.15s ease;
+}
+
+.nav-item-container > a:hover,
+.nav-item-container > button:hover {
+  color: var(--accent-color);
+}
+
+.header-search,
+.search-container,
+header form,
+header [class*="search"] {
+  flex-shrink: 0 !important;
+  width: 240px;
+}
+
+.header-actions,
+.header-icons,
+header [class*="actions"],
+header [class*="icons"] {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  flex-shrink: 0 !important;
+}
+
+/* ==========================================================================
+   4. DROPDOWN DO HEADER (MODO CLARO)
+   ========================================================================== */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.5rem;
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  border-radius: 12px;
+  box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.15);
+  padding: 1rem;
+  width: 240px;
+  z-index: 1000;
+  animation: dropdownFade 0.15s ease-out;
+}
+
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
+
+.dropdown-header-title {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.dropdown-category-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--card-border);
+  margin-bottom: 0.5rem;
+}
+
+.dropdown-category-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.dropdown-count {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.dropdown-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dropdown-menu li {
+  margin-bottom: 0.25rem;
+}
+
+.dropdown-menu li a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--foreground) !important;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.dropdown-menu li a:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dropdown-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--card-border);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-color) !important;
+}
+
+/* ==========================================================================
+   5. DROPDOWN NO MODO ESCURO (CORREÇÃO TOTAL DE VISIBILIDADE)
+   ========================================================================== */
+html.dark .dropdown-menu,
+html.dark [class*="dropdown"],
+html.dark .nav-item-container > div,
+html[data-bs-theme="dark"] .dropdown-menu,
+html[data-bs-theme="dark"] [class*="dropdown"],
+html[data-bs-theme="dark"] .nav-item-container > div {
+  background-color: #1e293b !important;
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+html.dark .dropdown-menu *,
+html.dark [class*="dropdown"] *,
+html.dark .nav-item-container > div *,
+html[data-bs-theme="dark"] .dropdown-menu *,
+html[data-bs-theme="dark"] [class*="dropdown"] *,
+html[data-bs-theme="dark"] .nav-item-container > div * {
+  color: #f8fafc !important;
+  background-color: transparent !important;
+}
+
+html.dark .dropdown-header-title,
+html.dark .dropdown-count,
+html.dark [class*="count"],
+html.dark [class*="title"],
+html[data-bs-theme="dark"] .dropdown-header-title,
+html[data-bs-theme="dark"] .dropdown-count,
+html[data-bs-theme="dark"] [class*="count"] {
+  color: #94a3b8 !important;
+}
+
+html.dark .dropdown-menu a:hover,
+html.dark .dropdown-menu li:hover,
+html[data-bs-theme="dark"] .dropdown-menu a:hover,
+html[data-bs-theme="dark"] .dropdown-menu li:hover {
+  background-color: #334155 !important;
+  color: #ffffff !important;
+}
+
+html.dark .dropdown-category-row,
+html.dark .dropdown-menu hr,
+html.dark .dropdown-footer-link,
+html[data-bs-theme="dark"] .dropdown-category-row,
+html[data-bs-theme="dark"] .dropdown-footer-link {
+  border-color: #334155 !important;
+}
+
+html.dark .dropdown-footer-link,
+html.dark .dropdown-menu a[href*="categoria"],
+html[data-bs-theme="dark"] .dropdown-footer-link {
+  color: #38bdf8 !important;
+}
+
+/* ==========================================================================
+   6. MODO ESCURO GERAL DA APLICAÇÃO
+   ========================================================================== */
+html.dark main,
+html.dark section,
+html.dark article,
+html.dark header,
+html.dark nav {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+}
+
+html.dark .bg-white,
+html.dark .bg-light,
+html.dark .bg-body {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+}
+
+html.dark h1, html.dark h2, html.dark h3, 
+html.dark h4, html.dark h5, html.dark h6, 
+html.dark p, html.dark span, html.dark label, 
+html.dark li, html.dark strong, html.dark b,
+html.dark a, html.dark small, html.dark div,
+html.dark .text-dark, html.dark .text-black, html.dark .text-body {
+  color: var(--foreground) !important;
+}
+
+html.dark .text-muted,
+html.dark .text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+html.dark .card,
+html.dark [class*="product-card"],
+html.dark [class*="product-item"] {
+  background-color: var(--card-bg) !important;
+  color: var(--foreground) !important;
+  border-color: var(--card-border) !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea,
+html.dark .form-control {
+  background-color: var(--input-bg) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* ==========================================================================
+   7. CARROSSEL & FOOTER
+   ========================================================================== */
+.carousel-inner, .carousel-item, .swiper-wrapper, .swiper-slide {
+  background-color: transparent !important;
+}
+
+.carousel-control-prev, .carousel-control-next, .swiper-button-prev, .swiper-button-next {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html.dark .footer, html[data-bs-theme="dark"] .footer {
+  background: linear-gradient(180deg, #0f172a 0%, #030712 100%) !important;
+  color: #f8fafc !important;
+}
+
+html.dark .brand-text-top, html[data-bs-theme="dark"] .brand-text-top { color: #cbd5e1 !important; }
+html.dark .brand-name, html[data-bs-theme="dark"] .brand-name { color: #ffffff !important; }
+html.dark .brand-description, html[data-bs-theme="dark"] .brand-description { color: #94a3b8 !important; }
+html.dark .social-link, html[data-bs-theme="dark"] .social-link { color: #f8fafc !important; }
+html.dark .social-link:hover, html[data-bs-theme="dark"] .social-link:hover { color: #38bdf8 !important; }
+html.dark .footer hr, html[data-bs-theme="dark"] .footer hr { border-color: rgba(255, 255, 255, 0.15) !important; }
+html.dark .column-header, html[data-bs-theme="dark"] .column-header { color: #ffffff !important; }
+html.dark .footer-link, html[data-bs-theme="dark"] .footer-link { color: #cbd5e1 !important; }
+html.dark .footer-link:hover, html[data-bs-theme="dark"] .footer-link:hover { color: #ffffff !important; }
+html.dark .contact-info, html.dark .mission-text, html[data-bs-theme="dark"] .contact-info, html[data-bs-theme="dark"] .mission-text { color: #cbd5e1 !important; }
+html.dark .copyright-text, html[data-bs-theme="dark"] .copyright-text { color: #64748b !important; }

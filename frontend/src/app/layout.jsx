@@ -4,9 +4,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import "bootstrap-icons/font/bootstrap-icons.css";
 import LayoutWrapper from "@/components/LayoutWrapper";
 
-
-
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -24,13 +21,12 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      
+    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
-      <LayoutWrapper>
-      {children}
+        <LayoutWrapper>
+          {children}
         </LayoutWrapper>
-        </body>
+      </body>
     </html>
   );
 }

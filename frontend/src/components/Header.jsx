@@ -10,10 +10,34 @@ const API_ORIGIN = (
 )
   .replace(/\/api\/?$/, "")
   .replace(/\/$/, "");
+
 const TOKEN_KEY = "token";
 const USER_KEY = "usuario";
 
+// TODO: substituir pelos dados vindos da API de carrinho (ex: GET /api/carrinho)
+// As imagens abaixo são placeholders — troque pelos caminhos reais dos produtos.
+const CARRINHO_MOCK = [
+  {
+    id: 1,
+    nome: "Camiseta Oversized Essential",
+    variacao: "Tamanho M · Preto",
+    preco: 129.9,
+    quantidade: 1,
+    imagem: "/produtos/mock-camiseta.jpg",
+  },
+  {
+    id: 2,
+    nome: "Moletom Canguru Everett",
+    variacao: "Tamanho G · Cinza Mescla",
+    preco: 219.9,
+    quantidade: 2,
+    imagem: "/produtos/mock-moletom.jpg",
+  },
+];
+
 function lerUsuarioSalvo() {
+  if (typeof window === "undefined") return { token: null, usuario: null };
+
   const token = localStorage.getItem(TOKEN_KEY);
   const usuarioSalvo = localStorage.getItem(USER_KEY);
 
@@ -29,6 +53,10 @@ function lerUsuarioSalvo() {
   }
 }
 
+function formatarPreco(valor) {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 export default function Header() {
   const [categorias, setCategorias] = useState([]);
   const [categoriaAtiva, setCategoriaAtiva] = useState(null);
@@ -36,7 +64,52 @@ export default function Header() {
   const [erro, setErro] = useState("");
   const [usuario, setUsuario] = useState(null);
   const [perfilAberto, setPerfilAberto] = useState(false);
+  const [modoEscuro, setModoEscuro] = useState(false);
+  const [itensCarrinho, setItensCarrinho] = useState(CARRINHO_MOCK);
+  const [carrinhoAberto, setCarrinhoAberto] = useState(false);
   const perfilRef = useRef(null);
+  const carrinhoRef = useRef(null);
+
+  const totalItensCarrinho = itensCarrinho.reduce(
+    (total, item) => total + item.quantidade,
+    0,
+  );
+  const subtotalCarrinho = itensCarrinho.reduce(
+    (total, item) => total + item.preco * item.quantidade,
+    0,
+  );
+
+  // Aplica as classes e o atributo de tema do Bootstrap no elemento <html>
+  function aplicarTema(isDark) {
+    if (typeof document === "undefined") return;
+
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.setAttribute("data-bs-theme", "dark");
+      localStorage.setItem("tema", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      document.documentElement.setAttribute("data-bs-theme", "light");
+      localStorage.setItem("tema", "light");
+    }
+  }
+
+  // Carrega a preferência de tema ao montar o componente
+  useEffect(() => {
+    const temaSalvo = localStorage.getItem("tema");
+    const prefereEscuro = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const deveSerEscuro = temaSalvo === "dark" || (!temaSalvo && prefereEscuro);
+
+    setModoEscuro(deveSerEscuro);
+    aplicarTema(deveSerEscuro);
+  }, []);
+
+  // Alterna o modo claro / escuro ao clicar no botão
+  function alternarTema() {
+    const novoModo = !modoEscuro;
+    setModoEscuro(novoModo);
+    aplicarTema(novoModo);
+  }
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -139,6 +212,9 @@ export default function Header() {
       if (perfilRef.current && !perfilRef.current.contains(event.target)) {
         setPerfilAberto(false);
       }
+      if (carrinhoRef.current && !carrinhoRef.current.contains(event.target)) {
+        setCarrinhoAberto(false);
+      }
     }
 
     document.addEventListener("pointerdown", fecharAoClicarFora);
@@ -151,6 +227,22 @@ export default function Header() {
     }
   }
 
+  function alterarQuantidade(idItem, delta) {
+    setItensCarrinho((itensAtuais) =>
+      itensAtuais.map((item) =>
+        item.id === idItem
+          ? { ...item, quantidade: Math.max(1, item.quantidade + delta) }
+          : item,
+      ),
+    );
+  }
+
+  function removerItemCarrinho(idItem) {
+    setItensCarrinho((itensAtuais) =>
+      itensAtuais.filter((item) => item.id !== idItem),
+    );
+  }
+
   return (
     <header
       className="header-container"
@@ -159,6 +251,7 @@ export default function Header() {
         if (event.key === "Escape") {
           setCategoriaAtiva(null);
           setPerfilAberto(false);
+          setCarrinhoAberto(false);
         }
       }}
     >
@@ -298,13 +391,142 @@ export default function Header() {
         </form>
 
         <div className="header-actions" aria-label="Ações do usuário">
+          {/* Botão de Alternância de Modo Escuro / Claro */}
+          <button
+            type="button"
+            className="header-action-button"
+            aria-label={modoEscuro ? "Ativar modo claro" : "Ativar modo escuro"}
+            onClick={alternarTema}
+            title={modoEscuro ? "Modo Claro" : "Modo Escuro"}
+          >
+            <i className={`bi ${modoEscuro ? "bi-sun-fill" : "bi-moon-fill"}`} aria-hidden="true" />
+          </button>
+
           <button type="button" className="header-action-button" aria-label="Notificações">
             <i className="bi bi-bell" aria-hidden="true" />
           </button>
 
-          <button type="button" className="header-action-button" aria-label="Carrinho">
-            <i className="bi bi-cart3" aria-hidden="true" />
-          </button>
+          <div className="cart-menu" ref={carrinhoRef}>
+            <button
+              type="button"
+              className={`header-action-button ${carrinhoAberto ? "active" : ""}`}
+              aria-label="Abrir carrinho de compras"
+              aria-expanded={carrinhoAberto}
+              aria-haspopup="dialog"
+              onClick={() => setCarrinhoAberto((aberto) => !aberto)}
+            >
+              <i className="bi bi-cart3" aria-hidden="true" />
+              {totalItensCarrinho > 0 ? (
+                <span className="cart-badge">
+                  {totalItensCarrinho > 9 ? "9+" : totalItensCarrinho}
+                </span>
+              ) : null}
+            </button>
+
+            {carrinhoAberto ? (
+              <div className="cart-dropdown" role="dialog" aria-label="Carrinho de compras">
+                <div className="cart-dropdown-header">
+                  <strong>Meu Carrinho</strong>
+                  <span className="cart-items-count">
+                    {totalItensCarrinho} {totalItensCarrinho === 1 ? "item" : "itens"}
+                  </span>
+                </div>
+
+                {itensCarrinho.length === 0 ? (
+                  <div className="cart-empty">
+                    <span className="cart-empty-icon" aria-hidden="true">
+                      <i className="bi bi-cart-x" />
+                    </span>
+                    <strong>Seu carrinho está vazio</strong>
+                    <p>Adicione produtos para vê-los por aqui.</p>
+                    <Link
+                      href="/produtos"
+                      className="cart-empty-link"
+                      onClick={() => setCarrinhoAberto(false)}
+                    >
+                      Ver produtos
+                    </Link>
+                  </div>
+                ) : (
+                  <>
+                    <ul className="cart-items-list">
+                      {itensCarrinho.map((item) => (
+                        <li key={item.id} className="cart-item">
+                          <div className="cart-item-image">
+                            <Image
+                              src={item.imagem}
+                              alt={item.nome}
+                              width={56}
+                              height={56}
+                            />
+                          </div>
+
+                          <div className="cart-item-info">
+                            <span className="cart-item-name">{item.nome}</span>
+                            {item.variacao ? (
+                              <span className="cart-item-variant">{item.variacao}</span>
+                            ) : null}
+                            <span className="cart-item-price">
+                              {formatarPreco(item.preco)}
+                            </span>
+                          </div>
+
+                          <div className="cart-item-actions">
+                            <div className="cart-quantity-stepper">
+                              <button
+                                type="button"
+                                aria-label={`Diminuir quantidade de ${item.nome}`}
+                                onClick={() => alterarQuantidade(item.id, -1)}
+                              >
+                                <i className="bi bi-dash" aria-hidden="true" />
+                              </button>
+                              <span>{item.quantidade}</span>
+                              <button
+                                type="button"
+                                aria-label={`Aumentar quantidade de ${item.nome}`}
+                                onClick={() => alterarQuantidade(item.id, 1)}
+                              >
+                                <i className="bi bi-plus" aria-hidden="true" />
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              className="cart-item-remove"
+                              aria-label={`Remover ${item.nome} do carrinho`}
+                              onClick={() => removerItemCarrinho(item.id)}
+                            >
+                              <i className="bi bi-trash3" aria-hidden="true" />
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="cart-dropdown-footer">
+                      <div className="cart-subtotal-row">
+                        <span>Subtotal</span>
+                        <strong>{formatarPreco(subtotalCarrinho)}</strong>
+                      </div>
+                      <Link
+                        href="/checkout"
+                        className="cart-checkout-button"
+                        onClick={() => setCarrinhoAberto(false)}
+                      >
+                        Finalizar Compra
+                      </Link>
+                      <Link
+                        href="/carrinho"
+                        className="cart-view-all-link"
+                        onClick={() => setCarrinhoAberto(false)}
+                      >
+                        Ver carrinho completo
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : null}
+          </div>
 
           <div className="profile-menu" ref={perfilRef}>
             <button

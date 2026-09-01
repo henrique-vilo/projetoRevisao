@@ -81,7 +81,6 @@ export default function Footer() {
             <ul className="list-unstyled">
               <li><a href="/produtos?categoria=acessorios" className="footer-link">Acessórios</a></li>
               <li><a href="/produtos?categoria=moda-esportiva" className="footer-link">Moda Esportiva</a></li>
-              <li><a href="/produtos?categoria=moda-praia" className="footer-link">Moda Praia</a></li>
               <li><a href="/produtos?categoria=inverno" className="footer-link">Inverno</a></li>
             </ul>
           </div>

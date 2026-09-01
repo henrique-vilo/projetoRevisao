@@ -1,3 +1,6 @@
+/* ==========================================================================
+   ESTILOS DO FOOTER (MODO CLARO)
+   ========================================================================== */
 .footer {
   background: linear-gradient(
     180deg,
@@ -25,7 +28,6 @@
   font-size: 1rem;
 }
 
-/* Reduz a área clicável dos ícones sociais estritamente ao tamanho do ícone */
 .social-link {
   color: #111;
   font-size: 1.5rem;
@@ -51,7 +53,6 @@
   margin: 0 auto;
 }
 
-/* Garante o espaçamento entre as linhas da lista de links */
 .footer-columns ul li {
   margin-bottom: 6px;
 }
@@ -63,7 +64,6 @@
   color: #000;
 }
 
-/* Hitbox ajustada: 'inline-block' limita a área de clique ao tamanho do texto */
 .footer-link {
   color: #333;
   text-decoration: none;
@@ -86,4 +86,74 @@
 .copyright-text {
   font-size: 0.9rem;
   color: #666;
+}
+
+/* ==========================================================================
+   ADAPTAÇÃO DO FOOTER PARA O MODO ESCURO
+   ========================================================================== */
+html.dark .footer,
+html[data-bs-theme="dark"] .footer {
+  background: linear-gradient(
+    180deg,
+    #0f172a 0%,
+    #030712 100%
+  ) !important;
+  color: #f8fafc !important;
+}
+
+html.dark .brand-text-top,
+html[data-bs-theme="dark"] .brand-text-top {
+  color: #cbd5e1 !important;
+}
+
+html.dark .brand-name,
+html[data-bs-theme="dark"] .brand-name {
+  color: #ffffff !important;
+}
+
+html.dark .brand-description,
+html[data-bs-theme="dark"] .brand-description {
+  color: #94a3b8 !important;
+}
+
+html.dark .social-link,
+html[data-bs-theme="dark"] .social-link {
+  color: #f8fafc !important;
+}
+
+html.dark .social-link:hover,
+html[data-bs-theme="dark"] .social-link:hover {
+  color: #38bdf8 !important;
+}
+
+html.dark .footer hr,
+html[data-bs-theme="dark"] .footer hr {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+html.dark .column-header,
+html[data-bs-theme="dark"] .column-header {
+  color: #ffffff !important;
+}
+
+html.dark .footer-link,
+html[data-bs-theme="dark"] .footer-link {
+  color: #cbd5e1 !important;
+}
+
+html.dark .footer-link:hover,
+html[data-bs-theme="dark"] .footer-link:hover {
+  color: #ffffff !important;
+}
+
+html.dark .contact-info,
+html.dark .mission-text,
+html[data-bs-theme="dark"] .contact-info,
+html[data-bs-theme="dark"] .mission-text {
+  color: #cbd5e1 !important;
+}
+
+html.dark .copyright-text,
+html[data-bs-theme="dark"] .copyright-text {
+  color: #64748b !important;
 }
