@@ -294,6 +294,32 @@ body {
   object-fit: cover;
 }
 
+.desired-product-image-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: #00a9d4;
+  background: #eef8fa;
+  font-size: 2rem;
+}
+
+.desired-products-feedback {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #77747c;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.desired-products-feedback i,
+.desired-products-feedback .spinner-border {
+  color: #00a9d4;
+}
+
 .product-tag-pill {
   position: absolute;
   top: 12px;

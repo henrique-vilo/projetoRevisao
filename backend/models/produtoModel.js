@@ -146,6 +146,7 @@ class ProdutoModel {
             const whereClause = conditions.join(' AND ');
             const ordenacoes = {
                 recente: 'p.idProduto DESC',
+                mais_vendidos: 'p.quantidadeVendas DESC, p.idProduto DESC',
                 preco_asc: 'p.preco ASC',
                 preco_desc: 'p.preco DESC',
                 nome_asc: 'p.nome ASC',

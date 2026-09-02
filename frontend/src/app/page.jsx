@@ -12,6 +12,89 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 
 import "./page.css";
 
+const API_ORIGIN = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
+)
+  .replace(/\/api\/?$/, "")
+  .replace(/\/$/, "");
+
+function formatarPreco(valor) {
+  return Number(valor || 0).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
+const MARCOS_DE_VENDAS = [
+  1_000_000,
+  500_000,
+  200_000,
+  100_000,
+  50_000,
+  20_000,
+  10_000,
+  5_000,
+  2_000,
+  1_000,
+  500,
+  200,
+  100,
+  50,
+  10,
+];
+
+function formatarQuantidadeVendas(valor) {
+  const quantidade = Math.max(0, Math.floor(Number(valor) || 0));
+
+  if (quantidade === 1) return "1 venda";
+  if (quantidade < 10) return `${quantidade} vendas`;
+
+  const marco = MARCOS_DE_VENDAS.find((limite) => quantidade >= limite) || 10;
+  const marcoFormatado = marco >= 1_000_000
+    ? `${marco / 1_000_000} mi`
+    : marco >= 1_000
+      ? `${marco / 1_000} mil`
+      : String(marco);
+
+  return `${marcoFormatado}+ vendas`;
+}
+
+function resolverImagemProduto(caminho) {
+  if (!caminho) return null;
+  if (/^https?:\/\//i.test(caminho)) return caminho;
+  if (caminho.startsWith("/") && !caminho.startsWith("/uploads/")) {
+    return caminho;
+  }
+
+  const caminhoLimpo = caminho.replace(/^\//, "");
+  return `${API_ORIGIN}/${
+    caminhoLimpo.startsWith("uploads/")
+      ? caminhoLimpo
+      : `uploads/${caminhoLimpo}`
+  }`;
+}
+
+function ImagemProdutoDesejado({ produto }) {
+  const [imagemComErro, setImagemComErro] = useState(false);
+  const imagem = resolverImagemProduto(produto.imagem1);
+
+  if (!imagem || imagemComErro) {
+    return (
+      <div className="desired-product-image-fallback" aria-label="Produto sem imagem">
+        <i className="bi bi-image" aria-hidden="true" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={imagem}
+      alt={produto.nome}
+      onError={() => setImagemComErro(true)}
+    />
+  );
+}
+
 export default function Home() {
 
   const router = useRouter();
@@ -19,6 +102,12 @@ export default function Home() {
   const [verificandoPerfil, setVerificandoPerfil] = useState(true);
 
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const [maisDesejados, setMaisDesejados] = useState([]);
+
+  const [carregandoMaisDesejados, setCarregandoMaisDesejados] = useState(true);
+
+  const [erroMaisDesejados, setErroMaisDesejados] = useState("");
 
   useEffect(() => {
 
@@ -73,6 +162,52 @@ export default function Home() {
     window.addEventListener("scroll", handleScroll);
 
     return () => window.removeEventListener("scroll", handleScroll);
+
+  }, []);
+
+  useEffect(() => {
+
+    const controller = new AbortController();
+
+    async function carregarMaisDesejados() {
+
+      try {
+
+        const response = await fetch(
+          `${API_ORIGIN}/api/produtos?ordenarPor=mais_vendidos&limite=4`,
+          { signal: controller.signal, cache: "no-store" },
+        );
+
+        const resultado = await response.json().catch(() => ({}));
+
+        if (!response.ok || !resultado.sucesso || !Array.isArray(resultado.dados)) {
+          throw new Error(resultado.erro || "Não foi possível carregar os produtos.");
+        }
+
+        setMaisDesejados(
+          resultado.dados.filter((produto) => Number(produto.quantidadeVendas) > 0),
+        );
+        setErroMaisDesejados("");
+
+      } catch (error) {
+
+        if (error.name !== "AbortError") {
+          setErroMaisDesejados(error.message || "Não foi possível carregar os produtos.");
+        }
+
+      } finally {
+
+        if (!controller.signal.aborted) {
+          setCarregandoMaisDesejados(false);
+        }
+
+      }
+
+    }
+
+    carregarMaisDesejados();
+
+    return () => controller.abort();
 
   }, []);
 
@@ -159,74 +294,6 @@ export default function Home() {
       imagem: "/cargo.png",
 
       tag: "Destaque",
-
-    },
-
-  ];
-
-  const maisDesejados = [
-
-    {
-
-      id: 5,
-
-      nome: "Jaqueta Puffer Thermal Everett",
-
-      precoOriginal: "R$ 399,90",
-
-      precoAtual: "R$ 319,90",
-
-      imagem: "/jaquetass.jpg",
-
-      badge: "Inverno",
-
-    },
-
-    {
-
-      id: 6,
-
-      nome: "Kit Acessórios Urban Style",
-
-      precoOriginal: null,
-
-      precoAtual: "R$ 89,90",
-
-      imagem: "/acessorios.jpg",
-
-      badge: "Essencial",
-
-    },
-
-    {
-
-      id: 7,
-
-      nome: "Calça Straight Fit Alfaiataria",
-
-      precoOriginal: "R$ 229,90",
-
-      precoAtual: "R$ 179,90",
-
-      imagem: "/calças.jpg",
-
-      badge: "Tendência",
-
-    },
-
-    {
-
-      id: 8,
-
-      nome: "Camiseta Classic Cotton Soft",
-
-      precoOriginal: null,
-
-      precoAtual: "R$ 99,90",
-
-      imagem: "/camisetapremium.jpg",
-
-      badge: null,
 
     },
 
@@ -618,19 +685,51 @@ export default function Home() {
 
           <div className="row g-4">
 
-            {maisDesejados.map((prod) => (
+            {carregandoMaisDesejados ? (
 
-              <div className="col-12 col-sm-6 col-md-3" key={prod.id}>
+              <div className="desired-products-feedback col-12" role="status">
 
-                <Link href={`/produto/${prod.id}`} className="text-decoration-none text-dark d-block h-100">
+                <span className="spinner-border spinner-border-sm" aria-hidden="true" />
+
+                Carregando os produtos mais vendidos...
+
+              </div>
+
+            ) : erroMaisDesejados ? (
+
+              <div className="desired-products-feedback col-12" role="alert">
+
+                <i className="bi bi-exclamation-circle" aria-hidden="true" />
+
+                {erroMaisDesejados}
+
+              </div>
+
+            ) : maisDesejados.length === 0 ? (
+
+              <div className="desired-products-feedback col-12">
+
+                As primeiras compras aparecerão aqui.
+
+              </div>
+
+            ) : maisDesejados.map((prod) => (
+
+              <div className="col-12 col-sm-6 col-md-3" key={prod.idProduto}>
+
+                <Link href={`/produtos/${prod.idProduto}`} className="text-decoration-none text-dark d-block h-100">
 
                   <div className="product-card-clean h-100">
 
                     <div className="product-image-box">
 
-                      {prod.badge && <span className="product-tag-pill badge-dark">{prod.badge}</span>}
+                      <span className="product-tag-pill badge-dark">
 
-                      <img src={prod.imagem} alt={prod.nome} />
+                        {formatarQuantidadeVendas(prod.quantidadeVendas)}
+
+                      </span>
+
+                      <ImagemProdutoDesejado produto={prod} />
 
                     </div>
 
@@ -640,25 +739,7 @@ export default function Home() {
 
                       <div className="product-price-row">
 
-                        {prod.precoOriginal ? (
-
-                          <>
-
-                            <span className="price-current text-discount">
-
-                              {prod.precoAtual}
-
-                            </span>
-
-                            <span className="price-old">{prod.precoOriginal}</span>
-
-                          </>
-
-                        ) : (
-
-                          <span className="price-current">{prod.precoAtual}</span>
-
-                        )}
+                        <span className="price-current">{formatarPreco(prod.preco)}</span>
 
                       </div>
 

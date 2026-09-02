@@ -1,4 +1,4 @@
-import { create, read, update, deleteRecord, getConnection } from '../config/database.js';
+import { create, update, deleteRecord, getConnection } from '../config/database.js';
 
 class VendaModel {
     // Listar todas as vendas (com paginação)
@@ -28,33 +28,300 @@ class VendaModel {
 
     // Buscar venda por ID
     static async buscarPorId(id) {
+        const connection = await getConnection();
         try {
-            const rows = await read('vendas', `idVendas = ${id}`);
+            const [rows] = await connection.execute(
+                'SELECT * FROM vendas WHERE idVendas = ?',
+                [id]
+            );
             return rows[0] || null;
-        } catch (error) {
-            console.error('Erro ao buscar venda por ID:', error);
-            throw error;
+        } finally {
+            connection.release();
         }
     }
 
     // Buscar vendas por ID do usuário
     static async buscarPorUsuario(idUsuario) {
+        const connection = await getConnection();
         try {
-            return await read('vendas', `idUsuario = ${idUsuario}`);
-        } catch (error) {
-            console.error('Erro ao buscar vendas por usuário:', error);
-            throw error;
+            const [rows] = await connection.execute(
+                'SELECT * FROM vendas WHERE idUsuario = ?',
+                [idUsuario]
+            );
+            return rows;
+        } finally {
+            connection.release();
         }
     }
 
     // Busca rápida de usuário para cálculo de CEP
     static async buscarUsuarioVenda(idUsuario) {
+        const connection = await getConnection();
         try {
-            const rows = await read('usuarios', `idUsuario = ${idUsuario}`);
+            const [rows] = await connection.execute(
+                'SELECT idUsuario, cep FROM usuarios WHERE idUsuario = ?',
+                [idUsuario]
+            );
             return rows[0] || null;
+        } finally {
+            connection.release();
+        }
+    }
+
+    static async buscarCarrinho(idUsuario) {
+        const connection = await getConnection();
+        try {
+            const [rows] = await connection.execute(
+                `SELECT
+                    v.idProduto,
+                    GROUP_CONCAT(v.idVendas ORDER BY v.idVendas) AS idsVendas,
+                    COUNT(*) AS quantidade,
+                    p.nome,
+                    p.nomeCombinacao,
+                    p.preco,
+                    p.imagem1,
+                    p.estoque
+                FROM vendas v
+                INNER JOIN produtos p ON p.idProduto = v.idProduto
+                WHERE v.idUsuario = ? AND v.status = 'carrinho'
+                GROUP BY
+                    v.idProduto, p.nome, p.nomeCombinacao, p.preco,
+                    p.imagem1, p.estoque
+                ORDER BY MIN(v.idVendas) DESC`,
+                [idUsuario]
+            );
+
+            return rows.map((item) => ({
+                ...item,
+                idsVendas: String(item.idsVendas)
+                    .split(',')
+                    .map(Number)
+                    .filter(Number.isInteger),
+                quantidade: Number(item.quantidade),
+                preco: Number(item.preco),
+                estoque: Number(item.estoque)
+            }));
+        } finally {
+            connection.release();
+        }
+    }
+
+    static async buscarEntregasPorUsuario(idUsuario) {
+        const connection = await getConnection();
+        try {
+            const [rows] = await connection.execute(
+                `SELECT
+                    v.idVendas,
+                    v.idUsuario,
+                    v.idProduto,
+                    v.dataPedido,
+                    v.dataEntrega,
+                    v.status,
+                    p.nome,
+                    p.nomeCombinacao,
+                    p.preco,
+                    p.imagem1,
+                    u.cep
+                FROM vendas v
+                INNER JOIN produtos p ON p.idProduto = v.idProduto
+                INNER JOIN usuarios u ON u.idUsuario = v.idUsuario
+                WHERE v.idUsuario = ? AND v.status <> 'carrinho'
+                ORDER BY v.dataPedido DESC, v.idVendas DESC`,
+                [idUsuario]
+            );
+            return rows.map((item) => ({
+                ...item,
+                preco: Number(item.preco)
+            }));
+        } finally {
+            connection.release();
+        }
+    }
+
+    static async adicionarAoCarrinho(idUsuario, idProduto) {
+        const connection = await getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const [produtos] = await connection.execute(
+                `SELECT idProduto, estoque, ativo
+                 FROM produtos
+                 WHERE idProduto = ?
+                 FOR UPDATE`,
+                [idProduto]
+            );
+            const produto = produtos[0];
+
+            if (!produto || !Number(produto.ativo)) {
+                const error = new Error('Produto não encontrado ou indisponível.');
+                error.code = 'PRODUTO_INDISPONIVEL';
+                throw error;
+            }
+
+            const [quantidades] = await connection.execute(
+                `SELECT COUNT(*) AS quantidade
+                 FROM vendas
+                 WHERE idUsuario = ? AND idProduto = ? AND status = 'carrinho'`,
+                [idUsuario, idProduto]
+            );
+
+            if (Number(quantidades[0].quantidade) >= Number(produto.estoque)) {
+                const error = new Error('Não há mais unidades disponíveis deste produto.');
+                error.code = 'ESTOQUE_INSUFICIENTE';
+                throw error;
+            }
+
+            const [resultado] = await connection.execute(
+                `INSERT INTO vendas (idUsuario, idProduto, dataPedido, dataEntrega, status)
+                 VALUES (?, ?, NULL, NULL, 'carrinho')`,
+                [idUsuario, idProduto]
+            );
+
+            await connection.commit();
+            return resultado.insertId;
         } catch (error) {
-            console.error('Erro ao buscar usuário da venda:', error);
+            await connection.rollback();
             throw error;
+        } finally {
+            connection.release();
+        }
+    }
+
+    static async removerDoCarrinho(idVenda, idUsuario) {
+        const connection = await getConnection();
+        try {
+            const [resultado] = await connection.execute(
+                `DELETE FROM vendas
+                 WHERE idVendas = ? AND idUsuario = ? AND status = 'carrinho'`,
+                [idVenda, idUsuario]
+            );
+            return resultado.affectedRows;
+        } finally {
+            connection.release();
+        }
+    }
+
+    static async confirmarCarrinho(idUsuario, dataPedido, dataEntrega) {
+        const connection = await getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const [itens] = await connection.execute(
+                `SELECT v.idVendas, v.idProduto, p.nome, p.estoque, p.ativo
+                 FROM vendas v
+                 INNER JOIN produtos p ON p.idProduto = v.idProduto
+                 WHERE v.idUsuario = ? AND v.status = 'carrinho'
+                 ORDER BY v.idVendas
+                 FOR UPDATE`,
+                [idUsuario]
+            );
+
+            if (itens.length === 0) {
+                const error = new Error('Seu carrinho está vazio.');
+                error.code = 'CARRINHO_VAZIO';
+                throw error;
+            }
+
+            const quantidades = new Map();
+            for (const item of itens) {
+                quantidades.set(item.idProduto, {
+                    nome: item.nome,
+                    estoque: Number(item.estoque),
+                    ativo: Number(item.ativo),
+                    quantidade: (quantidades.get(item.idProduto)?.quantidade || 0) + 1
+                });
+            }
+
+            for (const [idProduto, item] of quantidades) {
+                if (!item.ativo || item.estoque < item.quantidade) {
+                    const error = new Error(
+                        `Estoque insuficiente para ${item.nome || `produto ${idProduto}`}.`
+                    );
+                    error.code = 'ESTOQUE_INSUFICIENTE';
+                    throw error;
+                }
+
+                await connection.execute(
+                    `UPDATE produtos
+                     SET estoque = estoque - ?,
+                         quantidadeVendas = quantidadeVendas + ?
+                     WHERE idProduto = ?`,
+                    [item.quantidade, item.quantidade, idProduto]
+                );
+            }
+
+            const [resultado] = await connection.execute(
+                `UPDATE vendas
+                 SET dataPedido = ?, dataEntrega = ?, status = 'processando'
+                 WHERE idUsuario = ? AND status = 'carrinho'`,
+                [dataPedido, dataEntrega, idUsuario]
+            );
+
+            await connection.commit();
+            return {
+                idsVendas: itens.map((item) => item.idVendas),
+                quantidadeItens: resultado.affectedRows
+            };
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+
+    static async confirmarVenda(idVenda, idUsuario, dataPedido, dataEntrega, permitirAdmin = false) {
+        const connection = await getConnection();
+        try {
+            await connection.beginTransaction();
+            const [rows] = await connection.execute(
+                `SELECT v.idVendas, v.idUsuario, v.status, v.idProduto,
+                        p.nome, p.estoque, p.ativo
+                 FROM vendas v
+                 INNER JOIN produtos p ON p.idProduto = v.idProduto
+                 WHERE v.idVendas = ?
+                 FOR UPDATE`,
+                [idVenda]
+            );
+            const venda = rows[0];
+
+            if (!venda || venda.status !== 'carrinho') {
+                const error = new Error('Esta venda não está disponível no carrinho.');
+                error.code = 'CARRINHO_INVALIDO';
+                throw error;
+            }
+            if (!permitirAdmin && Number(venda.idUsuario) !== Number(idUsuario)) {
+                const error = new Error('Você não pode confirmar uma venda de outro usuário.');
+                error.code = 'ACESSO_NEGADO';
+                throw error;
+            }
+            if (!Number(venda.ativo) || Number(venda.estoque) < 1) {
+                const error = new Error(`Estoque insuficiente para ${venda.nome || 'o produto'}.`);
+                error.code = 'ESTOQUE_INSUFICIENTE';
+                throw error;
+            }
+
+            await connection.execute(
+                `UPDATE produtos
+                 SET estoque = estoque - 1,
+                     quantidadeVendas = quantidadeVendas + 1
+                 WHERE idProduto = ?`,
+                [venda.idProduto]
+            );
+            await connection.execute(
+                `UPDATE vendas
+                 SET dataPedido = ?, dataEntrega = ?, status = 'processando'
+                 WHERE idVendas = ?`,
+                [dataPedido, dataEntrega, idVenda]
+            );
+
+            await connection.commit();
+            return venda;
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
         }
     }
 

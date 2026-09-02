@@ -2,7 +2,7 @@ import ProdutoModel from '../models/produtoModel.js';
 
 const GENEROS_VALIDOS = new Set(['Masculino', 'Feminino', 'Unissex', 'Infantil']);
 const ORDENACOES_VALIDAS = new Set([
-    'recente', 'preco_asc', 'preco_desc', 'nome_asc', 'antigo'
+    'recente', 'mais_vendidos', 'preco_asc', 'preco_desc', 'nome_asc', 'antigo'
 ]);
 
 class FiltroInvalidoError extends Error {}

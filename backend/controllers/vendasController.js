@@ -12,6 +12,32 @@ const formatarDataSQL = (data) => {
     return data.toISOString().split('T')[0];
 };
 
+const obterIdPositivo = (valor) => {
+    const id = Number(valor);
+    return Number.isInteger(id) && id > 0 ? id : null;
+};
+
+const responderErroCarrinho = (res, error) => {
+    if (error.code === 'PRODUTO_INDISPONIVEL') {
+        return res.status(404).json({ sucesso: false, mensagem: error.message });
+    }
+    if (error.code === 'ESTOQUE_INSUFICIENTE' || error.code === 'CARRINHO_VAZIO') {
+        return res.status(409).json({ sucesso: false, mensagem: error.message });
+    }
+    if (error.code === 'CARRINHO_INVALIDO') {
+        return res.status(409).json({ sucesso: false, mensagem: error.message });
+    }
+    if (error.code === 'ACESSO_NEGADO') {
+        return res.status(403).json({ sucesso: false, mensagem: error.message });
+    }
+    console.error('Erro no carrinho:', error);
+    return res.status(500).json({
+        sucesso: false,
+        erro: 'Erro interno',
+        mensagem: 'Não foi possível processar o carrinho.'
+    });
+};
+
 const simularDiasEntregaCEP = (cep) => {
     const digitoRegiao = parseInt(cep.charAt(0));
     return digitoRegiao === 0 ? 2 : digitoRegiao + 2; 
@@ -76,25 +102,120 @@ class VendaController {
 
     static async adicionarCarrinho(req, res) {
         try {
-            const { idUsuario, idProduto } = req.body;
+            const idUsuario = obterIdPositivo(req.usuario?.id);
+            const idProduto = obterIdPositivo(req.body?.idProduto);
 
             if (!idUsuario || !idProduto) {
-                return res.status(400).json({ sucesso: false, erro: 'Dados incompletos', mensagem: 'ID de Usuário e Produto são obrigatórios' });
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'Dados inválidos',
+                    mensagem: 'Informe um produto válido.'
+                });
             }
 
-            const dadosVenda = {
-                idUsuario: parseInt(idUsuario),
-                idProduto: parseInt(idProduto),
-                dataPedido: null,
-                dataEntrega: null,
-                status: 'carrinho'
-            };
-
-            const vendaId = await VendaModel.criar(dadosVenda);
-            res.status(201).json({ sucesso: true, mensagem: 'Adicionado ao carrinho', dados: { idVendas: vendaId, ...dadosVenda } });
+            const vendaId = await VendaModel.adicionarAoCarrinho(idUsuario, idProduto);
+            res.status(201).json({
+                sucesso: true,
+                mensagem: 'Produto adicionado ao carrinho.',
+                dados: { idVendas: vendaId, idProduto }
+            });
         } catch (error) {
-            console.error('Erro ao adicionar ao carrinho:', error);
-            res.status(500).json({ sucesso: false, erro: 'Erro interno' });
+            return responderErroCarrinho(res, error);
+        }
+    }
+
+    static async listarCarrinho(req, res) {
+        try {
+            const idUsuario = obterIdPositivo(req.usuario?.id);
+            const itens = await VendaModel.buscarCarrinho(idUsuario);
+            return res.status(200).json({ sucesso: true, dados: itens });
+        } catch (error) {
+            return responderErroCarrinho(res, error);
+        }
+    }
+
+    static async removerCarrinho(req, res) {
+        try {
+            const idUsuario = obterIdPositivo(req.usuario?.id);
+            const idVenda = obterIdPositivo(req.params.id);
+
+            if (!idVenda) {
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem: 'Item do carrinho inválido.'
+                });
+            }
+
+            const removidos = await VendaModel.removerDoCarrinho(idVenda, idUsuario);
+            if (!removidos) {
+                return res.status(404).json({
+                    sucesso: false,
+                    mensagem: 'Item não encontrado no seu carrinho.'
+                });
+            }
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: 'Produto removido do carrinho.'
+            });
+        } catch (error) {
+            return responderErroCarrinho(res, error);
+        }
+    }
+
+    static async confirmarCarrinho(req, res) {
+        try {
+            const idUsuario = obterIdPositivo(req.usuario?.id);
+            const usuario = await VendaModel.buscarUsuarioVenda(idUsuario);
+
+            if (!usuario?.cep) {
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem: 'Cadastre um CEP válido no seu perfil antes de finalizar a compra.'
+                });
+            }
+
+            const hoje = new Date();
+            const diasParaEntrega = simularDiasEntregaCEP(String(usuario.cep).replace(/\D/g, ''));
+            const dataEntrega = new Date(hoje);
+            dataEntrega.setDate(hoje.getDate() + diasParaEntrega);
+
+            const resultado = await VendaModel.confirmarCarrinho(
+                idUsuario,
+                formatarDataSQL(hoje),
+                formatarDataSQL(dataEntrega)
+            );
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: 'Compra confirmada. Seu pedido está em processamento.',
+                dados: {
+                    ...resultado,
+                    previsaoEntregaDias: diasParaEntrega,
+                    dataPedidoBR: formatarDataBR(formatarDataSQL(hoje)),
+                    dataEntregaBR: formatarDataBR(formatarDataSQL(dataEntrega)),
+                    status: 'processando'
+                }
+            });
+        } catch (error) {
+            return responderErroCarrinho(res, error);
+        }
+    }
+
+    static async listarMinhasEntregas(req, res) {
+        try {
+            const idUsuario = obterIdPositivo(req.usuario?.id);
+            const vendas = await VendaModel.buscarEntregasPorUsuario(idUsuario);
+            const entregas = await Promise.all(
+                vendas.map((venda) => sincronizarProgressoVenda(venda))
+            );
+            return res.status(200).json({ sucesso: true, dados: entregas });
+        } catch (error) {
+            console.error('Erro ao listar entregas do usuário:', error);
+            return res.status(500).json({
+                sucesso: false,
+                mensagem: 'Não foi possível carregar suas entregas.'
+            });
         }
     }
 
@@ -104,6 +225,16 @@ class VendaController {
             const venda = await VendaModel.buscarPorId(id);
 
             if (!venda) return res.status(404).json({ sucesso: false, mensagem: 'Venda não encontrada' });
+
+            const podeConfirmar =
+                Number(venda.idUsuario) === Number(req.usuario?.id) ||
+                req.usuario?.tipo === 'admin';
+            if (!podeConfirmar) {
+                return res.status(403).json({
+                    sucesso: false,
+                    mensagem: 'Você não pode confirmar uma venda de outro usuário.'
+                });
+            }
             
             const statusAtual = String(venda.status).trim().toLowerCase();
             if (statusAtual !== 'carrinho') return res.status(400).json({ sucesso: false, mensagem: 'Esta venda já passou da fase de carrinho' });
@@ -123,7 +254,13 @@ class VendaController {
                 status: 'processando'
             };
 
-            await VendaModel.atualizar(id, dadosAtualizacao);
+            await VendaModel.confirmarVenda(
+                id,
+                req.usuario.id,
+                dadosAtualizacao.dataPedido,
+                dadosAtualizacao.dataEntrega,
+                req.usuario?.tipo === 'admin'
+            );
 
             res.status(200).json({
                 sucesso: true,
@@ -137,8 +274,7 @@ class VendaController {
                 }
             });
         } catch (error) {
-            console.error('Erro ao confirmar compra:', error);
-            res.status(500).json({ sucesso: false, erro: 'Erro interno' });
+            return responderErroCarrinho(res, error);
         }
     }
 
@@ -177,6 +313,16 @@ class VendaController {
 
             if (!venda) return res.status(404).json({ sucesso: false, mensagem: `Venda ID ${id} não encontrada` });
 
+            if (
+                req.usuario?.tipo !== 'admin' &&
+                Number(venda.idUsuario) !== Number(req.usuario?.id)
+            ) {
+                return res.status(403).json({
+                    sucesso: false,
+                    mensagem: 'Você não pode consultar uma venda de outro usuário.'
+                });
+            }
+
             venda = await sincronizarProgressoVenda(venda);
 
             res.status(200).json({ sucesso: true, dados: venda });
@@ -188,6 +334,17 @@ class VendaController {
     static async buscarPorUsuario(req, res) {
         try {
             const { idUsuario } = req.params;
+
+            if (
+                req.usuario?.tipo !== 'admin' &&
+                Number(idUsuario) !== Number(req.usuario?.id)
+            ) {
+                return res.status(403).json({
+                    sucesso: false,
+                    mensagem: 'Você não pode consultar as vendas de outro usuário.'
+                });
+            }
+
             const vendas = await VendaModel.buscarPorUsuario(idUsuario);
 
             const vendasAtualizadas = await Promise.all(

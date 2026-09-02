@@ -160,7 +160,7 @@ export default function Header() {
       setErroCarrinho("");
       try {
         const response = await fetch(
-          `${API_ORIGIN}/api/vendas/carrinho/${idUsuario}`,
+          `${API_ORIGIN}/api/vendas/carrinho`,
           {
             headers: {
               Accept: "application/json",
@@ -295,6 +295,16 @@ export default function Header() {
       setCategoriaAtiva(null);
     }
   }
+  function sairDaConta() {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    setUsuario(null);
+    setItensCarrinho([]);
+    setPerfilAberto(false);
+    setCarrinhoAberto(false);
+    window.dispatchEvent(new Event("auth-changed"));
+    window.location.href = "/login";
+  }
   async function requisitarCarrinho(caminho, opcoes = {}) {
     const sessao = lerUsuarioSalvo();
     if (!sessao.token) {
@@ -328,7 +338,7 @@ export default function Header() {
       if (delta > 0) {
         await requisitarCarrinho("/api/vendas/carrinho", {
           method: "POST",
-          body: JSON.stringify({ idUsuario, idProduto: item.idProduto }),
+          body: JSON.stringify({ idProduto: item.idProduto }),
         });
       } else {
         const idVenda = item.idsVendas[item.idsVendas.length - 1];
@@ -744,6 +754,15 @@ export default function Header() {
                         <span>Olá,</span>
                         <strong>{usuario.nome || "Usuário"}</strong>
                       </div>
+                      <button
+                        type="button"
+                        className="profile-logout-button"
+                        aria-label="Sair da conta"
+                        title="Sair da conta"
+                        onClick={sairDaConta}
+                      >
+                        <i className="bi bi-box-arrow-right" aria-hidden="true" />
+                      </button>
                     </div>
                     <div className="profile-details">
                       <p>

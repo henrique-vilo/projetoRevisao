@@ -1,15 +1,19 @@
 import express from 'express';
 import VendaController from '../controllers/vendasController.js';
-import { authMiddleware, adminMiddleware, selfMiddleware } from '../middlewares/authMiddleware.js';
+import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 //rotas de negócios
+router.get('/carrinho', authMiddleware, VendaController.listarCarrinho);
 router.post('/carrinho', authMiddleware, VendaController.adicionarCarrinho);
+router.post('/carrinho/confirmar', authMiddleware, VendaController.confirmarCarrinho);
+router.delete('/carrinho/:id', authMiddleware, VendaController.removerCarrinho);
+router.get('/minhas-entregas', authMiddleware, VendaController.listarMinhasEntregas);
 router.post('/:id/confirmar', authMiddleware, VendaController.confirmarCompra);
 
 //rotas de informação
-router.get('/', authMiddleware, VendaController.listarTodos);
+router.get('/', authMiddleware, adminMiddleware, VendaController.listarTodos);
 router.get('/:id', authMiddleware, VendaController.buscarPorId);
 router.get('/usuario/:idUsuario', authMiddleware, VendaController.buscarPorUsuario);
 

@@ -57,6 +57,7 @@ export default function ProductPage() {
   const [selectedSizeId, setSelectedSizeId] = useState('');
   const [imagemAtiva, setImagemAtiva] = useState(0);
   const [alertaCompra, setAlertaCompra] = useState(null);
+  const [adicionandoCarrinho, setAdicionandoCarrinho] = useState(false);
 
   useEffect(() => {
     if (!idProduto) return undefined;
@@ -216,7 +217,7 @@ export default function ProductPage() {
     setAlertaCompra({ tipo, titulo: tituloAlerta, mensagem });
   }
 
-  function handleBuy() {
+  async function handleBuy() {
     if (!selectedColorId) {
       mostrarAlerta(
         'aviso',
@@ -244,14 +245,51 @@ export default function ProductPage() {
       return;
     }
 
-    mostrarAlerta(
-      'sucesso',
-      'Produto adicionado',
-      `${titulo} foi adicionado ao carrinho.`,
-    );
+    const token = localStorage.getItem('token');
+    if (!token) {
+      mostrarAlerta(
+        'aviso',
+        'Entre na sua conta',
+        'Faça login para adicionar produtos ao carrinho.',
+      );
+      return;
+    }
 
-    // Integre aqui a função real do carrinho usando:
-    // variacaoSelecionada.idProduto
+    setAdicionandoCarrinho(true);
+    setAlertaCompra(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/vendas/carrinho`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ idProduto: variacaoSelecionada.idProduto }),
+      });
+      const resultado = await response.json().catch(() => ({}));
+
+      if (!response.ok || !resultado.sucesso) {
+        throw new Error(
+          resultado.mensagem || 'Não foi possível adicionar o produto ao carrinho.',
+        );
+      }
+
+      window.dispatchEvent(new Event('carrinho-atualizado'));
+      mostrarAlerta(
+        'sucesso',
+        'Produto adicionado',
+        `${titulo} foi adicionado ao carrinho.`,
+      );
+    } catch (error) {
+      mostrarAlerta(
+        'erro',
+        'Não foi possível adicionar',
+        error.message || 'Tente novamente em instantes.',
+      );
+    } finally {
+      setAdicionandoCarrinho(false);
+    }
   }
 
   if (carregando) {
@@ -449,11 +487,15 @@ export default function ProductPage() {
               <button
                 type="button"
                 onClick={handleBuy}
-                disabled={!temEstoque}
+                disabled={!temEstoque || adicionandoCarrinho}
                 className="buy-button"
               >
                 <i className="bi bi-bag-plus" aria-hidden="true" />
-                {temEstoque ? 'Adicionar ao carrinho' : 'Produto esgotado'}
+                {adicionandoCarrinho
+                  ? 'Adicionando...'
+                  : temEstoque
+                    ? 'Adicionar ao carrinho'
+                    : 'Produto esgotado'}
               </button>
 
               {alertaCompra ? (
