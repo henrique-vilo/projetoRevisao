@@ -223,19 +223,42 @@
 }
 
 html.dark .success-page {
-  background: #141218;
+  color: #f8f7f9;
+  background: #100d14;
 }
 
 html.dark .success-shell,
 html.dark .success-progress span,
 html.dark .success-secondary-action {
-  background: #201d24;
-  border-color: #35313a;
+  background: #1c1720;
+  border-color: #3a303f;
 }
 
 html.dark .success-summary {
-  background: #181f24;
-  border-color: #28424a;
+  background: #151d21;
+  border-color: #275967;
+}
+
+html.dark .success-header h1,
+html.dark .success-progress .active strong,
+html.dark .success-summary h2,
+html.dark .success-summary dd {
+  color: #f8f7f9;
+}
+
+html.dark .success-header p,
+html.dark .success-progress > div:not(.success-progress-line),
+html.dark .success-summary dt,
+html.dark .success-note {
+  color: #b4aab8;
+}
+
+html.dark .success-progress-line {
+  background: #3a303f;
+}
+
+html.dark .success-secondary-action {
+  color: #40ffdc;
 }
 
 @media (max-width: 620px) {

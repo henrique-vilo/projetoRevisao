@@ -204,6 +204,56 @@
   color: var(--everett-muted);
 }
 
+:global(html.dark) .authPage,
+:global(html[data-bs-theme="dark"]) .authPage {
+  --everett-ink: #f8f7f9;
+  --everett-muted: #b4aab8;
+  --everett-border: #3a303f;
+  --everett-surface: #1c1720;
+  --everett-background: #100d14;
+}
+
+:global(html.dark) .authCard,
+:global(html[data-bs-theme="dark"]) .authCard {
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.28);
+}
+
+:global(html.dark) .formLabel,
+:global(html[data-bs-theme="dark"]) .formLabel {
+  color: #e9e4eb;
+}
+
+:global(html.dark) .formControl,
+:global(html[data-bs-theme="dark"]) .formControl {
+  background: #161219;
+}
+
+:global(html.dark) .formControl::placeholder,
+:global(html[data-bs-theme="dark"]) .formControl::placeholder {
+  color: #887e8c;
+}
+
+:global(html.dark) .passwordButton,
+:global(html[data-bs-theme="dark"]) .passwordButton {
+  color: #b4aab8;
+}
+
+:global(html.dark) .passwordButton:hover,
+:global(html[data-bs-theme="dark"]) .passwordButton:hover {
+  color: #40ffdc;
+  background: rgba(0, 169, 212, 0.14);
+}
+
+:global(html.dark) .textLink,
+:global(html[data-bs-theme="dark"]) .textLink {
+  color: #40ffdc;
+}
+
+:global(html.dark) .textLink:hover,
+:global(html[data-bs-theme="dark"]) .textLink:hover {
+  color: #00a9d4;
+}
+
 @media (max-width: 575.98px) {
   .authPage {
     align-items: flex-start;

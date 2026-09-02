@@ -208,8 +208,35 @@ button:disabled {
 html.dark .cart-empty,
 html.dark .cart-products li,
 html.dark .cart-summary {
-  background: var(--card-bg);
-  color: var(--foreground);
+  background: #1c1720;
+  color: #f8f7f9;
+  border-color: #3a303f;
+}
+
+html.dark .cart-page {
+  color: #f8f7f9;
+  background: #100d14;
+}
+
+html.dark .cart-heading span,
+html.dark .cart-summary > span,
+html.dark .cart-heading a,
+html.dark .cart-empty a,
+html.dark .cart-empty i {
+  color: #40ffdc;
+}
+
+html.dark .cart-product-info h2,
+html.dark .cart-stepper strong,
+html.dark .cart-line-total,
+html.dark .cart-summary h2,
+html.dark .cart-summary div strong {
+  color: #f8f7f9;
+}
+
+html.dark .cart-product-info > span,
+html.dark .cart-summary p {
+  color: #b4aab8;
 }
 
 html.dark .cart-error {
@@ -225,8 +252,17 @@ html.dark .cart-summary div {
 
 html.dark .cart-stepper button,
 html.dark .cart-product-image {
-  background: var(--input-bg);
-  color: var(--foreground);
+  background: #161219;
+  color: #f8f7f9;
+}
+
+html.dark .cart-product-image > i {
+  color: #40ffdc;
+}
+
+html.dark .cart-summary a {
+  color: #ffffff;
+  background: #00a9d4;
 }
 
 @media (max-width: 820px) {

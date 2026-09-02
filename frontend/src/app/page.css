@@ -497,6 +497,90 @@ body {
 }
 
 /* =========================================
+   TEMA ESCURO
+========================================= */
+html.dark .home-container,
+html[data-bs-theme="dark"] .home-container {
+  --color-dark: #f8f7f9;
+  --color-secondary: #b4aab8;
+  --color-light-bg: #161219;
+  --color-border: #3a303f;
+  --color-discount-green: #40ffdc;
+  color: #f8f7f9;
+  background: #100d14;
+}
+
+html.dark .features-bar,
+html.dark .bg-light-clean,
+html.dark .promo-banner-card,
+html.dark .newsletter-section,
+html[data-bs-theme="dark"] .features-bar,
+html[data-bs-theme="dark"] .bg-light-clean,
+html[data-bs-theme="dark"] .promo-banner-card,
+html[data-bs-theme="dark"] .newsletter-section {
+  background-color: #161219 !important;
+  border-color: #3a303f;
+}
+
+html.dark .categoria-img-wrapper,
+html.dark .product-image-box,
+html[data-bs-theme="dark"] .categoria-img-wrapper,
+html[data-bs-theme="dark"] .product-image-box {
+  background-color: #211a25;
+}
+
+html.dark .product-card-clean,
+html[data-bs-theme="dark"] .product-card-clean {
+  background: #1c1720;
+}
+
+html.dark .desired-product-image-fallback,
+html[data-bs-theme="dark"] .desired-product-image-fallback {
+  color: #40ffdc;
+  background: linear-gradient(145deg, rgba(0, 169, 212, 0.15), rgba(36, 0, 71, 0.25)), #211a25;
+}
+
+html.dark .desired-products-feedback,
+html.dark .price-old,
+html[data-bs-theme="dark"] .desired-products-feedback,
+html[data-bs-theme="dark"] .price-old {
+  color: #b4aab8;
+}
+
+html.dark .nav-arrow-btn,
+html.dark .product-tag-pill,
+html[data-bs-theme="dark"] .nav-arrow-btn,
+html[data-bs-theme="dark"] .product-tag-pill {
+  color: #f8f7f9;
+  background: #211a25;
+  border-color: #4a3f50;
+}
+
+html.dark .nav-arrow-btn:hover,
+html[data-bs-theme="dark"] .nav-arrow-btn:hover {
+  color: #08191e;
+  background: #40ffdc;
+  border-color: #40ffdc;
+}
+
+html.dark .product-tag-pill.badge-dark,
+html[data-bs-theme="dark"] .product-tag-pill.badge-dark {
+  color: #ffffff;
+  background: #00a9d4;
+}
+
+html.dark .link-ver-todos,
+html[data-bs-theme="dark"] .link-ver-todos {
+  color: #40ffdc;
+}
+
+html.dark .scroll-to-top-btn,
+html[data-bs-theme="dark"] .scroll-to-top-btn {
+  color: #ffffff;
+  background: #00a9d4;
+}
+
+/* =========================================
    RESPONSIVIDADE
 ========================================= */
 @media (max-width: 991px) {

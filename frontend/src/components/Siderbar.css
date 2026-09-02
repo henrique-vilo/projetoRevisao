@@ -464,6 +464,26 @@
   background: #fef2f2;
 }
 
+html.dark .sidebar-user-action:hover,
+html.dark .sidebar-user-action.open,
+html[data-bs-theme="dark"] .sidebar-user-action:hover,
+html[data-bs-theme="dark"] .sidebar-user-action.open {
+  color: #f8f7f9;
+  background: #2a222e;
+}
+
+html.dark .sidebar-user-dropdown,
+html[data-bs-theme="dark"] .sidebar-user-dropdown {
+  border-color: #3a303f;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.38);
+}
+
+html.dark .sidebar-user-dropdown-item:hover,
+html[data-bs-theme="dark"] .sidebar-user-dropdown-item:hover {
+  color: #ff879b;
+  background: rgba(239, 68, 68, 0.12);
+}
+
 /* RESPONSIVO */
 @media (max-width: 767.98px) {
   .sidebar {

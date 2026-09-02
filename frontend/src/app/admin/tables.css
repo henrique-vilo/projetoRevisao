@@ -1108,6 +1108,76 @@
    RESPONSIVE
 ===================================================== */
 
+html.dark .users-btn-secondary,
+html.dark .users-search,
+html.dark .users-dropdown,
+html.dark .users-modal,
+html.dark .user-input-wrapper,
+html.dark .users-modal-btn.secondary,
+html[data-bs-theme="dark"] .users-btn-secondary,
+html[data-bs-theme="dark"] .users-search,
+html[data-bs-theme="dark"] .users-dropdown,
+html[data-bs-theme="dark"] .users-modal,
+html[data-bs-theme="dark"] .user-input-wrapper,
+html[data-bs-theme="dark"] .users-modal-btn.secondary {
+  color: #d6ced9;
+  background: #1c1720;
+  border-color: #3a303f;
+}
+
+html.dark .users-table th,
+html.dark .users-modal-footer,
+html.dark .users-empty-icon,
+html[data-bs-theme="dark"] .users-table th,
+html[data-bs-theme="dark"] .users-modal-footer,
+html[data-bs-theme="dark"] .users-empty-icon {
+  color: #968b9b;
+  background: #161219;
+}
+
+html.dark .users-table > :not(caption) > * > *,
+html[data-bs-theme="dark"] .users-table > :not(caption) > * > * {
+  border-color: #2b2430;
+}
+
+html.dark .users-table tbody tr:hover,
+html.dark .users-dropdown .dropdown-item:hover,
+html.dark .users-search-clear:hover,
+html.dark .users-table-action:hover,
+html.dark .users-table-action[aria-expanded='true'],
+html.dark .users-modal-close:hover,
+html.dark .users-pagination .page-link:hover,
+html[data-bs-theme="dark"] .users-table tbody tr:hover,
+html[data-bs-theme="dark"] .users-dropdown .dropdown-item:hover,
+html[data-bs-theme="dark"] .users-search-clear:hover,
+html[data-bs-theme="dark"] .users-table-action:hover,
+html[data-bs-theme="dark"] .users-table-action[aria-expanded='true'],
+html[data-bs-theme="dark"] .users-modal-close:hover,
+html[data-bs-theme="dark"] .users-pagination .page-link:hover {
+  color: #f8f7f9;
+  background: #2a222e;
+}
+
+html.dark .user-avatar,
+html.dark .user-form-avatar,
+html[data-bs-theme="dark"] .user-avatar,
+html[data-bs-theme="dark"] .user-form-avatar {
+  color: #40ffdc;
+  background: rgba(0, 169, 212, 0.14);
+}
+
+html.dark .user-type,
+html[data-bs-theme="dark"] .user-type {
+  background: #2a222e;
+}
+
+html.dark .user-input-wrapper input,
+html.dark .user-input-wrapper select,
+html[data-bs-theme="dark"] .user-input-wrapper input,
+html[data-bs-theme="dark"] .user-input-wrapper select {
+  color: #f8f7f9;
+}
+
 @media (max-width: 1199.98px) {
   .users-page {
     padding: 26px;
@@ -1266,4 +1336,4 @@
 
 .user-action.delete:hover {
   background: #fef2f2;
-}   
+}

@@ -1565,6 +1565,61 @@
    RESPONSIVE
 ===================================================== */
 
+html.dark .support-btn-secondary,
+html.dark .support-stat-card,
+html.dark .support-card,
+html.dark .support-search,
+html.dark .support-filter select,
+html.dark .support-modal,
+html.dark .support-ticket-sidebar,
+html[data-bs-theme="dark"] .support-btn-secondary,
+html[data-bs-theme="dark"] .support-stat-card,
+html[data-bs-theme="dark"] .support-card,
+html[data-bs-theme="dark"] .support-search,
+html[data-bs-theme="dark"] .support-filter select,
+html[data-bs-theme="dark"] .support-modal,
+html[data-bs-theme="dark"] .support-ticket-sidebar {
+  color: #f8f7f9;
+  background: #1c1720;
+  border-color: #3a303f;
+}
+
+html.dark .support-table th,
+html.dark .support-filters,
+html[data-bs-theme="dark"] .support-table th,
+html[data-bs-theme="dark"] .support-filters {
+  background: #161219;
+  border-color: #3a303f;
+}
+
+html.dark .support-table > :not(caption) > * > *,
+html.dark .support-modal-header,
+html.dark .support-ticket-details > div,
+html[data-bs-theme="dark"] .support-table > :not(caption) > * > *,
+html[data-bs-theme="dark"] .support-modal-header,
+html[data-bs-theme="dark"] .support-ticket-details > div {
+  border-color: #2b2430;
+}
+
+html.dark .support-table tbody tr:hover,
+html.dark .support-tabs button:hover,
+html.dark .support-view-btn:hover,
+html.dark .support-modal-close:hover,
+html[data-bs-theme="dark"] .support-table tbody tr:hover,
+html[data-bs-theme="dark"] .support-tabs button:hover,
+html[data-bs-theme="dark"] .support-view-btn:hover,
+html[data-bs-theme="dark"] .support-modal-close:hover {
+  color: #f8f7f9;
+  background: #2a222e;
+}
+
+html.dark .support-search input,
+html.dark .support-filter select,
+html[data-bs-theme="dark"] .support-search input,
+html[data-bs-theme="dark"] .support-filter select {
+  color: #f8f7f9;
+}
+
 @media (max-width: 1199.98px) {
   .support-page {
     padding: 26px;

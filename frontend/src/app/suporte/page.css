@@ -1155,6 +1155,114 @@
 
 
 /* =========================================
+   TEMA ESCURO
+========================================= */
+html.dark .suporte-page,
+html.dark .suporte-duvidas,
+html.dark .suporte-contato,
+html[data-bs-theme="dark"] .suporte-page,
+html[data-bs-theme="dark"] .suporte-duvidas,
+html[data-bs-theme="dark"] .suporte-contato {
+  color: #f8f7f9;
+  background: #100d14;
+}
+
+html.dark .suporte-titulo-secao h2,
+html.dark .pergunta-texto,
+html.dark .contato-texto h2,
+html.dark .modal-titulo-area h2,
+html.dark .modal-label,
+html.dark .mensagem-sucesso h3,
+html[data-bs-theme="dark"] .suporte-titulo-secao h2,
+html[data-bs-theme="dark"] .pergunta-texto,
+html[data-bs-theme="dark"] .contato-texto h2,
+html[data-bs-theme="dark"] .modal-titulo-area h2,
+html[data-bs-theme="dark"] .modal-label,
+html[data-bs-theme="dark"] .mensagem-sucesso h3 {
+  color: #f8f7f9;
+}
+
+html.dark .suporte-item,
+html.dark .contato-card,
+html.dark .modal-content-custom,
+html[data-bs-theme="dark"] .suporte-item,
+html[data-bs-theme="dark"] .contato-card,
+html[data-bs-theme="dark"] .modal-content-custom {
+  background: #1c1720;
+  border-color: #3a303f;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
+}
+
+html.dark .suporte-item:hover,
+html.dark .suporte-item.item-aberto,
+html[data-bs-theme="dark"] .suporte-item:hover,
+html[data-bs-theme="dark"] .suporte-item.item-aberto {
+  border-color: #00a9d4;
+}
+
+html.dark .pergunta-numero,
+html.dark .pergunta-icone,
+html.dark .contato-icone,
+html.dark .modal-icone,
+html.dark .modal-fechar,
+html[data-bs-theme="dark"] .pergunta-numero,
+html[data-bs-theme="dark"] .pergunta-icone,
+html[data-bs-theme="dark"] .contato-icone,
+html[data-bs-theme="dark"] .modal-icone,
+html[data-bs-theme="dark"] .modal-fechar {
+  color: #40ffdc;
+  background: rgba(0, 169, 212, 0.14);
+}
+
+html.dark .suporte-resposta,
+html[data-bs-theme="dark"] .suporte-resposta {
+  background: #161219;
+  border-color: #3a303f;
+}
+
+html.dark .suporte-pergunta,
+html[data-bs-theme="dark"] .suporte-pergunta {
+  color: #f8f7f9;
+  background: #1c1720;
+}
+
+html.dark .resposta-conteudo p,
+html.dark .contato-texto > p:last-child,
+html.dark .modal-titulo-area p,
+html.dark .mensagem-sucesso p,
+html[data-bs-theme="dark"] .resposta-conteudo p,
+html[data-bs-theme="dark"] .contato-texto > p:last-child,
+html[data-bs-theme="dark"] .modal-titulo-area p,
+html[data-bs-theme="dark"] .mensagem-sucesso p {
+  color: #b4aab8;
+}
+
+html.dark .modal-header-custom,
+html[data-bs-theme="dark"] .modal-header-custom {
+  border-color: #3a303f;
+}
+
+html.dark .modal-textarea,
+html[data-bs-theme="dark"] .modal-textarea {
+  color: #f8f7f9;
+  background: #161219;
+  border-color: #4a3f50;
+}
+
+html.dark .modal-textarea::placeholder,
+html[data-bs-theme="dark"] .modal-textarea::placeholder {
+  color: #887e8c;
+}
+
+html.dark .btn-cancelar,
+html[data-bs-theme="dark"] .btn-cancelar {
+  color: #d6ced9;
+  background: #161219;
+  border-color: #4a3f50;
+}
+
+
+/* =========================================
    RESPONSIVIDADE
 ========================================= */
 

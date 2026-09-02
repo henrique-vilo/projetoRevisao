@@ -504,6 +504,53 @@
    RESPONSIVE
 ===================================================== */
 
+html.dark .products-filter-toggle,
+html.dark .products-filter-field input,
+html.dark .products-filter-field select,
+html[data-bs-theme="dark"] .products-filter-toggle,
+html[data-bs-theme="dark"] .products-filter-field input,
+html[data-bs-theme="dark"] .products-filter-field select {
+  color: #f8f7f9;
+  background: #1c1720;
+  border-color: #3a303f;
+}
+
+html.dark .products-filter-toggle:hover,
+html.dark .products-filter-field input:focus,
+html.dark .products-filter-field select:focus,
+html[data-bs-theme="dark"] .products-filter-toggle:hover,
+html[data-bs-theme="dark"] .products-filter-field input:focus,
+html[data-bs-theme="dark"] .products-filter-field select:focus {
+  background: #161219;
+  border-color: #00a9d4;
+}
+
+html.dark .products-filters,
+html[data-bs-theme="dark"] .products-filters {
+  background: #161219;
+  border-color: #3a303f;
+}
+
+html.dark .products-filter-field label,
+html.dark .products-filter-reset,
+html.dark .product-category-cell small,
+html.dark .products-loading-content,
+html[data-bs-theme="dark"] .products-filter-field label,
+html[data-bs-theme="dark"] .products-filter-reset,
+html[data-bs-theme="dark"] .product-category-cell small,
+html[data-bs-theme="dark"] .products-loading-content {
+  color: #b4aab8;
+}
+
+html.dark .product-table-image,
+html.dark .product-image-upload,
+html[data-bs-theme="dark"] .product-table-image,
+html[data-bs-theme="dark"] .product-image-upload {
+  color: #40ffdc;
+  background: #161219;
+  border-color: #3a303f;
+}
+
 @media (max-width: 1200px) {
   .products-filter-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));

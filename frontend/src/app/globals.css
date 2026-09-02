@@ -16,15 +16,23 @@
 html.dark,
 html[data-bs-theme="dark"] {
   color-scheme: dark;
-  --background: #0b1120;
-  --foreground: #f8fafc;
-  --card-bg: #1e293b;
-  --card-border: #334155;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --input-bg: #0f172a;
-  --border-color: #334155;
-  --accent-color: #38bdf8;
+  --background: #100d14;
+  --foreground: #f8f7f9;
+  --card-bg: #1c1720;
+  --card-border: #3a303f;
+  --text-primary: #f8f7f9;
+  --text-secondary: #b4aab8;
+  --input-bg: #161219;
+  --border-color: #3a303f;
+  --accent-color: #00a9d4;
+  --primary-blue: #00a9d4;
+  --primary-blue-dark: #0088aa;
+  --primary-blue-light: rgba(0, 169, 212, 0.14);
+  --surface: #1c1720;
+  --surface-muted: #161219;
+  --border: #3a303f;
+  --border-light: #2b2430;
+  --text-muted: #968b9b;
 }
 
 /* ==========================================================================
@@ -41,6 +49,12 @@ body {
   background-color: var(--background);
   font-family: Arial, Helvetica, sans-serif;
   transition: background-color 200ms ease, color 200ms ease;
+}
+
+html.dark body,
+html[data-bs-theme="dark"] body {
+  color: var(--foreground);
+  background-color: var(--background);
 }
 
 a {
@@ -220,110 +234,145 @@ header [class*="icons"] {
 }
 
 /* ==========================================================================
-   5. DROPDOWN NO MODO ESCURO (CORREÇÃO TOTAL DE VISIBILIDADE)
+   5. BASE DO MODO ESCURO
+
+   O tema é aplicado por superfície em cada componente. Manter esta camada
+   curta evita que seletores globais apaguem cores de badges, botões e heróis.
    ========================================================================== */
-html.dark .dropdown-menu,
-html.dark [class*="dropdown"],
-html.dark .nav-item-container > div,
-html[data-bs-theme="dark"] .dropdown-menu,
-html[data-bs-theme="dark"] [class*="dropdown"],
-html[data-bs-theme="dark"] .nav-item-container > div {
-  background-color: #1e293b !important;
-  background: #1e293b !important;
-  border: 1px solid #334155 !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
-}
-
-html.dark .dropdown-menu *,
-html.dark [class*="dropdown"] *,
-html.dark .nav-item-container > div *,
-html[data-bs-theme="dark"] .dropdown-menu *,
-html[data-bs-theme="dark"] [class*="dropdown"] *,
-html[data-bs-theme="dark"] .nav-item-container > div * {
-  color: #f8fafc !important;
-  background-color: transparent !important;
-}
-
-html.dark .dropdown-header-title,
-html.dark .dropdown-count,
-html.dark [class*="count"],
-html.dark [class*="title"],
-html[data-bs-theme="dark"] .dropdown-header-title,
-html[data-bs-theme="dark"] .dropdown-count,
-html[data-bs-theme="dark"] [class*="count"] {
-  color: #94a3b8 !important;
-}
-
-html.dark .dropdown-menu a:hover,
-html.dark .dropdown-menu li:hover,
-html[data-bs-theme="dark"] .dropdown-menu a:hover,
-html[data-bs-theme="dark"] .dropdown-menu li:hover {
-  background-color: #334155 !important;
-  color: #ffffff !important;
-}
-
-html.dark .dropdown-category-row,
-html.dark .dropdown-menu hr,
-html.dark .dropdown-footer-link,
-html[data-bs-theme="dark"] .dropdown-category-row,
-html[data-bs-theme="dark"] .dropdown-footer-link {
-  border-color: #334155 !important;
-}
-
-html.dark .dropdown-footer-link,
-html.dark .dropdown-menu a[href*="categoria"],
-html[data-bs-theme="dark"] .dropdown-footer-link {
-  color: #38bdf8 !important;
-}
-
-/* ==========================================================================
-   6. MODO ESCURO GERAL DA APLICAÇÃO
-   ========================================================================== */
-html.dark main,
-html.dark section,
-html.dark article,
-html.dark header,
-html.dark nav {
-  background-color: var(--background) !important;
-  color: var(--foreground) !important;
-}
-
 html.dark .bg-white,
 html.dark .bg-light,
-html.dark .bg-body {
+html.dark .bg-body,
+html[data-bs-theme="dark"] .bg-white,
+html[data-bs-theme="dark"] .bg-light,
+html[data-bs-theme="dark"] .bg-body {
   background-color: var(--background) !important;
-  color: var(--foreground) !important;
 }
 
-html.dark h1, html.dark h2, html.dark h3, 
-html.dark h4, html.dark h5, html.dark h6, 
-html.dark p, html.dark span, html.dark label, 
-html.dark li, html.dark strong, html.dark b,
-html.dark a, html.dark small, html.dark div,
-html.dark .text-dark, html.dark .text-black, html.dark .text-body {
-  color: var(--foreground) !important;
+html.dark .text-dark,
+html.dark .text-black,
+html.dark .text-body,
+html[data-bs-theme="dark"] .text-dark,
+html[data-bs-theme="dark"] .text-black,
+html[data-bs-theme="dark"] .text-body {
+  color: var(--text-primary) !important;
 }
 
 html.dark .text-muted,
-html.dark .text-secondary {
+html.dark .text-secondary,
+html[data-bs-theme="dark"] .text-muted,
+html[data-bs-theme="dark"] .text-secondary {
   color: var(--text-secondary) !important;
 }
 
 html.dark .card,
-html.dark [class*="product-card"],
-html.dark [class*="product-item"] {
-  background-color: var(--card-bg) !important;
-  color: var(--foreground) !important;
-  border-color: var(--card-border) !important;
+html[data-bs-theme="dark"] .card {
+  color: var(--text-primary);
+  background-color: var(--card-bg);
+  border-color: var(--card-border);
 }
 
-html.dark input,
-html.dark select,
-html.dark textarea,
-html.dark .form-control {
-  background-color: var(--input-bg) !important;
-  color: var(--foreground) !important;
-  border-color: var(--border-color) !important;
+html.dark .form-control,
+html.dark .form-select,
+html[data-bs-theme="dark"] .form-control,
+html[data-bs-theme="dark"] .form-select {
+  color: var(--text-primary);
+  background-color: var(--input-bg);
+  border-color: var(--border-color);
+}
+
+/* As três vitrines legadas compartilham a classe raiz e o mesmo CSS. */
+html.dark .masculino-page,
+html[data-bs-theme="dark"] .masculino-page {
+  color: #f8f7f9;
+  background: linear-gradient(180deg, #100d14 0%, #151117 48%, #100d14 100%);
+}
+
+html.dark .masculino-header,
+html[data-bs-theme="dark"] .masculino-header {
+  background: linear-gradient(115deg, #1c0021 0%, #171320 48%, #14213d 100%);
+  border-color: #3a303f;
+}
+
+html.dark .masculino-header h1,
+html.dark .filter-title,
+html.dark .products-heading h2,
+html.dark .product-info h3,
+html.dark .product-bottom strong,
+html[data-bs-theme="dark"] .masculino-header h1,
+html[data-bs-theme="dark"] .filter-title,
+html[data-bs-theme="dark"] .products-heading h2,
+html[data-bs-theme="dark"] .product-info h3,
+html[data-bs-theme="dark"] .product-bottom strong {
+  color: #f8f7f9;
+}
+
+html.dark .masculino-header p,
+html.dark .clear-filters,
+html.dark .filter-group label,
+html.dark .products-heading p,
+html[data-bs-theme="dark"] .masculino-header p,
+html[data-bs-theme="dark"] .clear-filters,
+html[data-bs-theme="dark"] .filter-group label,
+html[data-bs-theme="dark"] .products-heading p {
+  color: #b4aab8;
+}
+
+html.dark .filters-section,
+html[data-bs-theme="dark"] .filters-section {
+  background: rgba(28, 23, 32, 0.94);
+  border-color: #3a303f;
+  box-shadow: 0 3px 16px rgba(0, 0, 0, 0.22);
+}
+
+html.dark .filter-title i,
+html[data-bs-theme="dark"] .filter-title i {
+  color: #40ffdc;
+  background: rgba(0, 169, 212, 0.14);
+}
+
+html.dark .filter-group select,
+html[data-bs-theme="dark"] .filter-group select {
+  color: #f8f7f9;
+  background: #161219;
+  border-color: #4a3f50;
+}
+
+html.dark .filter-group select:hover,
+html.dark .filter-group select:focus,
+html[data-bs-theme="dark"] .filter-group select:hover,
+html[data-bs-theme="dark"] .filter-group select:focus {
+  background: #100d14;
+  border-color: #00a9d4;
+}
+
+html.dark .product-card,
+html[data-bs-theme="dark"] .product-card {
+  background: #1c1720;
+  border-color: #3a303f;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+}
+
+html.dark .product-card:hover,
+html[data-bs-theme="dark"] .product-card:hover {
+  border-color: #00a9d4;
+  box-shadow: 0 12px 30px rgba(0, 169, 212, 0.1);
+}
+
+html.dark .product-image,
+html[data-bs-theme="dark"] .product-image {
+  background: linear-gradient(145deg, #211a25, #171320);
+}
+
+html.dark .favorite-button,
+html[data-bs-theme="dark"] .favorite-button {
+  color: #40ffdc;
+  background: rgba(28, 23, 32, 0.94);
+  border-color: #4a3f50;
+}
+
+html.dark .product-info,
+html[data-bs-theme="dark"] .product-info {
+  border-color: #3a303f;
 }
 
 /* ==========================================================================
@@ -338,20 +387,3 @@ html.dark .form-control {
   border: none !important;
   box-shadow: none !important;
 }
-
-html.dark .footer, html[data-bs-theme="dark"] .footer {
-  background: linear-gradient(180deg, #0f172a 0%, #030712 100%) !important;
-  color: #f8fafc !important;
-}
-
-html.dark .brand-text-top, html[data-bs-theme="dark"] .brand-text-top { color: #cbd5e1 !important; }
-html.dark .brand-name, html[data-bs-theme="dark"] .brand-name { color: #ffffff !important; }
-html.dark .brand-description, html[data-bs-theme="dark"] .brand-description { color: #94a3b8 !important; }
-html.dark .social-link, html[data-bs-theme="dark"] .social-link { color: #f8fafc !important; }
-html.dark .social-link:hover, html[data-bs-theme="dark"] .social-link:hover { color: #38bdf8 !important; }
-html.dark .footer hr, html[data-bs-theme="dark"] .footer hr { border-color: rgba(255, 255, 255, 0.15) !important; }
-html.dark .column-header, html[data-bs-theme="dark"] .column-header { color: #ffffff !important; }
-html.dark .footer-link, html[data-bs-theme="dark"] .footer-link { color: #cbd5e1 !important; }
-html.dark .footer-link:hover, html[data-bs-theme="dark"] .footer-link:hover { color: #ffffff !important; }
-html.dark .contact-info, html.dark .mission-text, html[data-bs-theme="dark"] .contact-info, html[data-bs-theme="dark"] .mission-text { color: #cbd5e1 !important; }
-html.dark .copyright-text, html[data-bs-theme="dark"] .copyright-text { color: #64748b !important; }

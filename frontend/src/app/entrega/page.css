@@ -378,25 +378,58 @@
 }
 
 html.dark .delivery-page {
-  background: #141218;
+  color: #f8f7f9;
+  background: #100d14;
 }
 
 html.dark .delivery-main,
 html.dark .delivery-summary,
 html.dark .delivery-feedback,
 html.dark .delivery-step-marker span {
-  border-color: #35313a;
-  background: #201d24;
+  border-color: #3a303f;
+  background: #1c1720;
 }
 
 html.dark .delivery-status,
 html.dark .delivery-order-meta {
-  border-color: #28424a;
-  background: #181f24;
+  border-color: #275967;
+  background: #151d21;
 }
 
 html.dark .delivery-products article {
-  border-color: #35313a;
+  border-color: #3a303f;
+}
+
+html.dark .delivery-heading h1,
+html.dark .delivery-status h2,
+html.dark .delivery-step.completed h3,
+html.dark .delivery-summary h2,
+html.dark .delivery-order-meta strong,
+html.dark .delivery-products h3,
+html.dark .delivery-products strong,
+html.dark .delivery-feedback h1 {
+  color: #f8f7f9;
+}
+
+html.dark .delivery-heading p,
+html.dark .delivery-status p,
+html.dark .delivery-step,
+html.dark .delivery-step h3,
+html.dark .delivery-step p,
+html.dark .delivery-order-meta span,
+html.dark .delivery-feedback p {
+  color: #b4aab8;
+}
+
+html.dark .delivery-warning {
+  color: #d9f8ff;
+  background: rgba(0, 169, 212, 0.12);
+}
+
+html.dark .delivery-product-image,
+html.dark .delivery-product-fallback {
+  color: #40ffdc;
+  background: #161219;
 }
 
 @media (max-width: 880px) {

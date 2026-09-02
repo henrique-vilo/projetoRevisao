@@ -95,15 +95,15 @@ html.dark .footer,
 html[data-bs-theme="dark"] .footer {
   background: linear-gradient(
     180deg,
-    #0f172a 0%,
-    #030712 100%
+    #1c0021 0%,
+    #100d14 100%
   ) !important;
-  color: #f8fafc !important;
+  color: #f8f7f9 !important;
 }
 
 html.dark .brand-text-top,
 html[data-bs-theme="dark"] .brand-text-top {
-  color: #cbd5e1 !important;
+  color: #d6ced9 !important;
 }
 
 html.dark .brand-name,
@@ -113,17 +113,17 @@ html[data-bs-theme="dark"] .brand-name {
 
 html.dark .brand-description,
 html[data-bs-theme="dark"] .brand-description {
-  color: #94a3b8 !important;
+  color: #b4aab8 !important;
 }
 
 html.dark .social-link,
 html[data-bs-theme="dark"] .social-link {
-  color: #f8fafc !important;
+  color: #f8f7f9 !important;
 }
 
 html.dark .social-link:hover,
 html[data-bs-theme="dark"] .social-link:hover {
-  color: #38bdf8 !important;
+  color: #40ffdc !important;
 }
 
 html.dark .footer hr,
@@ -138,7 +138,7 @@ html[data-bs-theme="dark"] .column-header {
 
 html.dark .footer-link,
 html[data-bs-theme="dark"] .footer-link {
-  color: #cbd5e1 !important;
+  color: #d6ced9 !important;
 }
 
 html.dark .footer-link:hover,
@@ -150,10 +150,10 @@ html.dark .contact-info,
 html.dark .mission-text,
 html[data-bs-theme="dark"] .contact-info,
 html[data-bs-theme="dark"] .mission-text {
-  color: #cbd5e1 !important;
+  color: #d6ced9 !important;
 }
 
 html.dark .copyright-text,
 html[data-bs-theme="dark"] .copyright-text {
-  color: #64748b !important;
+  color: #968b9b !important;
 }

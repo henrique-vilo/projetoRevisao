@@ -339,6 +339,30 @@
   color: #cbd5e1;
 }
 
+html.dark .not-found-btn-secondary,
+html[data-bs-theme="dark"] .not-found-btn-secondary {
+  color: #d6ced9;
+  background: #1c1720;
+  border-color: #3a303f;
+}
+
+html.dark .not-found-btn-secondary:hover,
+html[data-bs-theme="dark"] .not-found-btn-secondary:hover {
+  color: #40ffdc;
+  background: #161219;
+  border-color: #00a9d4;
+}
+
+html.dark .not-found-orb-one,
+html[data-bs-theme="dark"] .not-found-orb-one {
+  background: #00a9d4;
+}
+
+html.dark .not-found-orb-two,
+html[data-bs-theme="dark"] .not-found-orb-two {
+  background: #240047;
+}
+
 
 /* =========================================================
    RESPONSIVE

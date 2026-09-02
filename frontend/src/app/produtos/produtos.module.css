@@ -476,6 +476,116 @@
   font-weight: 700;
 }
 
+/* Tema escuro */
+:global(html.dark) .page,
+:global(html[data-bs-theme="dark"]) .page {
+  color: #f8f7f9;
+  background: #100d14;
+}
+
+:global(html.dark) .filters,
+:global(html.dark) .card,
+:global(html.dark) .skeleton,
+:global(html[data-bs-theme="dark"]) .filters,
+:global(html[data-bs-theme="dark"]) .card,
+:global(html[data-bs-theme="dark"]) .skeleton {
+  color: #f8f7f9;
+  background: #1c1720;
+  border-color: #3a303f;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+}
+
+:global(html.dark) .heading h1,
+:global(html.dark) .filtersTitle h2,
+:global(html.dark) .cardBody h2,
+:global(html.dark) .cardBody strong,
+:global(html.dark) .feedback h2,
+:global(html[data-bs-theme="dark"]) .heading h1,
+:global(html[data-bs-theme="dark"]) .filtersTitle h2,
+:global(html[data-bs-theme="dark"]) .cardBody h2,
+:global(html[data-bs-theme="dark"]) .cardBody strong,
+:global(html[data-bs-theme="dark"]) .feedback h2 {
+  color: #f8f7f9;
+}
+
+:global(html.dark) .heading p,
+:global(html.dark) .field > span,
+:global(html.dark) .priceGroup legend,
+:global(html.dark) .priceGroup label > span,
+:global(html.dark) .stockCheck,
+:global(html.dark) .toolbar,
+:global(html.dark) .meta,
+:global(html.dark) .cardBody small,
+:global(html.dark) .feedback p,
+:global(html.dark) .initialLoading,
+:global(html.dark) .pagination span,
+:global(html[data-bs-theme="dark"]) .heading p,
+:global(html[data-bs-theme="dark"]) .field > span,
+:global(html[data-bs-theme="dark"]) .priceGroup legend,
+:global(html[data-bs-theme="dark"]) .priceGroup label > span,
+:global(html[data-bs-theme="dark"]) .stockCheck,
+:global(html[data-bs-theme="dark"]) .toolbar,
+:global(html[data-bs-theme="dark"]) .meta,
+:global(html[data-bs-theme="dark"]) .cardBody small,
+:global(html[data-bs-theme="dark"]) .feedback p,
+:global(html[data-bs-theme="dark"]) .initialLoading,
+:global(html[data-bs-theme="dark"]) .pagination span {
+  color: #b4aab8;
+}
+
+:global(html.dark) .field input,
+:global(html.dark) .field select,
+:global(html.dark) .priceGroup input,
+:global(html.dark) .toolbar select,
+:global(html[data-bs-theme="dark"]) .field input,
+:global(html[data-bs-theme="dark"]) .field select,
+:global(html[data-bs-theme="dark"]) .priceGroup input,
+:global(html[data-bs-theme="dark"]) .toolbar select {
+  color: #f8f7f9;
+  background: #161219;
+  border-color: #4a3f50;
+}
+
+:global(html.dark) .field input:focus,
+:global(html.dark) .field select:focus,
+:global(html.dark) .priceGroup input:focus,
+:global(html.dark) .toolbar select:focus,
+:global(html[data-bs-theme="dark"]) .field input:focus,
+:global(html[data-bs-theme="dark"]) .field select:focus,
+:global(html[data-bs-theme="dark"]) .priceGroup input:focus,
+:global(html[data-bs-theme="dark"]) .toolbar select:focus {
+  background: #100d14;
+}
+
+:global(html.dark) .imageLink,
+:global(html[data-bs-theme="dark"]) .imageLink {
+  background: #211a25;
+}
+
+:global(html.dark) .imageFallback,
+:global(html[data-bs-theme="dark"]) .imageFallback {
+  color: #40ffdc;
+}
+
+:global(html.dark) .pagination button,
+:global(html[data-bs-theme="dark"]) .pagination button {
+  color: #40ffdc;
+  background: #1c1720;
+  border-color: #4a3f50;
+}
+
+:global(html.dark) .pagination button:disabled,
+:global(html[data-bs-theme="dark"]) .pagination button:disabled {
+  color: #756b79;
+  background: #161219;
+}
+
+:global(html.dark) .skeleton > span,
+:global(html[data-bs-theme="dark"]) .skeleton > span {
+  background: linear-gradient(90deg, #2a222e 25%, #3a303f 50%, #2a222e 75%);
+  background-size: 200% 100%;
+}
+
 @media (max-width: 1100px) {
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

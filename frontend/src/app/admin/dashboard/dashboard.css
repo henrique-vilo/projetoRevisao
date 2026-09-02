@@ -32,6 +32,26 @@
   transition: margin-left 150ms ease;
 }
 
+html.dark .dashboard-page,
+html[data-bs-theme="dark"] .dashboard-page {
+  --db-primary: #00a9d4;
+  --db-primary-soft: rgba(0, 169, 212, 0.14);
+  --db-ink: #f8f7f9;
+  --db-text: #d6ced9;
+  --db-muted: #968b9b;
+  --db-border: #3a303f;
+  --db-surface: #1c1720;
+  --db-bg: #100d14;
+  --db-success: #40ffdc;
+  --db-success-soft: rgba(64, 255, 220, 0.12);
+  --db-warning: #f6bd60;
+  --db-warning-soft: rgba(246, 189, 96, 0.12);
+  --db-danger: #ff879b;
+  --db-danger-soft: rgba(255, 135, 155, 0.12);
+  --db-info: #5fdcff;
+  --db-info-soft: rgba(0, 169, 212, 0.12);
+}
+
 /* Abaixo de 767.98px a sidebar recolhe para width: 0 (ver
    Siderbar.css) — o dashboard acompanha a mesma quebra. */
 @media (max-width: 767.98px) {

@@ -635,6 +635,117 @@
 }
 
 /* =========================================
+   TEMA ESCURO
+========================================= */
+html.dark .checkoutPage,
+html[data-bs-theme="dark"] .checkoutPage {
+  color: #f8f7f9;
+  background: #100d14;
+}
+
+html.dark .checkoutCard,
+html.dark .summaryCard,
+html.dark .carrinhoVazio,
+html[data-bs-theme="dark"] .checkoutCard,
+html[data-bs-theme="dark"] .summaryCard,
+html[data-bs-theme="dark"] .carrinhoVazio {
+  background: #1c1720;
+  border-color: #3a303f;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+}
+
+html.dark .checkoutHeading h1,
+html.dark .cardHeader h2,
+html.dark .summaryHeader h2,
+html.dark .summaryProductInfo h3,
+html.dark .summaryProductInfo strong,
+html.dark .summaryValues strong,
+html.dark .summaryValues .summaryTotal,
+html.dark .carrinhoVazio h2,
+html[data-bs-theme="dark"] .checkoutHeading h1,
+html[data-bs-theme="dark"] .cardHeader h2,
+html[data-bs-theme="dark"] .summaryHeader h2,
+html[data-bs-theme="dark"] .summaryProductInfo h3,
+html[data-bs-theme="dark"] .summaryProductInfo strong,
+html[data-bs-theme="dark"] .summaryValues strong,
+html[data-bs-theme="dark"] .summaryValues .summaryTotal,
+html[data-bs-theme="dark"] .carrinhoVazio h2 {
+  color: #f8f7f9;
+}
+
+html.dark .checkoutHeading p,
+html.dark .formField label,
+html.dark .paymentOption span,
+html.dark .summaryProductInfo span,
+html.dark .summaryProductInfo small,
+html.dark .summaryValues > div,
+html.dark .securityText,
+html.dark .carrinhoVazio p,
+html[data-bs-theme="dark"] .checkoutHeading p,
+html[data-bs-theme="dark"] .formField label,
+html[data-bs-theme="dark"] .paymentOption span,
+html[data-bs-theme="dark"] .summaryProductInfo span,
+html[data-bs-theme="dark"] .summaryProductInfo small,
+html[data-bs-theme="dark"] .summaryValues > div,
+html[data-bs-theme="dark"] .securityText,
+html[data-bs-theme="dark"] .carrinhoVazio p {
+  color: #b4aab8;
+}
+
+html.dark .formField input,
+html[data-bs-theme="dark"] .formField input {
+  color: #f8f7f9;
+  background: #161219;
+  border-color: #4a3f50;
+}
+
+html.dark .formField input:focus,
+html[data-bs-theme="dark"] .formField input:focus {
+  background: #100d14;
+}
+
+html.dark .paymentOption,
+html[data-bs-theme="dark"] .paymentOption {
+  background: #161219;
+  border-color: #4a3f50;
+}
+
+html.dark .paymentOption strong,
+html[data-bs-theme="dark"] .paymentOption strong {
+  color: #e9e4eb;
+}
+
+html.dark .paymentOption.selected,
+html[data-bs-theme="dark"] .paymentOption.selected {
+  background: rgba(0, 169, 212, 0.13);
+  border-color: #00a9d4;
+}
+
+html.dark .cardFields,
+html.dark .summaryHeader,
+html.dark .summaryProduct,
+html.dark .summaryValues .summaryTotal,
+html[data-bs-theme="dark"] .cardFields,
+html[data-bs-theme="dark"] .summaryHeader,
+html[data-bs-theme="dark"] .summaryProduct,
+html[data-bs-theme="dark"] .summaryValues .summaryTotal {
+  border-color: #3a303f;
+}
+
+html.dark .summaryImage,
+html.dark .summaryImageFallback,
+html[data-bs-theme="dark"] .summaryImage,
+html[data-bs-theme="dark"] .summaryImageFallback {
+  color: #40ffdc;
+  background: linear-gradient(145deg, rgba(0, 169, 212, 0.14), rgba(36, 0, 71, 0.24)), #211a25;
+}
+
+html.dark .summaryTotal strong,
+html[data-bs-theme="dark"] .summaryTotal strong {
+  color: #40ffdc;
+}
+
+/* =========================================
    RESPONSIVO
 ========================================= */
 
