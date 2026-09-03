@@ -115,7 +115,7 @@ class AuthController {
                 return res.status(400).json({
                     sucesso: false,
                     erro: 'CEP obrigatório',
-                    mesnagem: 'O CEP é obrigatório'
+                    mensagem: 'O CEP é obrigatório'
                 })
             }
 
@@ -314,8 +314,9 @@ class AuthController {
     static async listarUsuarios(req, res) {
         try {
             // Obter parâmetros de paginação da query string
-            const pagina = parseInt(req.query.pagina) || 1;
-            const limite = parseInt(req.query.limite) || 10;
+            const pagina = parseInt(req.query.pagina, 10) || 1;
+            const limite = parseInt(req.query.limite, 10) || 10;
+            const busca = String(req.query.busca || '').trim().slice(0, 100);
             
             // Validações
             if (pagina < 1) {
@@ -335,7 +336,7 @@ class AuthController {
                 });
             }
             
-            const resultado = await UsuarioModel.listarTodos(pagina, limite);
+            const resultado = await UsuarioModel.listarTodos(pagina, limite, busca);
             
             // Remover senha de todos os usuários
             const usuariosSemSenha = resultado.usuarios.map(({ senha, ...usuario }) => usuario);
@@ -531,6 +532,15 @@ class AuthController {
                 });
             }
 
+            const tipoFormatado = String(tipo || 'cliente').trim().toLowerCase();
+            if (!['cliente', 'admin'].includes(tipoFormatado)) {
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'Tipo inválido',
+                    mensagem: 'O tipo deve ser cliente ou admin'
+                });
+            }
+
             // Verificar se dados únicos já existem
             const usuarioEmailExistente = await UsuarioModel.buscarPorEmail(email);
             if (usuarioEmailExistente) {
@@ -567,7 +577,7 @@ class AuthController {
                 telefone: telefone.trim(),
                 cep: cep.trim(),
                 senha: senha,
-                tipo: tipo || 'cliente'
+                tipo: tipoFormatado
             };
 
             // Criar usuário
@@ -662,8 +672,8 @@ class AuthController {
                         })
                 }
 
-                const usuarioCpfExistente = await UsuarioModel.buscarPorCpf(cpf);
-                if (usuarioCpfExistente) {
+                const usuarioCpfExistente = await UsuarioModel.buscarPorCpf(cpf.trim());
+                if (usuarioCpfExistente && Number(usuarioCpfExistente.idUsuario) !== Number(id)) {
                     return res.status(409).json({
                         sucesso: false,
                         erro: 'CPF já cadastrado',
@@ -684,8 +694,9 @@ class AuthController {
                 }
                 
                 // Verificar se o email já está em uso por outro usuário
-                const usuarioComEmail = await UsuarioModel.buscarPorEmail(email);
-                if (usuarioComEmail && usuarioComEmail.id !== parseInt(id)) {
+                const emailNormalizado = email.trim().toLowerCase();
+                const usuarioComEmail = await UsuarioModel.buscarPorEmail(emailNormalizado);
+                if (usuarioComEmail && Number(usuarioComEmail.idUsuario) !== Number(id)) {
                     return res.status(409).json({
                         sucesso: false,
                         erro: 'Email já cadastrado',
@@ -693,7 +704,7 @@ class AuthController {
                     });
                 }
                 
-                dadosAtualizacao.email = email.trim().toLowerCase();
+                dadosAtualizacao.email = emailNormalizado;
             }
 
             if(telefone !== undefined){
@@ -713,6 +724,15 @@ class AuthController {
                         erro: 'telefone inválido',
                         mensagem: 'formato de telefone inválido'
                     })
+                }
+
+                const usuarioComTelefone = await UsuarioModel.buscarPorTelefone(telefone.trim());
+                if (usuarioComTelefone && Number(usuarioComTelefone.idUsuario) !== Number(id)) {
+                    return res.status(409).json({
+                        sucesso: false,
+                        erro: 'Telefone já cadastrado',
+                        mensagem: 'Este telefone já está sendo usado por outro usuário'
+                    });
                 }
 
                 dadosAtualizacao.telefone = telefone.trim();
@@ -776,14 +796,14 @@ class AuthController {
             }
 
             // Atualizar usuário
-            const resultado = await UsuarioModel.atualizar(id, dadosAtualizacao);
+            await UsuarioModel.atualizar(id, dadosAtualizacao);
+            const usuarioAtualizado = await UsuarioModel.buscarPorId(id);
+            const { senha: _, ...usuarioSemSenha } = usuarioAtualizado;
             
             res.status(200).json({
                 sucesso: true,
                 mensagem: 'Usuário atualizado com sucesso',
-                dados: {
-                    linhasAfetadas: resultado || 1
-                }
+                dados: usuarioSemSenha
             });
         } catch (error) {
             console.error('Erro ao atualizar usuário:', error);
@@ -815,6 +835,15 @@ class AuthController {
                     sucesso: false,
                     erro: 'Usuário não encontrado',
                     mensagem: `Usuário com ID ${id} não foi encontrado`
+                });
+            }
+
+
+            if (Number(req.usuario?.id) === Number(id)) {
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'Operação não permitida',
+                    mensagem: 'Você não pode excluir a própria conta administrativa.'
                 });
             }
 

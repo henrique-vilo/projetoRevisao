@@ -615,7 +615,7 @@ export default function SubcategoriasPage() {
           ================================================= */}
 
           <div className="table-responsive users-table-wrapper">
-            <table className="table users-table align-middle">
+            <table className="table users-table admin-responsive-table align-middle">
 
               <thead>
                 <tr>
@@ -662,7 +662,7 @@ export default function SubcategoriasPage() {
 
                         {/* SUBCATEGORY */}
 
-                        <td>
+                        <td data-label="Subcategoria">
                           <div className="user-cell">
 
                             <div className="user-avatar">
@@ -688,7 +688,7 @@ export default function SubcategoriasPage() {
 
                         {/* ID */}
 
-                        <td>
+                        <td data-label="ID">
                           <span className="table-muted">
                             ID #
                             {
@@ -699,7 +699,7 @@ export default function SubcategoriasPage() {
 
                         {/* ACTIONS */}
 
-                        <td>
+                        <td data-label="Ações">
                           <div className="user-actions">
 
                             <button

@@ -2,6 +2,7 @@
 
 import '../tables.css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { getPaginationItems } from '../adminPagination';
 
 const API_URL = 'http://localhost:3001/api/usuarios';
 
@@ -119,6 +120,7 @@ function formatCep(value) {
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
     pagina: 1,
@@ -180,7 +182,9 @@ export default function UsersPage() {
         setError('');
         setTokenError(false);
 
-        const data = await apiRequest(`${API_URL}?pagina=${page}&limite=${usersPerPage}`);
+        const params = new URLSearchParams({ pagina: String(page), limite: String(usersPerPage) });
+        if (debouncedSearch.trim()) params.set('busca', debouncedSearch.trim());
+        const data = await apiRequest(`${API_URL}?${params.toString()}`);
         const apiUsers = Array.isArray(data?.dados) ? data.dados : [];
 
         setUsers(apiUsers);
@@ -200,33 +204,30 @@ export default function UsersPage() {
         setLoading(false);
       }
     },
-    [apiRequest]
+    [apiRequest, debouncedSearch]
   );
 
   useEffect(() => {
-    loadUsers(1);
-  }, [loadUsers]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    loadUsers(currentPage);
+  }, [currentPage, loadUsers]);
 
   const filteredUsers = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return users;
-
-    return users.filter((user) => {
-      const name = String(user.nome || '').toLowerCase();
-      const email = String(user.email || '').toLowerCase();
-      const cpf = String(user.cpf || '').toLowerCase();
-      const telefone = String(user.telefone || '').toLowerCase();
-      const tipo = getTypeLabel(user.tipo).toLowerCase();
-
-      return [name, email, cpf, telefone, tipo].some((value) => value.includes(term));
-    });
-  }, [users, search]);
+    return users;
+  }, [users]);
 
   const totalPages = Math.max(1, pagination.totalPaginas);
   const safeCurrentPage = Math.min(currentPage, totalPages);
 
-  const closeModal = () => {
-    if (submitting) return;
+  const closeModal = (force = false) => {
+    if (submitting && force !== true) return;
     setModal(null);
     setSelectedUser(null);
     setForm(emptyForm);
@@ -357,7 +358,7 @@ export default function UsersPage() {
         data?.mensagem || (modal === 'create' ? 'Usuário criado com sucesso.' : 'Usuário atualizado com sucesso.')
       );
       
-      closeModal();
+      closeModal(true);
       await loadUsers(modal === 'create' ? 1 : safeCurrentPage);
       
       if (modal === 'create') {
@@ -384,7 +385,7 @@ export default function UsersPage() {
       });
 
       const deletedUserName = selectedUser.nome;
-      closeModal();
+      closeModal(true);
 
       let pageToLoad = safeCurrentPage;
       if (users.length === 1 && safeCurrentPage > 1) {
@@ -405,9 +406,7 @@ export default function UsersPage() {
   const handleSearch = (event) => setSearch(event.target.value);
   const changePage = (page) => {
     if (page < 1 || page > totalPages || page === safeCurrentPage || loading) return;
-    setSearch('');
     setCurrentPage(page);
-    loadUsers(page);
   };
   const handleRefresh = () => {
     setSearch('');
@@ -485,7 +484,7 @@ export default function UsersPage() {
           </div>
 
           <div className="table-responsive users-table-wrapper">
-            <table className="table users-table align-middle">
+            <table className="table users-table admin-responsive-table align-middle">
               <thead>
                 <tr>
                   <th>Usuário</th>
@@ -508,7 +507,7 @@ export default function UsersPage() {
                 ) : filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
                     <tr key={user.idUsuario}>
-                      <td>
+                      <td data-label="Usuário">
                         <div className="user-cell">
                           <div className="user-avatar">{getInitials(user.nome)}</div>
                           <div className="user-information">
@@ -517,13 +516,13 @@ export default function UsersPage() {
                           </div>
                         </div>
                       </td>
-                      <td>
+                      <td data-label="E-mail">
                         <span className="user-email">{user.email || '—'}</span>
                       </td>
-                      <td>
+                      <td data-label="Tipo">
                         <span className={getTypeClass(user.tipo)}>{getTypeLabel(user.tipo)}</span>
                       </td>
-                      <td>
+                      <td data-label="Ações">
                         <div className="user-actions">
                           <button
                             type="button"
@@ -571,10 +570,16 @@ export default function UsersPage() {
                     <i className="bi bi-chevron-left" />
                   </button>
                 </li>
-                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-                  <li key={page} className={`page-item ${page === safeCurrentPage ? 'active' : ''}`}>
-                    <button type="button" className="page-link" disabled={loading} onClick={() => changePage(page)}>{page}</button>
-                  </li>
+                {getPaginationItems(safeCurrentPage, totalPages).map((item) => (
+                  typeof item === 'number' ? (
+                    <li key={item} className={`page-item ${item === safeCurrentPage ? 'active' : ''}`}>
+                      <button type="button" className="page-link" disabled={loading} onClick={() => changePage(item)}>{item}</button>
+                    </li>
+                  ) : (
+                    <li key={item} className="page-item disabled" aria-hidden="true">
+                      <span className="page-link">…</span>
+                    </li>
+                  )
                 ))}
                 <li className={`page-item ${safeCurrentPage === totalPages || loading ? 'disabled' : ''}`}>
                   <button type="button" className="page-link" disabled={safeCurrentPage === totalPages || loading} onClick={() => changePage(safeCurrentPage + 1)}>

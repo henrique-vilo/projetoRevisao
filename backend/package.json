@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node --watch app.js",
     "dev": "node --watch app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --check controllers/vendasController.js && node --check controllers/produtoController.js && node --check controllers/authController.js && node --check models/vendasModel.js && node --check models/usuarioModel.js && node --check routes/vendasRotas.js && node --check routes/produtoRotas.js && node --check middlewares/authMiddleware.js && node --check middlewares/logMiddleware.js",
+    "test:admin-integration": "node scripts/verify-admin.mjs"
   },
   "keywords": [
     "api",

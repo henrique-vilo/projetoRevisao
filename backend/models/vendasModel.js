@@ -2,13 +2,54 @@ import { create, update, deleteRecord, getConnection } from '../config/database.
 
 class VendaModel {
     // Listar todas as vendas (com paginação)
-    static async listarTodos(limite, offset) {
+    static async listarTodos({ limite, offset, busca = '' }) {
         try {
             const connection = await getConnection();
             try {
-                const sql = 'SELECT * FROM vendas ORDER BY idVendas DESC LIMIT ? OFFSET ?';
-                const [vendas] = await connection.query(sql, [limite, offset]);
-                const [totalResult] = await connection.execute('SELECT COUNT(*) as total FROM vendas');
+                const termo = String(busca).trim();
+                const conditions = [];
+                const params = [];
+
+                if (termo) {
+                    const termoId = termo.replace(/^#?ord-?/i, '');
+                    conditions.push(`(
+                        CAST(v.idVendas AS CHAR) LIKE ? OR
+                        CAST(v.idUsuario AS CHAR) LIKE ? OR
+                        CAST(v.idProduto AS CHAR) LIKE ? OR
+                        u.nome LIKE ? OR u.email LIKE ? OR
+                        p.nome LIKE ? OR p.nomeCombinacao LIKE ? OR p.sku LIKE ? OR
+                        v.status LIKE ?
+                    )`);
+                    const like = `%${termo}%`;
+                    params.push(`%${termoId}%`, like, like, like, like, like, like, like, like);
+                }
+
+                const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+                const baseJoin = `
+                    FROM vendas v
+                    INNER JOIN usuarios u ON u.idUsuario = v.idUsuario
+                    INNER JOIN produtos p ON p.idProduto = v.idProduto
+                `;
+                const sql = `
+                    SELECT
+                        v.*,
+                        v.STATUS AS status,
+                        u.nome AS nomeUsuario,
+                        u.email AS emailUsuario,
+                        p.nome AS nomeProduto,
+                        p.nomeCombinacao,
+                        p.sku,
+                        p.preco AS precoProduto
+                    ${baseJoin}
+                    ${whereClause}
+                    ORDER BY v.idVendas DESC
+                    LIMIT ? OFFSET ?
+                `;
+                const [vendas] = await connection.query(sql, [...params, limite, offset]);
+                const [totalResult] = await connection.query(
+                    `SELECT COUNT(*) AS total ${baseJoin} ${whereClause}`,
+                    params
+                );
                 
                 return {
                     vendas,
@@ -31,7 +72,19 @@ class VendaModel {
         const connection = await getConnection();
         try {
             const [rows] = await connection.execute(
-                'SELECT * FROM vendas WHERE idVendas = ?',
+                `SELECT
+                    v.*,
+                    v.STATUS AS status,
+                    u.nome AS nomeUsuario,
+                    u.email AS emailUsuario,
+                    p.nome AS nomeProduto,
+                    p.nomeCombinacao,
+                    p.sku,
+                    p.preco AS precoProduto
+                 FROM vendas v
+                 INNER JOIN usuarios u ON u.idUsuario = v.idUsuario
+                 INNER JOIN produtos p ON p.idProduto = v.idProduto
+                 WHERE v.idVendas = ?`,
                 [id]
             );
             return rows[0] || null;
@@ -45,7 +98,20 @@ class VendaModel {
         const connection = await getConnection();
         try {
             const [rows] = await connection.execute(
-                'SELECT * FROM vendas WHERE idUsuario = ?',
+                `SELECT
+                    v.*,
+                    v.STATUS AS status,
+                    u.nome AS nomeUsuario,
+                    u.email AS emailUsuario,
+                    p.nome AS nomeProduto,
+                    p.nomeCombinacao,
+                    p.sku,
+                    p.preco AS precoProduto
+                 FROM vendas v
+                 INNER JOIN usuarios u ON u.idUsuario = v.idUsuario
+                 INNER JOIN produtos p ON p.idProduto = v.idProduto
+                 WHERE v.idUsuario = ?
+                 ORDER BY v.idVendas DESC`,
                 [idUsuario]
             );
             return rows;
@@ -115,8 +181,9 @@ class VendaModel {
                     v.idUsuario,
                     v.idProduto,
                     v.dataPedido,
+                    v.dataEnvio,
                     v.dataEntrega,
-                    v.status,
+                    v.STATUS AS status,
                     p.nome,
                     p.nomeCombinacao,
                     p.preco,
@@ -275,7 +342,7 @@ class VendaModel {
         try {
             await connection.beginTransaction();
             const [rows] = await connection.execute(
-                `SELECT v.idVendas, v.idUsuario, v.status, v.idProduto,
+                `SELECT v.idVendas, v.idUsuario, v.STATUS AS status, v.idProduto,
                         p.nome, p.estoque, p.ativo
                  FROM vendas v
                  INNER JOIN produtos p ON p.idProduto = v.idProduto
@@ -338,7 +405,7 @@ class VendaModel {
     // Atualizar dados gerais da venda
     static async atualizar(id, dadosVenda) {
         try {
-            return await update('vendas', dadosVenda, `idVendas = ${id}`);
+            return await update('vendas', dadosVenda, 'idVendas = ?', [id]);
         } catch (error) {
             console.error('Erro ao atualizar venda:', error);
             throw error;
@@ -348,7 +415,7 @@ class VendaModel {
     // Excluir venda
     static async excluir(id) {
         try {
-            return await deleteRecord('vendas', `idVendas = ${id}`);
+            return await deleteRecord('vendas', 'idVendas = ?', [id]);
         } catch (error) {
             console.error('Erro ao excluir venda:', error);
             throw error;

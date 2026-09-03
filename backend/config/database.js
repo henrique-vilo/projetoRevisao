@@ -19,6 +19,10 @@ async function getConnection() {
     return pool.getConnection();
 }
 
+async function closePool() {
+    await pool.end();
+}
+
 
 async function read(table, where = null, params = []) {
     const connection = await getConnection();
@@ -104,5 +108,6 @@ export {
     deleteRecord, 
     comparePassword, 
     hashPassword,
-    getConnection
+    getConnection,
+    closePool
 };

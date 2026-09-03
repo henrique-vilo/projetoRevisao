@@ -679,7 +679,7 @@ export default function CoresPage() {
 
           <div className="table-responsive users-table-wrapper">
 
-            <table className="table users-table align-middle">
+            <table className="table users-table admin-responsive-table align-middle">
 
               <thead>
                 <tr>
@@ -725,7 +725,7 @@ export default function CoresPage() {
 
                       {/* COR */}
 
-                      <td>
+                      <td data-label="Cor">
 
                         <div className="user-cell">
 
@@ -758,7 +758,7 @@ export default function CoresPage() {
 
                       {/* HEX */}
 
-                      <td>
+                      <td data-label="HEX">
 
                         <span className="color-hex">
                           {color.codigoCor}
@@ -768,7 +768,7 @@ export default function CoresPage() {
 
                       {/* TOM */}
 
-                      <td>
+                      <td data-label="Tom">
 
                         <span className="table-muted">
                           {color.tom ||
@@ -779,7 +779,7 @@ export default function CoresPage() {
 
                       {/* ACTIONS */}
 
-                      <td>
+                      <td data-label="Ações">
 
                         <div className="user-actions">
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
@@ -48,6 +48,7 @@ function codigoCorSeguro(codigo) {
 
 export default function ProductPage() {
   const params = useParams();
+  const router = useRouter();
   const idProduto = params?.id || params?.slug;
 
   const [detalhes, setDetalhes] = useState(null);
@@ -196,7 +197,7 @@ export default function ProductPage() {
   const temEstoque = variacoes.some((variacao) => variacao.disponivel);
   const precoExibido = variacaoSelecionada?.preco ?? produto?.preco ?? 0;
   const valorParcela = Number(precoExibido) / 7;
-  const titulo = produto?.nomeCombinacao || produto?.nome || 'Produto';
+  const titulo = produto?.nome || produto?.nomeCombinacao || 'Produto';
 
   function selecionarCor(idCor) {
     setSelectedColorId(String(idCor));
@@ -217,7 +218,7 @@ export default function ProductPage() {
     setAlertaCompra({ tipo, titulo: tituloAlerta, mensagem });
   }
 
-  async function handleBuy() {
+  async function handleBuy(destino = null) {
     if (!selectedColorId) {
       mostrarAlerta(
         'aviso',
@@ -281,6 +282,7 @@ export default function ProductPage() {
         'Produto adicionado',
         `${titulo} foi adicionado ao carrinho.`,
       );
+      if (destino) router.push(destino);
     } catch (error) {
       mostrarAlerta(
         'erro',
@@ -393,7 +395,7 @@ export default function ProductPage() {
           <section className="details-card">
             <div className="product-meta">
               <span>{produto.categoriaNome || produto.genero || 'Everett'}</span>
-              {produto.corNome ? <span>{produto.corNome}</span> : null}
+              {variacaoVisual?.corNome ? <span>{variacaoVisual.corNome}</span> : null}
               <span>
                 Ref. {variacaoSelecionada?.sku || produto.sku || produto.idProduto}
               </span>
@@ -434,8 +436,10 @@ export default function ProductPage() {
                       title={cor.nomeCor}
                     >
                       <span
+                        className="color-swatch"
                         style={{ backgroundColor: codigoCorSeguro(cor.codigoCor) }}
                       />
+                      <span className="color-name">{cor.nomeCor}</span>
                     </button>
                   );
                 })}
@@ -484,19 +488,31 @@ export default function ProductPage() {
             </div>
 
             <div className="purchase-row">
-              <button
-                type="button"
-                onClick={handleBuy}
-                disabled={!temEstoque || adicionandoCarrinho}
-                className="buy-button"
-              >
-                <i className="bi bi-bag-plus" aria-hidden="true" />
-                {adicionandoCarrinho
-                  ? 'Adicionando...'
-                  : temEstoque
-                    ? 'Adicionar ao carrinho'
-                    : 'Produto esgotado'}
-              </button>
+              <div className="purchase-actions">
+                <button
+                  type="button"
+                  onClick={() => handleBuy()}
+                  disabled={!temEstoque || adicionandoCarrinho}
+                  className="buy-button"
+                >
+                  <i className="bi bi-bag-plus" aria-hidden="true" />
+                  {adicionandoCarrinho
+                    ? 'Adicionando...'
+                    : temEstoque
+                      ? 'Adicionar ao carrinho'
+                      : 'Produto esgotado'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleBuy('/finalizarCompra')}
+                  disabled={!temEstoque || adicionandoCarrinho}
+                  className="buy-button buy-now-button"
+                >
+                  <i className="bi bi-lightning-charge" aria-hidden="true" />
+                  Comprar agora
+                </button>
+              </div>
 
               {alertaCompra ? (
                 <aside
@@ -520,6 +536,12 @@ export default function ProductPage() {
                   <div>
                     <strong>{alertaCompra.titulo}</strong>
                     <p>{alertaCompra.mensagem}</p>
+                    {alertaCompra.tipo === 'sucesso' ? (
+                      <div className="alert-actions">
+                        <Link href="/produtos">Continuar comprando</Link>
+                        <Link href="/finalizarCompra">Ir para pagamento</Link>
+                      </div>
+                    ) : null}
                   </div>
 
                   <button
@@ -849,12 +871,18 @@ const pageStyles = `
   }
 
   .color-list button {
-    width: 44px;
-    height: 44px;
-    padding: 4px;
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 4px 0.75rem 4px 4px;
     border: 1px solid #d7d7d1;
-    border-radius: 50%;
+    border-radius: 999px;
+    color: #30302d;
     background: #fff;
+    font-size: 0.76rem;
+    font-weight: 700;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
@@ -863,12 +891,17 @@ const pageStyles = `
     box-shadow: 0 0 0 1px #171717;
   }
 
-  .color-list button > span {
+  .color-list .color-swatch {
     display: block;
-    width: 100%;
-    height: 100%;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
     border: 1px solid rgba(0, 0, 0, 0.14);
     border-radius: 50%;
+  }
+
+  .color-name {
+    white-space: nowrap;
   }
 
   .color-list button:disabled,
@@ -921,10 +954,14 @@ const pageStyles = `
   .purchase-row {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(210px, 1fr) minmax(230px, 0.9fr);
-    align-items: stretch;
     gap: 0.75rem;
     margin-top: 1.8rem;
+  }
+
+  .purchase-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
   }
 
   .buy-button {
@@ -949,6 +986,16 @@ const pageStyles = `
   .buy-button:hover:not(:disabled) {
     background: #343431;
     transform: translateY(-1px);
+  }
+
+  .buy-now-button {
+    color: #06262d;
+    background: #40ffdc;
+    box-shadow: 0 10px 22px rgba(0, 169, 212, 0.15);
+  }
+
+  .buy-now-button:hover:not(:disabled) {
+    background: #7dffe7;
   }
 
   .buy-button:disabled {
@@ -1007,6 +1054,21 @@ const pageStyles = `
     margin: 0;
     font-size: 0.68rem;
     line-height: 1.35;
+  }
+
+  .alert-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.8rem;
+    margin-top: 0.45rem;
+  }
+
+  .alert-actions a {
+    color: currentColor;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .purchase-alert > button {
@@ -1265,6 +1327,12 @@ const pageStyles = `
     background: #00a9d4;
   }
 
+  html.dark .buy-now-button,
+  html[data-bs-theme="dark"] .buy-now-button {
+    color: #07181d;
+    background: #40ffdc;
+  }
+
   html.dark .available-stock,
   html[data-bs-theme="dark"] .available-stock {
     color: #40ffdc;
@@ -1340,12 +1408,38 @@ const pageStyles = `
       grid-template-columns: 1fr;
     }
 
+    .purchase-actions {
+      grid-template-columns: 1fr;
+    }
+
+    .color-list button {
+      flex: 1 1 calc(50% - 0.65rem);
+    }
+
     .purchase-alert {
       min-height: auto;
     }
 
     .size-guide {
       font-size: 0.7rem;
+    }
+  }
+
+  @media (max-width: 390px) {
+    .product-page {
+      padding-inline: 0.5rem;
+    }
+
+    .details-card {
+      padding: 1rem;
+    }
+
+    .color-list button {
+      flex-basis: 100%;
+    }
+
+    .option-heading {
+      align-items: flex-start;
     }
   }
 

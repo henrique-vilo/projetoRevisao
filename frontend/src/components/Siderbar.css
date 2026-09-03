@@ -1,7 +1,7 @@
 :root {
-  --primary-blue: #2563eb;
-  --primary-blue-dark: #1d4ed8;
-  --primary-blue-light: #eff6ff;
+  --primary-blue: #00a9d4;
+  --primary-blue-dark: #0086aa;
+  --primary-blue-light: #e8f9fd;
 
   --background: #f8fafc;
   --surface: #ffffff;
@@ -329,6 +329,15 @@
   flex-direction: column;
   gap: 2px;
   margin-bottom: 12px;
+}
+
+.sidebar-theme-toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 /* =====================================================

@@ -13,6 +13,18 @@ const API_ORIGIN = (
 
 const TOKEN_KEY = 'token';
 const USER_KEY = 'usuario';
+const THEME_KEY = 'tema';
+
+function aplicarTema(isDark) {
+  if (typeof document === 'undefined') return;
+
+  document.documentElement.classList.toggle('dark', isDark);
+  document.documentElement.setAttribute(
+    'data-bs-theme',
+    isDark ? 'dark' : 'light'
+  );
+  localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+}
 
 function lerUsuarioSalvo() {
   if (typeof window === 'undefined') return { token: null, usuario: null };
@@ -91,6 +103,16 @@ export default function Sidebar() {
   const [productsOpen, setProductsOpen] = useState(isProductRouteActive);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [usuario, setUsuario] = useState(null);
+  const [modoEscuro, setModoEscuro] = useState(false);
+
+  useEffect(() => {
+    const temaSalvo = localStorage.getItem(THEME_KEY);
+    const prefereEscuro = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const deveSerEscuro = temaSalvo === 'dark' || (!temaSalvo && prefereEscuro);
+
+    setModoEscuro(deveSerEscuro);
+    aplicarTema(deveSerEscuro);
+  }, []);
 
   // Auto expande o submenu de produtos se estiver em uma rota filha
   useEffect(() => {
@@ -174,6 +196,14 @@ export default function Sidebar() {
     localStorage.removeItem(USER_KEY);
     window.dispatchEvent(new Event('auth-changed'));
     window.location.href = '/login';
+  }
+
+  function alternarTema() {
+    setModoEscuro((modoAtual) => {
+      const novoModo = !modoAtual;
+      aplicarTema(novoModo);
+      return novoModo;
+    });
   }
 
   return (
@@ -294,6 +324,24 @@ export default function Sidebar() {
         {/* BOTTOM */}
         <div className="sidebar-bottom">
           <div className="sidebar-bottom-menu">
+            <button
+              type="button"
+              className="sidebar-link sidebar-theme-toggle"
+              onClick={alternarTema}
+              aria-label={modoEscuro ? 'Ativar modo claro' : 'Ativar modo escuro'}
+              title={modoEscuro ? 'Modo claro' : 'Modo escuro'}
+            >
+              <span className="sidebar-link-icon">
+                <i
+                  className={`bi ${modoEscuro ? 'bi-sun-fill' : 'bi-moon-fill'}`}
+                  aria-hidden="true"
+                />
+              </span>
+              <span className="sidebar-link-label">
+                {modoEscuro ? 'Tema claro' : 'Tema escuro'}
+              </span>
+            </button>
+
             <Link
               href="/admin/ajuda"
               className={`sidebar-link ${

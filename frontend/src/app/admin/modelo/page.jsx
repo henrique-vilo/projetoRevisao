@@ -522,7 +522,7 @@ export default function ModelosPage() {
           ================================================= */}
 
           <div className="table-responsive users-table-wrapper">
-            <table className="table users-table align-middle">
+            <table className="table users-table admin-responsive-table align-middle">
 
               <thead>
                 <tr>
@@ -566,7 +566,7 @@ export default function ModelosPage() {
 
                       {/* MODEL */}
 
-                      <td>
+                      <td data-label="Modelo">
                         <div className="user-cell">
 
                           <div className="user-avatar">
@@ -590,7 +590,7 @@ export default function ModelosPage() {
 
                       {/* ID */}
 
-                      <td>
+                      <td data-label="ID">
                         <span className="table-muted">
                           #{model.idModelo}
                         </span>
@@ -598,7 +598,7 @@ export default function ModelosPage() {
 
                       {/* ACTIONS */}
 
-                      <td>
+                      <td data-label="Ações">
                         <div className="user-actions">
 
                           <button

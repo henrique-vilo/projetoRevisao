@@ -282,7 +282,7 @@ export default function TamanhosPage() {
           </div>
 
           <div className="table-responsive users-table-wrapper">
-            <table className="table users-table align-middle">
+            <table className="table users-table admin-responsive-table align-middle">
               <thead>
                 <tr>
                   <th>Tamanho</th>
@@ -295,7 +295,7 @@ export default function TamanhosPage() {
                 {filteredSizes.length > 0 ? (
                   filteredSizes.map((size) => (
                     <tr key={size.id}>
-                      <td>
+                      <td data-label="Tamanho">
                         <div className="user-cell">
                           <div className="user-avatar">
                             {size.name.slice(0, 2).toUpperCase()}
@@ -306,18 +306,18 @@ export default function TamanhosPage() {
                           </div>
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Descrição">
                         <span className="table-muted">
                           {size.description || 'Sem descrição'}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Status">
                         <span className={`user-status ${getStatusClass(size.status)}`}>
                           <span />
                           {size.status}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Ações">
                         <div className="user-actions">
                           <button type="button" className="user-action edit" onClick={() => openEditModal(size)}>
                             <i className="bi bi-pencil" /> Editar

@@ -14,10 +14,11 @@ router.post('/:id/confirmar', authMiddleware, VendaController.confirmarCompra);
 
 //rotas de informação
 router.get('/', authMiddleware, adminMiddleware, VendaController.listarTodos);
-router.get('/:id', authMiddleware, VendaController.buscarPorId);
 router.get('/usuario/:idUsuario', authMiddleware, VendaController.buscarPorUsuario);
+router.get('/:id', authMiddleware, VendaController.buscarPorId);
 
 //rotas admin
+router.post('/', authMiddleware, adminMiddleware, VendaController.criar);
 router.put('/:id', authMiddleware, adminMiddleware, VendaController.atualizar);
 router.delete('/:id', authMiddleware, adminMiddleware, VendaController.excluir);
 

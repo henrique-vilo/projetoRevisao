@@ -4,11 +4,13 @@ import '../tables.css';
 import './produtos.css';
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import { getPaginationItems } from '../adminPagination';
 
 /* =====================================================
    CONFIGURAÇÃO
 ===================================================== */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_ORIGIN = API_URL.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
 /* =====================================================
    ESTADO INICIAL DO FORMULÁRIO
@@ -37,7 +39,7 @@ const emptyForm = {
 ===================================================== */
 function getToken() {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('token') || localStorage.getItem('accessToken');
+  return localStorage.getItem('token') || localStorage.getItem('accessToken') || localStorage.getItem('authToken') || localStorage.getItem('jwt');
 }
 
 function formatPrice(value) {
@@ -52,7 +54,11 @@ function getImageUrl(filename) {
   if (filename.startsWith('http://') || filename.startsWith('https://')) {
     return filename;
   }
-  return `${API_URL}/uploads/${filename}`;
+  const normalizedPath = String(filename).replace(/^\/+/, '');
+  const uploadPath = normalizedPath.startsWith('uploads/')
+    ? normalizedPath
+    : `uploads/imagens/${normalizedPath}`;
+  return `${API_ORIGIN}/${uploadPath}`;
 }
 
 function getStatusClass(ativo) {
@@ -72,6 +78,22 @@ function getOptionId(item, possibleKeys = []) {
     }
   }
   return '';
+}
+
+function ProductThumbnail({ src, name }) {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => setFailed(false), [src]);
+
+  return (
+    <div className="product-table-image">
+      {src && !failed ? (
+        <img src={src} alt={name || 'Produto'} onError={() => setFailed(true)} />
+      ) : (
+        <i className="bi bi-image" aria-hidden="true" />
+      )}
+    </div>
+  );
 }
 
 /* =====================================================
@@ -103,6 +125,7 @@ export default function ProdutosPage() {
   const [subcategorias, setSubcategorias] = useState([]);
   const [cores, setCores] = useState([]);
   const [tamanhos, setTamanhos] = useState([]);
+  const [tamanhosCompativeis, setTamanhosCompativeis] = useState([]);
   const [modelos, setModelos] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -137,6 +160,7 @@ export default function ProdutosPage() {
       const params = new URLSearchParams();
       params.set('pagina', currentPage);
       params.set('limite', productsPerPage);
+      params.set('agruparModelos', 'false');
 
       if (debouncedSearch.trim()) {
         params.set('busca', debouncedSearch.trim());
@@ -236,6 +260,47 @@ export default function ProdutosPage() {
     carregarProdutos();
   }, [carregarProdutos]);
 
+  useEffect(() => {
+    if (!form.idSubcategoria) {
+      setTamanhosCompativeis([]);
+      return undefined;
+    }
+
+    const abortController = new AbortController();
+
+    async function carregarTamanhosCompativeis() {
+      try {
+        const response = await fetch(
+          `${API_URL}/produtos/tamanhos-compativeis/${form.idSubcategoria}`,
+          { signal: abortController.signal, cache: 'no-store' }
+        );
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.sucesso) {
+          throw new Error(data.erro || 'Não foi possível carregar os tamanhos compatíveis.');
+        }
+
+        const opcoes = data.dados || [];
+        setTamanhosCompativeis(opcoes);
+        setForm((previous) => {
+          const selecionadoAindaExiste = opcoes.some(
+            (item) => String(item.idTamanho) === String(previous.idTamanho)
+          );
+          return previous.idTamanho && !selecionadoAindaExiste
+            ? { ...previous, idTamanho: '' }
+            : previous;
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          setTamanhosCompativeis([]);
+          setError(err.message);
+        }
+      }
+    }
+
+    carregarTamanhosCompativeis();
+    return () => abortController.abort();
+  }, [form.idSubcategoria]);
+
   /* ===================================================
      HANDLERS
   =================================================== */
@@ -246,7 +311,11 @@ export default function ProdutosPage() {
 
   const handleFormChange = (event) => {
     const { name, value } = event.target;
-    setForm((previous) => ({ ...previous, [name]: value }));
+    setForm((previous) => ({
+      ...previous,
+      [name]: value,
+      ...(name === 'idSubcategoria' ? { idTamanho: '' } : {})
+    }));
   };
 
   const handleImageChange = (event) => {
@@ -254,9 +323,12 @@ export default function ProdutosPage() {
     const file = files?.[0];
     if (!file) return;
 
-    setForm((previous) => ({ ...previous, [name]: file }));
     const preview = URL.createObjectURL(file);
-    setImagePreviews((previous) => ({ ...previous, [name]: preview }));
+    setForm((previous) => ({ ...previous, [name]: file }));
+    setImagePreviews((previous) => {
+      if (previous[name]?.startsWith('blob:')) URL.revokeObjectURL(previous[name]);
+      return { ...previous, [name]: preview };
+    });
   };
 
   /* ===================================================
@@ -359,10 +431,10 @@ export default function ProdutosPage() {
         body: formData,
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
-      if (!response.ok || !data.sucesso) {
-        throw new Error(data.erro || data.mensagem || 'Não foi possível salvar o produto.');
+      if (!response.ok || !data?.sucesso) {
+        throw new Error(data?.erro || data?.mensagem || 'Não foi possível salvar o produto.');
       }
 
       setSuccessMessage(isEdit ? 'Produto atualizado com sucesso.' : 'Produto cadastrado com sucesso.');
@@ -393,10 +465,10 @@ export default function ProdutosPage() {
         headers: { ...getHeaders() },
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
-      if (!response.ok || !data.sucesso) {
-        throw new Error(data.erro || data.mensagem || 'Não foi possível desativar o produto.');
+      if (!response.ok || !data?.sucesso) {
+        throw new Error(data?.erro || data?.mensagem || 'Não foi possível desativar o produto.');
       }
 
       closeModal();
@@ -638,7 +710,7 @@ export default function ProdutosPage() {
           )}
 
           <div className="table-responsive users-table-wrapper">
-            <table className="table users-table align-middle">
+            <table className="table users-table admin-responsive-table align-middle">
               <thead>
                 <tr>
                   <th>Produto</th>
@@ -664,39 +736,37 @@ export default function ProdutosPage() {
                     const image = getImageUrl(product.imagem1);
                     return (
                       <tr key={product.idProduto}>
-                        <td>
+                        <td data-label="Produto">
                           <div className="user-cell">
-                            <div className="product-table-image">
-                              {image ? <img src={image} alt={product.nome} /> : <i className="bi bi-box-seam" />}
-                            </div>
+                            <ProductThumbnail src={image} name={product.nome} />
                             <div className="user-information">
                               <span className="user-name">{product.nome}</span>
                               <span className="user-id">SKU: {product.sku}</span>
                             </div>
                           </div>
                         </td>
-                        <td>
+                        <td data-label="Categoria">
                           <div className="product-category-cell">
                             <span className="user-type cliente">{product.categoriaNome || 'Sem categoria'}</span>
                             {product.subcategoriaNome && <small>{product.subcategoriaNome}</small>}
                           </div>
                         </td>
-                        <td>
+                        <td data-label="Preço">
                           <strong className="product-price">{formatPrice(product.preco)}</strong>
                         </td>
-                        <td>
+                        <td data-label="Estoque">
                           <span className={`user-status ${getStockClass(product.estoque)}`}>
                             <span />
                             {Number(product.estoque) <= 0 ? 'Sem estoque' : `${product.estoque} un.`}
                           </span>
                         </td>
-                        <td>
+                        <td data-label="Status">
                           <span className={`user-status ${getStatusClass(product.ativo)}`}>
                             <span />
                             {Number(product.ativo) === 1 ? 'Ativo' : 'Inativo'}
                           </span>
                         </td>
-                        <td>
+                        <td data-label="Ações">
                           <div className="user-actions">
                             <button type="button" className="user-action edit" onClick={() => openEditModal(product)}>
                               <i className="bi bi-pencil" /> Editar
@@ -742,12 +812,18 @@ export default function ProdutosPage() {
                     <i className="bi bi-chevron-left" />
                   </button>
                 </li>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <li key={page} className={`page-item ${page === currentPage ? 'active' : ''}`}>
-                    <button type="button" className="page-link" onClick={() => setCurrentPage(page)}>
-                      {page}
-                    </button>
-                  </li>
+                {getPaginationItems(currentPage, totalPages).map((item) => (
+                  typeof item === 'number' ? (
+                    <li key={item} className={`page-item ${item === currentPage ? 'active' : ''}`}>
+                      <button type="button" className="page-link" onClick={() => setCurrentPage(item)} disabled={loading}>
+                        {item}
+                      </button>
+                    </li>
+                  ) : (
+                    <li key={item} className="page-item disabled" aria-hidden="true">
+                      <span className="page-link">…</span>
+                    </li>
+                  )
                 ))}
                 <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
                   <button
@@ -797,14 +873,24 @@ export default function ProdutosPage() {
                     {['imagem1', 'imagem2', 'imagem3', 'imagem4'].map((imageName, index) => (
                       <label key={imageName} className={`product-image-upload ${index === 0 ? 'main' : ''}`}>
                         {imagePreviews[imageName] ? (
-                          <img src={imagePreviews[imageName]} alt={`Imagem ${index + 1}`} />
+                          <img
+                            src={imagePreviews[imageName]}
+                            alt={`Imagem ${index + 1}`}
+                            onError={() => setImagePreviews((previous) => ({ ...previous, [imageName]: null }))}
+                          />
                         ) : (
                           <>
                             <i className="bi bi-image" />
                             <span>{index === 0 ? 'Principal' : `Imagem ${index + 1}`}</span>
                           </>
                         )}
-                        <input type="file" name={imageName} accept="image/*" onChange={handleImageChange} />
+                        <input
+                          type="file"
+                          name={imageName}
+                          accept="image/jpeg,image/png,image/gif,image/webp"
+                          onChange={handleImageChange}
+                          required={index === 0 && modal === 'create'}
+                        />
                         <div className="product-image-overlay">
                           <i className="bi bi-camera" />
                         </div>
@@ -846,6 +932,7 @@ export default function ProdutosPage() {
                         <option value="Unissex">Unissex</option>
                         <option value="Masculino">Masculino</option>
                         <option value="Feminino">Feminino</option>
+                        <option value="Infantil">Infantil</option>
                       </select>
                     </div>
                   </div>
@@ -901,12 +988,15 @@ export default function ProdutosPage() {
                       <i className="bi bi-rulers" />
                       <select id="product-size" name="idTamanho" value={form.idTamanho} onChange={handleFormChange} required>
                         <option value="">Selecionar tamanho</option>
-                        {tamanhos.map((tam) => (
+                        {tamanhosCompativeis.map((tam) => (
                           <option key={getOptionId(tam, ['idTamanho'])} value={getOptionId(tam, ['idTamanho'])}>
                             {tam.codigoTamanho}
                           </option>
                         ))}
                       </select>
+                      {!form.idSubcategoria ? (
+                        <small>Selecione primeiro a subcategoria.</small>
+                      ) : null}
                     </div>
                   </div>
 

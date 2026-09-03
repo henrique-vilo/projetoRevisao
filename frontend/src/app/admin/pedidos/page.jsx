@@ -3,6 +3,7 @@
 import '../tables.css';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { getPaginationItems } from '../adminPagination';
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
@@ -45,6 +46,7 @@ const emptyForm = {
   idUsuario: '',
   idProduto: '',
   status: 'carrinho',
+  dataEntrega: '',
 };
 
 function getToken() {
@@ -55,7 +57,8 @@ function getToken() {
   return (
     localStorage.getItem('token') ||
     localStorage.getItem('accessToken') ||
-    localStorage.getItem('authToken')
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('jwt')
   );
 }
 
@@ -93,6 +96,16 @@ function formatDate(date) {
   return parsedDate.toLocaleDateString('pt-BR', {
     timeZone: 'UTC',
   });
+}
+
+function toDateInputValue(date) {
+  if (!date) return '';
+  if (typeof date === 'string') {
+    const match = date.match(/^\d{4}-\d{2}-\d{2}/);
+    if (match) return match[0];
+  }
+  const parsedDate = new Date(date);
+  return Number.isNaN(parsedDate.getTime()) ? '' : parsedDate.toISOString().slice(0, 10);
 }
 
 // Utilitário rápido para pegar o ID correto (trata id, idVenda ou idVendas)
@@ -168,17 +181,13 @@ export default function OrdersPage() {
   );
 
   useEffect(() => {
-    const timer = setTimeout(
-      () => setDebouncedSearch(search),
-      400
-    );
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [search]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch]);
 
   const loadOrders = useCallback(
     async (page = 1, showRefresh = false) => {
@@ -265,8 +274,8 @@ export default function OrdersPage() {
     setCurrentPage(page);
   };
 
-  const closeModal = () => {
-    if (saving) {
+  const closeModal = (force = false) => {
+    if (saving && force !== true) {
       return;
     }
 
@@ -288,6 +297,7 @@ export default function OrdersPage() {
     idUsuario: order.idUsuario?.toString() || '',
     idProduto: order.idProduto?.toString() || '',
     status: order.status ? String(order.status).trim().toLowerCase() : 'carrinho',
+    dataEntrega: toDateInputValue(order.dataEntrega),
   });
 
   setModal('edit');
@@ -335,12 +345,12 @@ export default function OrdersPage() {
       setSaving(true);
       setError('');
 
-      await apiRequest('/vendas/carrinho', {
+      await apiRequest('/vendas', {
         method: 'POST',
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, status: 'carrinho' }),
       });
 
-      closeModal();
+      closeModal(true);
       await loadOrders(currentPage, true);
     } catch (requestError) {
       console.error('Erro ao criar pedido:', requestError);
@@ -378,11 +388,12 @@ export default function OrdersPage() {
           body: JSON.stringify({
             ...values,
             status: form.status,
+            dataEntrega: form.dataEntrega || null,
           }),
         }
       );
 
-      closeModal();
+      closeModal(true);
       await loadOrders(currentPage, true);
     } catch (requestError) {
       console.error('Erro ao atualizar pedido:', requestError);
@@ -427,7 +438,7 @@ export default function OrdersPage() {
         }
       );
 
-      closeModal();
+      closeModal(true);
 
       const pageAfterDelete =
         orders.length === 1 && currentPage > 1
@@ -453,8 +464,8 @@ export default function OrdersPage() {
   };
 
   const paginationRange = useMemo(
-    () => Array.from({ length: totalPages }, (_, index) => index + 1),
-    [totalPages]
+    () => getPaginationItems(currentPage, totalPages),
+    [currentPage, totalPages]
   );
 
   return (
@@ -552,14 +563,15 @@ export default function OrdersPage() {
           </div>
 
           <div className="table-responsive users-table-wrapper">
-            <table className="table users-table align-middle">
+            <table className="table users-table orders-table admin-responsive-table align-middle">
               <thead>
                 <tr>
                   <th>Pedido</th>
                   <th>Usuário</th>
                   <th>Produto</th>
                   <th>Data do pedido</th>
-                  <th>Entrega</th>
+                  <th>Data de envio</th>
+                  <th>Data de entrega</th>
                   <th>Status</th>
                   <th>Ações</th>
                 </tr>
@@ -568,7 +580,7 @@ export default function OrdersPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="7" className="users-empty">
+                    <td colSpan="8" className="users-empty">
                       <div className="users-empty-content">
                         <div className="users-empty-icon">
                           <i className="bi bi-arrow-repeat" />
@@ -585,13 +597,13 @@ export default function OrdersPage() {
 
                     return (
                       <tr key={orderId}>
-                        <td>
+                        <td data-label="Pedido">
                           <span className="order-table-id">
                             #ORD-{orderId}
                           </span>
                         </td>
 
-                        <td>
+                        <td data-label="Usuário">
                           <div className="user-cell">
                             <div className="user-avatar">U</div>
                             <div className="user-information">
@@ -605,32 +617,38 @@ export default function OrdersPage() {
                           </div>
                         </td>
 
-                        <td>
+                        <td data-label="Produto">
                           <span className="order-product">
                             {order.nomeProduto || `Produto #${order.idProduto}`}
                           </span>
                         </td>
 
-                        <td>
+                        <td data-label="Data do pedido">
                           <span className="table-muted">
                             {formatDate(order.dataPedidoBR || order.dataPedido)}
                           </span>
                         </td>
 
-                        <td>
+                        <td data-label="Data de envio">
+                          <span className="table-muted admin-date-cell">
+                            {formatDate(order.dataEnvioBR || order.dataEnvio)}
+                          </span>
+                        </td>
+
+                        <td data-label="Data de entrega">
                           <span className="table-muted">
                             {formatDate(order.dataEntregaBR || order.dataEntrega)}
                           </span>
                         </td>
 
-                        <td>
+                        <td data-label="Status">
                           <span className={`user-status ${status.className}`}>
                             <span />
                             {status.label}
                           </span>
                         </td>
 
-                        <td>
+                        <td data-label="Ações">
                           <div className="user-actions">
                             <button
                               type="button"
@@ -656,7 +674,7 @@ export default function OrdersPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan="7" className="users-empty">
+                    <td colSpan="8" className="users-empty">
                       <div className="users-empty-content">
                         <div className="users-empty-icon">
                           <i className="bi bi-receipt" />
@@ -698,22 +716,18 @@ export default function OrdersPage() {
                   </button>
                 </li>
 
-                {paginationRange.map((page) => (
-                  <li
-                    key={page}
-                    className={`page-item ${
-                      page === currentPage ? 'active' : ''
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      className="page-link"
-                      onClick={() => goToPage(page)}
-                      disabled={loading}
-                    >
-                      {page}
-                    </button>
-                  </li>
+                {paginationRange.map((item) => (
+                  typeof item === 'number' ? (
+                    <li key={item} className={`page-item ${item === currentPage ? 'active' : ''}`}>
+                      <button type="button" className="page-link" onClick={() => goToPage(item)} disabled={loading}>
+                        {item}
+                      </button>
+                    </li>
+                  ) : (
+                    <li key={item} className="page-item disabled" aria-hidden="true">
+                      <span className="page-link">…</span>
+                    </li>
+                  )
                 ))}
 
                 <li
@@ -813,25 +827,36 @@ export default function OrdersPage() {
                   </div>
 
                   {modal === 'edit' && (
-                    <div className="user-form-field full">
-                      <label htmlFor="order-status">Status</label>
-                      <div className="user-input-wrapper">
-                        <i className="bi bi-circle-half" />
-                        <select
-                          id="order-status"
-                          name="status"
-                          value={form.status}
-                          onChange={handleFormChange}
-                        >
-                          <option value="carrinho">Carrinho</option>
-                          <option value="pendente">Pendente</option>
-                          <option value="processando">Processando</option>
-                          <option value="enviado">Enviado</option>
-                          <option value="entregue">Entregue</option>
-                          <option value="cancelado">Cancelado</option>
-                        </select>
+                    <>
+                      <div className="user-form-field">
+                        <label htmlFor="order-status">Status do envio</label>
+                        <div className="user-input-wrapper">
+                          <i className="bi bi-truck" />
+                          <select id="order-status" name="status" value={form.status} onChange={handleFormChange}>
+                            <option value="carrinho">Carrinho</option>
+                            <option value="pendente">Pendente</option>
+                            <option value="processando">Processando</option>
+                            <option value="enviado">Enviado</option>
+                            <option value="entregue">Entregue</option>
+                            <option value="cancelado">Cancelado</option>
+                          </select>
+                        </div>
                       </div>
-                    </div>
+
+                      <div className="user-form-field">
+                        <label htmlFor="order-delivery-date">Data de entrega</label>
+                        <div className="user-input-wrapper">
+                          <i className="bi bi-calendar-check" />
+                          <input
+                            id="order-delivery-date"
+                            name="dataEntrega"
+                            type="date"
+                            value={form.dataEntrega}
+                            onChange={handleFormChange}
+                          />
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>

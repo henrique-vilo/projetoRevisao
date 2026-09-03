@@ -241,7 +241,7 @@ function CatalogoProdutos() {
             <p>
               {carregando
                 ? 'Atualizando catálogo...'
-                : `${paginacao.total} produto${paginacao.total === 1 ? '' : 's'} encontrado${paginacao.total === 1 ? '' : 's'}`}
+                : `${paginacao.total} modelo${paginacao.total === 1 ? '' : 's'} encontrado${paginacao.total === 1 ? '' : 's'}`}
             </p>
           </div>
 
@@ -269,7 +269,7 @@ function CatalogoProdutos() {
                   name="busca"
                   value={filtros.busca}
                   onChange={atualizarFiltro}
-                  placeholder="Nome, descrição ou SKU"
+                  placeholder="Modelo, nome, descrição ou SKU"
                   maxLength={100}
                 />
               </label>
@@ -461,10 +461,15 @@ function CatalogoProdutos() {
                   {produtos.map((produto) => {
                     const imagem = resolverImagem(produto.imagem1);
                     const mostrarImagem = imagem && !imagensComErro.has(imagem);
+                    const referencia = produto.slugModelo || produto.idProduto;
+                    const precoMinimo = produto.precoMinimo ?? produto.preco;
+                    const precoMaximo = produto.precoMaximo ?? produto.preco;
+                    const possuiFaixaPreco = Number(precoMinimo) !== Number(precoMaximo);
+                    const totalVariacoes = Number(produto.totalVariacoes) || 1;
 
                     return (
                       <article className={styles.card} key={produto.idProduto}>
-                        <Link href={`/produtos/${produto.idProduto}`} className={styles.imageLink}>
+                        <Link href={`/produtos/${referencia}`} className={styles.imageLink}>
                           {mostrarImagem ? (
                             <Image
                               src={imagem}
@@ -480,16 +485,22 @@ function CatalogoProdutos() {
                               Imagem indisponível
                             </span>
                           )}
-                          {Number(produto.estoque) <= 0 ? <span className={styles.outOfStock}>Esgotado</span> : null}
+                          {Number(produto.estoqueTotal ?? produto.estoque) <= 0 ? <span className={styles.outOfStock}>Esgotado</span> : null}
                         </Link>
                         <div className={styles.cardBody}>
                           <p className={styles.meta}>
                             {produto.categoriaNome || produto.genero}
-                            {produto.corNome ? ` • ${produto.corNome}` : ''}
+                            {produto.modeloNome ? ` • ${produto.modeloNome}` : ''}
                           </p>
-                          <h2><Link href={`/produtos/${produto.idProduto}`}>{produto.nome}</Link></h2>
-                          <strong>{formatarPreco(produto.preco)}</strong>
-                          <small>{produto.tamanhoNome ? `Tamanho ${produto.tamanhoNome}` : 'Consulte as opções'}</small>
+                          <h2><Link href={`/produtos/${referencia}`}>{produto.nome}</Link></h2>
+                          <strong>
+                            {possuiFaixaPreco ? 'A partir de ' : ''}{formatarPreco(precoMinimo)}
+                          </strong>
+                          <small>
+                            {totalVariacoes > 1
+                              ? `${totalVariacoes} variações disponíveis`
+                              : 'Consulte cores e tamanhos'}
+                          </small>
                         </div>
                       </article>
                     );

@@ -64,7 +64,8 @@ function getToken() {
   return (
     localStorage.getItem('token') ||
     localStorage.getItem('accessToken') ||
-    localStorage.getItem('authToken')
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('jwt')
   );
 }
 
@@ -74,8 +75,9 @@ function getHeaders() {
 }
 
 function getStatusConfig(status) {
+  const normalizedStatus = String(status || '').trim().toLowerCase();
   return (
-    STATUS_CONFIG[status] || {
+    STATUS_CONFIG[normalizedStatus] || {
       label: status || 'Desconhecido',
       className: 'warning',
     }
@@ -288,11 +290,12 @@ export default function DashboardPage() {
         return {
           id: `#ORD-${sale.idVendas}`,
           idVendas: sale.idVendas,
-          customer: getUserName(usuario) || `Usuário #${sale.idUsuario}`,
-          product: produto?.nome || `Produto #${sale.idProduto}`,
+          customer: sale.nomeUsuario || getUserName(usuario) || `Usuário #${sale.idUsuario}`,
+          product: sale.nomeProduto || produto?.nome || `Produto #${sale.idProduto}`,
           date: formatDate(sale.dataPedido),
           rawDate,
-          value: Number(produto?.preco) || 0,
+          value: Number(sale.precoProduto ?? produto?.preco) || 0,
+          statusKey: String(sale.status || '').trim().toLowerCase(),
           status: status.label,
           statusClass: status.className,
         };
@@ -304,19 +307,29 @@ export default function DashboardPage() {
       });
   }, [vendas, produtosMap, usuariosMap]);
 
+  const orderSales = useMemo(
+    () => normalizedSales.filter((sale) => sale.statusKey !== 'carrinho'),
+    [normalizedSales]
+  );
+
+  const revenueSales = useMemo(
+    () => orderSales.filter((sale) => sale.statusKey !== 'cancelado'),
+    [orderSales]
+  );
+
   /* ===================================================
      RECEITA
   =================================================== */
 
   const totalRevenue = useMemo(
-    () => normalizedSales.reduce((sum, sale) => sum + sale.value, 0),
-    [normalizedSales]
+    () => revenueSales.reduce((sum, sale) => sum + sale.value, 0),
+    [revenueSales]
   );
 
   const averageTicket = useMemo(() => {
-    if (normalizedSales.length === 0) return 0;
-    return totalRevenue / normalizedSales.length;
-  }, [totalRevenue, normalizedSales.length]);
+    if (revenueSales.length === 0) return 0;
+    return totalRevenue / revenueSales.length;
+  }, [totalRevenue, revenueSales.length]);
 
   /* ===================================================
      SÉRIES MENSAIS (ano corrente, dados reais das vendas)
@@ -329,24 +342,24 @@ export default function DashboardPage() {
   const monthlyOrders = useMemo(() => {
     const result = new Array(12).fill(0);
 
-    normalizedSales.forEach((sale) => {
+    orderSales.forEach((sale) => {
       if (!sale.rawDate || sale.rawDate.getFullYear() !== currentYear) return;
       result[sale.rawDate.getMonth()] += 1;
     });
 
     return result;
-  }, [normalizedSales, currentYear]);
+  }, [orderSales, currentYear]);
 
   const monthlyRevenue = useMemo(() => {
     const result = new Array(12).fill(0);
 
-    normalizedSales.forEach((sale) => {
+    revenueSales.forEach((sale) => {
       if (!sale.rawDate || sale.rawDate.getFullYear() !== currentYear) return;
       result[sale.rawDate.getMonth()] += sale.value;
     });
 
     return result;
-  }, [normalizedSales, currentYear]);
+  }, [revenueSales, currentYear]);
 
   const revenueGrowth = useMemo(() => {
     const current = monthlyRevenue[currentMonth];
@@ -398,7 +411,7 @@ export default function DashboardPage() {
   const statusBreakdown = useMemo(() => {
     const counts = {};
 
-    normalizedSales.forEach((sale) => {
+    orderSales.forEach((sale) => {
       counts[sale.status] = (counts[sale.status] || 0) + 1;
     });
 
@@ -409,7 +422,7 @@ export default function DashboardPage() {
         total: counts[config.label] || 0,
       }))
       .filter((item) => item.total > 0);
-  }, [normalizedSales]);
+  }, [orderSales]);
 
   /* ===================================================
      GRÁFICO DE RECEITA
@@ -422,8 +435,8 @@ export default function DashboardPage() {
         {
           label: 'Receita',
           data: monthlyRevenue,
-          borderColor: '#4f46e5',
-          backgroundColor: 'rgba(79, 70, 229, 0.08)',
+          borderColor: '#00a9d4',
+          backgroundColor: 'rgba(0, 169, 212, 0.10)',
           borderWidth: 2,
           pointRadius: 0,
           pointHoverRadius: 5,
@@ -483,8 +496,8 @@ export default function DashboardPage() {
         {
           label: 'Pedidos',
           data: monthlyOrders,
-          backgroundColor: '#e0e7ff',
-          hoverBackgroundColor: '#4f46e5',
+          backgroundColor: 'rgba(0, 169, 212, 0.22)',
+          hoverBackgroundColor: '#00a9d4',
           borderRadius: 6,
           borderSkipped: false,
           barThickness: 18,
@@ -527,7 +540,7 @@ export default function DashboardPage() {
   =================================================== */
 
   const categoryData = useMemo(() => {
-    const colors = ['#4f46e5', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff'];
+    const colors = ['#00a9d4', '#40ffdc', '#1c3166', '#240047', '#9eeaf6'];
 
     return {
       labels: categoryDistribution.map(([category]) => category),
@@ -560,7 +573,7 @@ export default function DashboardPage() {
   =================================================== */
 
   const activities = useMemo(() => {
-    return normalizedSales.slice(0, 4).map((sale) => ({
+    return orderSales.slice(0, 4).map((sale) => ({
       key: sale.id,
       initials: getInitials(sale.customer),
       name: sale.customer,
@@ -569,7 +582,7 @@ export default function DashboardPage() {
       statusClass: sale.statusClass,
       statusLabel: sale.status,
     }));
-  }, [normalizedSales]);
+  }, [orderSales]);
 
   /* ===================================================
      EXPORTAR RELATÓRIO (CSV com os dados reais carregados)
@@ -578,7 +591,7 @@ export default function DashboardPage() {
   const handleExport = useCallback(() => {
     const header = ['Pedido', 'Cliente', 'Produto', 'Data', 'Valor', 'Status'];
 
-    const rows = normalizedSales.map((sale) => [
+    const rows = orderSales.map((sale) => [
       sale.id,
       sale.customer,
       sale.product,
@@ -608,7 +621,7 @@ export default function DashboardPage() {
     document.body.removeChild(link);
 
     URL.revokeObjectURL(url);
-  }, [normalizedSales]);
+  }, [orderSales]);
 
   /* ===================================================
      LOADING
@@ -695,7 +708,7 @@ export default function DashboardPage() {
             type="button"
             className="dashboard-btn dashboard-btn-primary"
             onClick={handleExport}
-            disabled={normalizedSales.length === 0}
+            disabled={orderSales.length === 0}
           >
             <i className="bi bi-download" />
             Exportar
@@ -731,7 +744,7 @@ export default function DashboardPage() {
           </div>
 
           <span className="metric-label">Pedidos</span>
-          <strong className="metric-value">{formatNumber(totals.vendas)}</strong>
+          <strong className="metric-value">{formatNumber(orderSales.length)}</strong>
 
           <div className="metric-footer">
             {ordersGrowth === null ? (
@@ -848,7 +861,7 @@ export default function DashboardPage() {
               <h2>Pedidos em {currentYear}</h2>
             </div>
 
-            <span className="chart-summary-pill">{formatNumber(totals.vendas)} pedidos</span>
+            <span className="chart-summary-pill">{formatNumber(orderSales.length)} pedidos</span>
           </div>
 
           <div className="chart-container chart-medium">
@@ -865,7 +878,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="quick-actions">
-            <Link href="/pedidos" className="quick-action">
+            <Link href="/admin/pedidos" className="quick-action">
               <span className="quick-action-icon blue">
                 <i className="bi bi-plus-lg" />
               </span>
@@ -876,7 +889,7 @@ export default function DashboardPage() {
               <i className="bi bi-chevron-right" />
             </Link>
 
-            <Link href="/produtos" className="quick-action">
+            <Link href="/admin/produtos" className="quick-action">
               <span className="quick-action-icon purple">
                 <i className="bi bi-box-seam" />
               </span>
@@ -898,7 +911,7 @@ export default function DashboardPage() {
               <i className="bi bi-chevron-right" />
             </button>
 
-            <Link href="/usuarios" className="quick-action">
+            <Link href="/admin/usuarios" className="quick-action">
               <span className="quick-action-icon orange">
                 <i className="bi bi-person-plus" />
               </span>
@@ -935,7 +948,7 @@ export default function DashboardPage() {
               <h2>Pedidos recentes</h2>
             </div>
 
-            <Link href="/pedidos" className="dashboard-link">
+            <Link href="/admin/pedidos" className="dashboard-link">
               Ver todos
               <i className="bi bi-arrow-right" />
             </Link>
@@ -955,7 +968,7 @@ export default function DashboardPage() {
               </thead>
 
               <tbody>
-                {normalizedSales.slice(0, 5).map((sale) => (
+                {orderSales.slice(0, 5).map((sale) => (
                   <tr key={sale.id}>
                     <td>
                       <span className="order-id">{sale.id}</span>
@@ -975,7 +988,7 @@ export default function DashboardPage() {
                   </tr>
                 ))}
 
-                {normalizedSales.length === 0 && (
+                {orderSales.length === 0 && (
                   <tr>
                     <td colSpan="6" className="dashboard-empty">
                       <i className="bi bi-inbox" />
@@ -1024,7 +1037,7 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <Link href="/pedidos" className="dashboard-link block">
+          <Link href="/admin/pedidos" className="dashboard-link block">
             Ver todas as atividades
             <i className="bi bi-arrow-right" />
           </Link>

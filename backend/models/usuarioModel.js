@@ -3,18 +3,26 @@ import { create, read, update, deleteRecord, comparePassword, hashPassword, getC
 // Model para operações com usuários
 class UsuarioModel {
     // Listar todos os usuários (com paginação)
-    static async listarTodos(pagina = 1, limite = 10) {
+    static async listarTodos(pagina = 1, limite = 10, busca = '') {
         try {
             const offset = (pagina - 1) * limite;
             
             // Buscar usuários com paginação (usando prepared statements para segurança)
             const connection = await getConnection();
             try {
-                const sql = 'SELECT * FROM usuarios ORDER BY idUsuario DESC LIMIT ? OFFSET ?';
-                const [usuarios] = await connection.query(sql, [limite, offset]);
+                const termo = String(busca).trim();
+                const where = termo
+                    ? 'WHERE nome LIKE ? OR email LIKE ? OR cpf LIKE ? OR telefone LIKE ? OR tipo LIKE ?'
+                    : '';
+                const params = termo ? Array(5).fill(`%${termo}%`) : [];
+                const sql = `SELECT * FROM usuarios ${where} ORDER BY idUsuario DESC LIMIT ? OFFSET ?`;
+                const [usuarios] = await connection.query(sql, [...params, limite, offset]);
                 
                 // Contar total de registros
-                const [totalResult] = await connection.execute('SELECT COUNT(*) as total FROM usuarios');
+                const [totalResult] = await connection.query(
+                    `SELECT COUNT(*) AS total FROM usuarios ${where}`,
+                    params
+                );
                 const total = totalResult[0].total;
                 
                 return {
@@ -36,7 +44,7 @@ class UsuarioModel {
     // Buscar usuário por ID
     static async buscarPorId(id) {
         try {
-            const rows = await read('usuarios', `idUsuario = ${id}`);
+            const rows = await read('usuarios', 'idUsuario = ?', [id]);
             return rows[0] || null;
         } catch (error) {
             console.error('Erro ao buscar usuário por ID:', error);
@@ -47,7 +55,7 @@ class UsuarioModel {
     // Buscar usuário por email
     static async buscarPorEmail(email) {
         try {
-            const rows = await read('usuarios', `email = '${email}'`);
+            const rows = await read('usuarios', 'email = ?', [email]);
             return rows[0] || null;
         } catch (error) {
             console.error('Erro ao buscar usuário por email:', error);
@@ -58,7 +66,7 @@ class UsuarioModel {
     // Buscar usuário por cpf
     static async buscarPorCpf(cpf) {
         try {
-            const rows = await read('usuarios', `cpf = '${cpf}'`);
+            const rows = await read('usuarios', 'cpf = ?', [cpf]);
             return rows[0] || null;
         } catch (error) {
             console.error('Erro ao buscar usuário por cpf:', error);
@@ -69,7 +77,7 @@ class UsuarioModel {
     // Buscar usuário por telefone
     static async buscarPorTelefone(telefone) {
         try {
-            const rows = await read('usuarios', `telefone = '${telefone}'`);
+            const rows = await read('usuarios', 'telefone = ?', [telefone]);
             return rows[0] || null;
         } catch (error) {
             console.error('Erro ao buscar usuário por telefone:', error);
@@ -102,7 +110,7 @@ class UsuarioModel {
                 dadosUsuario.senha = await hashPassword(dadosUsuario.senha);
             }
             
-            return await update('usuarios', dadosUsuario, `idUsuario = ${id}`);
+            return await update('usuarios', dadosUsuario, 'idUsuario = ?', [id]);
         } catch (error) {
             console.error('Erro ao atualizar usuário:', error);
             throw error;
@@ -112,7 +120,7 @@ class UsuarioModel {
     // Excluir usuário
     static async excluir(id) {
         try {
-            return await deleteRecord('usuarios', `idUsuario = ${id}`);
+            return await deleteRecord('usuarios', 'idUsuario = ?', [id]);
         } catch (error) {
             console.error('Erro ao excluir usuário:', error);
             throw error;

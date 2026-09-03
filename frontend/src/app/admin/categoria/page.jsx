@@ -688,7 +688,7 @@ export default function CategoriasPage() {
           ================================================= */}
 
           <div className="table-responsive users-table-wrapper">
-            <table className="table users-table align-middle">
+            <table className="table users-table admin-responsive-table align-middle">
               <thead>
                 <tr>
                   <th>Categoria</th>
@@ -729,7 +729,7 @@ export default function CategoriasPage() {
                       >
                         {/* CATEGORY */}
 
-                        <td>
+                        <td data-label="Categoria">
                           <div className="user-cell">
                             <div className="user-avatar">
                               <i className="bi bi-grid" />
@@ -754,7 +754,7 @@ export default function CategoriasPage() {
 
                         {/* ACTIONS */}
 
-                        <td>
+                        <td data-label="Ações">
                           <div className="user-actions">
                             <button
                               type="button"

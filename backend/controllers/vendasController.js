@@ -12,6 +12,19 @@ const formatarDataSQL = (data) => {
     return data.toISOString().split('T')[0];
 };
 
+const dataSqlValida = (valor) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(valor || ''))) return false;
+    const data = new Date(`${valor}T00:00:00.000Z`);
+    return !Number.isNaN(data.getTime()) && formatarDataSQL(data) === valor;
+};
+
+const normalizarDataOpcional = (valor) => {
+    if (valor === undefined) return { fornecida: false, valor: undefined, valida: true };
+    if (valor === null || valor === '') return { fornecida: true, valor: null, valida: true };
+    const normalizada = String(valor).trim();
+    return { fornecida: true, valor: normalizada, valida: dataSqlValida(normalizada) };
+};
+
 const obterIdPositivo = (valor) => {
     const id = Number(valor);
     return Number.isInteger(id) && id > 0 ? id : null;
@@ -43,59 +56,16 @@ const simularDiasEntregaCEP = (cep) => {
     return digitoRegiao === 0 ? 2 : digitoRegiao + 2; 
 };
 
-const sincronizarProgressoVenda = async (venda) => {
-    // Normaliza a string do status removendo espaços
-    const statusLimpo = venda.status ? String(venda.status).trim().toLowerCase() : '';
-    venda.status = statusLimpo;
-
-    if (statusLimpo === 'carrinho' || statusLimpo === 'entregue' || statusLimpo === 'cancelado') {
-        venda.dataPedidoBR = formatarDataBR(venda.dataPedido);
-        venda.dataEntregaBR = formatarDataBR(venda.dataEntrega);
-        return venda;
-    }
-
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    
-    let novoStatus = statusLimpo;
-    let atualizou = false;
-    let dadosAtualizacao = {};
-
-    const dataPedidoObj = venda.dataPedido ? new Date(venda.dataPedido) : null;
-    const dataEntregaObj = venda.dataEntrega ? new Date(venda.dataEntrega) : null;
-
-    if (novoStatus === 'pendente' && venda.dataEntrega) {
-        novoStatus = 'processando';
-        atualizou = true;
-    }
-
-    if (novoStatus === 'processando' && dataPedidoObj && dataEntregaObj) {
-        const diasTotais = (dataEntregaObj - dataPedidoObj) / (1000 * 60 * 60 * 24);
-        const diasPassados = (hoje - dataPedidoObj) / (1000 * 60 * 60 * 24);
-
-        if (diasPassados >= (diasTotais / 2)) {
-            novoStatus = 'enviado';
-            atualizou = true;
-        }
-    }
-
-    if ((novoStatus === 'processando' || novoStatus === 'enviado') && dataEntregaObj) {
-        if (hoje >= dataEntregaObj) {
-            novoStatus = 'entregue';
-            atualizou = true;
-        }
-    }
-
-    if (atualizou) {
-        dadosAtualizacao.status = novoStatus;
-        await VendaModel.atualizar(venda.idVendas, dadosAtualizacao);
-        venda.status = novoStatus; 
-    }
-
-    venda.dataPedidoBR = formatarDataBR(venda.dataPedido);
-    venda.dataEntregaBR = formatarDataBR(venda.dataEntrega);
-
-    return venda;
+const formatarVenda = (venda) => {
+    const statusOriginal = venda.status ?? venda.STATUS;
+    const statusLimpo = statusOriginal ? String(statusOriginal).trim().toLowerCase() : '';
+    return {
+        ...venda,
+        status: statusLimpo,
+        dataPedidoBR: formatarDataBR(venda.dataPedido),
+        dataEnvioBR: formatarDataBR(venda.dataEnvio),
+        dataEntregaBR: formatarDataBR(venda.dataEntrega)
+    };
 };
 
 class VendaController {
@@ -206,9 +176,7 @@ class VendaController {
         try {
             const idUsuario = obterIdPositivo(req.usuario?.id);
             const vendas = await VendaModel.buscarEntregasPorUsuario(idUsuario);
-            const entregas = await Promise.all(
-                vendas.map((venda) => sincronizarProgressoVenda(venda))
-            );
+            const entregas = vendas.map(formatarVenda);
             return res.status(200).json({ sucesso: true, dados: entregas });
         } catch (error) {
             console.error('Erro ao listar entregas do usuário:', error);
@@ -280,19 +248,23 @@ class VendaController {
 
     static async listarTodos(req, res) {
         try {
-            const pagina = parseInt(req.query.pagina) || 1;
-            const limite = parseInt(req.query.limite) || 10;
+            const pagina = parseInt(req.query.pagina, 10) || 1;
+            const limite = parseInt(req.query.limite, 10) || 10;
+            const busca = String(req.query.busca || '').trim().slice(0, 100);
+
+            if (pagina < 1 || limite < 1 || limite > 100) {
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem: 'Página e limite devem ser válidos; o limite máximo é 100.'
+                });
+            }
+
             const offset = (pagina - 1) * limite;
-
-            const resultado = await VendaModel.listarTodos(limite, offset);
-
-            const vendasAtualizadas = await Promise.all(
-                resultado.vendas.map(v => sincronizarProgressoVenda(v))
-            );
+            const resultado = await VendaModel.listarTodos({ limite, offset, busca });
 
             res.status(200).json({
                 sucesso: true,
-                dados: vendasAtualizadas,
+                dados: resultado.vendas.map(formatarVenda),
                 paginacao: {
                     pagina: resultado.pagina,
                     limite: resultado.limite,
@@ -308,7 +280,10 @@ class VendaController {
 
     static async buscarPorId(req, res) {
         try {
-            const { id } = req.params;
+            const id = obterIdPositivo(req.params.id);
+            if (!id) {
+                return res.status(400).json({ sucesso: false, mensagem: 'ID de pedido inválido.' });
+            }
             let venda = await VendaModel.buscarPorId(id);
 
             if (!venda) return res.status(404).json({ sucesso: false, mensagem: `Venda ID ${id} não encontrada` });
@@ -323,7 +298,7 @@ class VendaController {
                 });
             }
 
-            venda = await sincronizarProgressoVenda(venda);
+            venda = formatarVenda(venda);
 
             res.status(200).json({ sucesso: true, dados: venda });
         } catch (error) {
@@ -333,7 +308,10 @@ class VendaController {
 
     static async buscarPorUsuario(req, res) {
         try {
-            const { idUsuario } = req.params;
+            const idUsuario = obterIdPositivo(req.params.idUsuario);
+            if (!idUsuario) {
+                return res.status(400).json({ sucesso: false, mensagem: 'ID de usuário inválido.' });
+            }
 
             if (
                 req.usuario?.tipo !== 'admin' &&
@@ -347,47 +325,140 @@ class VendaController {
 
             const vendas = await VendaModel.buscarPorUsuario(idUsuario);
 
-            const vendasAtualizadas = await Promise.all(
-                vendas.map(v => sincronizarProgressoVenda(v))
-            );
-
-            res.status(200).json({ sucesso: true, dados: vendasAtualizadas });
+            res.status(200).json({ sucesso: true, dados: vendas.map(formatarVenda) });
         } catch (error) {
             res.status(500).json({ sucesso: false, erro: 'Erro interno' });
+        }
+    }
+
+    // CRIAR PEDIDO (ADMIN)
+    static async criar(req, res) {
+        try {
+            const idUsuario = obterIdPositivo(req.body?.idUsuario);
+            const idProduto = obterIdPositivo(req.body?.idProduto);
+            const status = String(req.body?.status || 'carrinho').trim().toLowerCase();
+            const dataPedido = normalizarDataOpcional(req.body?.dataPedido);
+            const dataEnvio = normalizarDataOpcional(req.body?.dataEnvio);
+            const dataEntrega = normalizarDataOpcional(req.body?.dataEntrega);
+
+            if (!idUsuario || !idProduto) {
+                return res.status(400).json({ sucesso: false, mensagem: 'Informe usuário e produto válidos.' });
+            }
+            if (!STATUS_PERMITIDOS.includes(status)) {
+                return res.status(400).json({ sucesso: false, mensagem: 'Status inválido informado.' });
+            }
+            if (![dataPedido, dataEnvio, dataEntrega].every((data) => data.valida)) {
+                return res.status(400).json({ sucesso: false, mensagem: 'As datas devem usar o formato AAAA-MM-DD.' });
+            }
+
+            const hoje = formatarDataSQL(new Date());
+            const idVendas = await VendaModel.criar({
+                idUsuario,
+                idProduto,
+                dataPedido: dataPedido.fornecida ? dataPedido.valor : (status === 'carrinho' ? null : hoje),
+                dataEnvio: dataEnvio.fornecida
+                    ? dataEnvio.valor
+                    : (['enviado', 'entregue'].includes(status) ? hoje : null),
+                dataEntrega: dataEntrega.fornecida ? dataEntrega.valor : null,
+                status
+            });
+            const venda = await VendaModel.buscarPorId(idVendas);
+
+            return res.status(201).json({
+                sucesso: true,
+                mensagem: 'Pedido criado com sucesso.',
+                dados: formatarVenda(venda)
+            });
+        } catch (error) {
+            console.error('Erro ao criar pedido:', error);
+            if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+                return res.status(409).json({ sucesso: false, mensagem: 'Usuário ou produto não encontrado.' });
+            }
+            return res.status(500).json({ sucesso: false, erro: 'Erro interno ao criar pedido.' });
         }
     }
 
     // ATUALIZAR PEDIDO (ADMIN)
     static async atualizar(req, res) {
         try {
-            const { id } = req.params;
-            const { idUsuario, idProduto, status } = req.body;
+            const id = obterIdPositivo(req.params.id);
+            if (!id) {
+                return res.status(400).json({ sucesso: false, mensagem: 'ID de pedido inválido.' });
+            }
+
+            const { idUsuario, idProduto, status } = req.body || {};
 
             const vendaExistente = await VendaModel.buscarPorId(id);
             if (!vendaExistente) {
                 return res.status(404).json({ sucesso: false, mensagem: 'Pedido não encontrado.' });
             }
 
-            const statusFormatado = status ? String(status).trim().toLowerCase() : vendaExistente.status;
+            const statusFormatado = status
+                ? String(status).trim().toLowerCase()
+                : String(vendaExistente.status).trim().toLowerCase();
 
             if (status && !STATUS_PERMITIDOS.includes(statusFormatado)) {
                 return res.status(400).json({ sucesso: false, mensagem: 'Status inválido informado.' });
             }
 
-            const dadosAtualizacao = {
-                idUsuario: parseInt(idUsuario),
-                idProduto: parseInt(idProduto),
-                status: statusFormatado
-            };
+            const dadosAtualizacao = {};
+            if (idUsuario !== undefined) {
+                const usuarioId = obterIdPositivo(idUsuario);
+                if (!usuarioId) return res.status(400).json({ sucesso: false, mensagem: 'Usuário inválido.' });
+                dadosAtualizacao.idUsuario = usuarioId;
+            }
+            if (idProduto !== undefined) {
+                const produtoId = obterIdPositivo(idProduto);
+                if (!produtoId) return res.status(400).json({ sucesso: false, mensagem: 'Produto inválido.' });
+                dadosAtualizacao.idProduto = produtoId;
+            }
+            if (status !== undefined) dadosAtualizacao.status = statusFormatado;
+
+            const camposData = ['dataPedido', 'dataEnvio', 'dataEntrega'];
+            for (const campo of camposData) {
+                const data = normalizarDataOpcional(req.body?.[campo]);
+                if (!data.valida) {
+                    return res.status(400).json({ sucesso: false, mensagem: `${campo} deve usar o formato AAAA-MM-DD.` });
+                }
+                if (data.fornecida) dadosAtualizacao[campo] = data.valor;
+            }
+
+            if (['enviado', 'entregue'].includes(statusFormatado) && !(dadosAtualizacao.dataEnvio || vendaExistente.dataEnvio)) {
+                dadosAtualizacao.dataEnvio = formatarDataSQL(new Date());
+            } else if (status !== undefined && ['carrinho', 'pendente', 'processando'].includes(statusFormatado)) {
+                dadosAtualizacao.dataEnvio = null;
+            }
+
+            const valorFinal = (campo) => Object.prototype.hasOwnProperty.call(dadosAtualizacao, campo)
+                ? dadosAtualizacao[campo]
+                : vendaExistente[campo];
+            const dataPedidoFinal = valorFinal('dataPedido');
+            const dataEnvioFinal = valorFinal('dataEnvio');
+            const dataEntregaFinal = valorFinal('dataEntrega');
+            if (dataPedidoFinal && dataEntregaFinal && new Date(dataEntregaFinal) < new Date(dataPedidoFinal)) {
+                return res.status(400).json({ sucesso: false, mensagem: 'A data de entrega não pode ser anterior à data do pedido.' });
+            }
+            if (dataEnvioFinal && dataEntregaFinal && new Date(dataEntregaFinal) < new Date(dataEnvioFinal)) {
+                return res.status(400).json({ sucesso: false, mensagem: 'A data de entrega não pode ser anterior à data de envio.' });
+            }
+
+            if (Object.keys(dadosAtualizacao).length === 0) {
+                return res.status(400).json({ sucesso: false, mensagem: 'Nenhum dado foi informado para atualização.' });
+            }
 
             await VendaModel.atualizar(id, dadosAtualizacao);
+            const vendaAtualizada = await VendaModel.buscarPorId(id);
 
             res.status(200).json({
                 sucesso: true,
-                mensagem: 'Pedido atualizado com sucesso.'
+                mensagem: 'Pedido atualizado com sucesso.',
+                dados: formatarVenda(vendaAtualizada)
             });
         } catch (error) {
             console.error('Erro ao atualizar pedido:', error);
+            if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+                return res.status(409).json({ sucesso: false, mensagem: 'Usuário ou produto não encontrado.' });
+            }
             res.status(500).json({ sucesso: false, erro: 'Erro interno ao atualizar pedido.' });
         }
     }
@@ -395,7 +466,10 @@ class VendaController {
     // EXCLUIR PEDIDO (ADMIN)
     static async excluir(req, res) {
         try {
-            const { id } = req.params;
+            const id = obterIdPositivo(req.params.id);
+            if (!id) {
+                return res.status(400).json({ sucesso: false, mensagem: 'ID de pedido inválido.' });
+            }
 
             const vendaExistente = await VendaModel.buscarPorId(id);
             if (!vendaExistente) {

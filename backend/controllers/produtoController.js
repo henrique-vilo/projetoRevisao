@@ -1,4 +1,5 @@
 import ProdutoModel from '../models/produtoModel.js';
+import { removerArquivoAntigo } from '../middlewares/uploadMiddleware.js';
 
 const GENEROS_VALIDOS = new Set(['Masculino', 'Feminino', 'Unissex', 'Infantil']);
 const ORDENACOES_VALIDAS = new Set([
@@ -6,6 +7,30 @@ const ORDENACOES_VALIDAS = new Set([
 ]);
 
 class FiltroInvalidoError extends Error {}
+class ProdutoInvalidoError extends Error {}
+
+const CAMPOS_IMAGEM = ['imagem1', 'imagem2', 'imagem3', 'imagem4'];
+const CAMPOS_INTEIROS = ['idCategoria', 'idSubcategoria', 'idCor', 'idTamanho', 'idModelo', 'estoque'];
+
+function obterImagensEnviadas(req) {
+    return Object.fromEntries(
+        CAMPOS_IMAGEM
+            .filter((campo) => req.files?.[campo]?.[0])
+            .map((campo) => [campo, `uploads/imagens/${req.files[campo][0].filename}`])
+    );
+}
+
+async function limparImagens(imagens) {
+    await Promise.all(Object.values(imagens).map((imagem) => removerArquivoAntigo(imagem)));
+}
+
+function validarNumero(valor, campo, { inteiro = false, minimo = 0 } = {}) {
+    const numero = Number(valor);
+    if (!Number.isFinite(numero) || numero < minimo || (inteiro && !Number.isInteger(numero))) {
+        throw new ProdutoInvalidoError(`${campo} deve ser um número válido maior ou igual a ${minimo}.`);
+    }
+    return numero;
+}
 
 function normalizarFiltros(query) {
     const filtros = {};
@@ -92,84 +117,24 @@ function normalizarFiltros(query) {
         filtros.ordenarPor = query.ordenarPor;
     }
 
+    if (query.agruparModelos !== undefined && query.agruparModelos !== '') {
+        if (!['true', 'false'].includes(String(query.agruparModelos))) {
+            throw new FiltroInvalidoError('O agrupamento por modelos deve ser true ou false.');
+        }
+        filtros.agruparModelos = String(query.agruparModelos) !== 'false';
+    }
+
     return filtros;
 }
 
-const TAMANHOS_POR_TIPO = {
-    roupaSuperior: new Set(['PP', 'P', 'M', 'G', 'GG', 'XG', 'XGG', 'EG', 'EGG']),
-    calcado: new Set([
-        '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36',
-        '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48'
-    ]),
-    roupaNumerica: new Set([
-        '32', '34', '36', '38', '40', '42', '44', '46', '48', '50', '52',
-        '54', '56', '58', '60'
-    ]),
-    unico: new Set(['U', 'UNICO'])
-};
-
-function normalizarTexto(valor = '') {
-    return String(valor)
+function criarSlugModelo(nome, idModelo) {
+    const slugNome = String(nome)
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
-        .trim()
-        .toUpperCase();
-}
-
-function contemAlgum(texto, palavras) {
-    return palavras.some((palavra) => texto.includes(palavra));
-}
-
-function identificarTipoTamanho(produto) {
-    const classificacao = normalizarTexto([
-        produto.categoriaNome,
-        produto.subcategoriaNome,
-        produto.modeloNome,
-        produto.nome
-    ].filter(Boolean).join(' '));
-
-    if (contemAlgum(classificacao, [
-        'TENIS', 'SAPATO', 'SANDALIA', 'CHINELO', 'BOTA', 'COTURNO',
-        'MOCASSIM', 'CALCADO'
-    ])) {
-        return 'calcado';
-    }
-
-    if (contemAlgum(classificacao, [
-        'CALCA', 'BERMUDA', 'SHORT', 'SAIA'
-    ])) {
-        return 'roupaNumerica';
-    }
-
-    if (contemAlgum(classificacao, [
-        'CAMISETA', 'CAMISA', 'JAQUETA', 'CASACO', 'MOLETOM', 'BLUSA',
-        'REGATA', 'SUETER', 'VESTIDO', 'POLO'
-    ])) {
-        return 'roupaSuperior';
-    }
-
-    if (contemAlgum(classificacao, [
-        'BONE', 'BOLSA', 'CARTEIRA', 'OCULOS', 'RELOGIO', 'ACESSORIO'
-    ])) {
-        return 'unico';
-    }
-
-    // Para categorias ainda não mapeadas, preserva os tamanhos cadastrados.
-    return 'generico';
-}
-
-function tamanhoCompativel(codigoTamanho, tipo) {
-    const codigo = normalizarTexto(codigoTamanho);
-
-    if (!codigo) {
-        return false;
-    }
-
-    if (tipo === 'generico') {
-        return true;
-    }
-
-    return TAMANHOS_POR_TIPO[tipo]?.has(codigo) || false;
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+    return `${slugNome || 'modelo'}-${Number(idModelo)}`;
 }
 
 function montarOpcoes(variacoes) {
@@ -262,10 +227,10 @@ class ProdutoController {
         try {
             const { id } = req.params;
 
-            if (!id || Number.isNaN(Number(id))) {
+            if (!id || String(id).length > 180) {
                 return res.status(400).json({
                     sucesso: false,
-                    erro: 'ID inválido'
+                    erro: 'Referência de modelo inválida'
                 });
             }
 
@@ -278,9 +243,7 @@ class ProdutoController {
                 });
             }
 
-            const tipoTamanho = identificarTipoTamanho(detalhes.produto);
             const variacoes = detalhes.variacoes
-                .filter((variacao) => tamanhoCompativel(variacao.tamanhoNome, tipoTamanho))
                 .map((variacao) => ({
                     ...variacao,
                     preco: Number(variacao.preco),
@@ -298,7 +261,6 @@ class ProdutoController {
                         preco: Number(detalhes.produto.preco),
                         estoque: Number(detalhes.produto.estoque)
                     },
-                    tipoTamanho,
                     variacoes,
                     ...opcoes
                 }
@@ -308,6 +270,28 @@ class ProdutoController {
             return res.status(500).json({
                 sucesso: false,
                 erro: 'Erro interno ao buscar os detalhes do produto'
+            });
+        }
+    }
+
+    // GET /produtos/tamanhos-compativeis/:idSubcategoria
+    static async listarTamanhosCompativeis(req, res) {
+        try {
+            const idSubcategoria = Number(req.params.idSubcategoria);
+            if (!Number.isInteger(idSubcategoria) || idSubcategoria < 1) {
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'Subcategoria inválida'
+                });
+            }
+
+            const tamanhos = await ProdutoModel.buscarTamanhosCompativeis(idSubcategoria);
+            return res.status(200).json({ sucesso: true, dados: tamanhos });
+        } catch (error) {
+            console.error('Erro ao buscar tamanhos compatíveis:', error);
+            return res.status(500).json({
+                sucesso: false,
+                erro: 'Erro interno ao buscar tamanhos compatíveis'
             });
         }
     }
@@ -342,6 +326,7 @@ class ProdutoController {
 
     // POST /produtos (ADMIN)
     static async criar(req, res) {
+        const imagensEnviadas = obterImagensEnviadas(req);
         try {
             const {
                 sku,
@@ -356,42 +341,55 @@ class ProdutoController {
                 idTamanho,
                 idModelo,
                 estoque,
-                imagem1,
-                imagem2,
-                imagem3,
-                imagem4
-            } = req.body;
+                imagem1, imagem2, imagem3, imagem4
+            } = req.body || {};
+
+            const imagens = {
+                imagem1: imagensEnviadas.imagem1 || imagem1,
+                imagem2: imagensEnviadas.imagem2 || imagem2 || null,
+                imagem3: imagensEnviadas.imagem3 || imagem3 || null,
+                imagem4: imagensEnviadas.imagem4 || imagem4 || null
+            };
 
             if (
                 !sku || !nome || !nomeCombinacao || !descricao ||
                 preco === undefined || !idCategoria || !idSubcategoria ||
-                !idCor || !idTamanho || !idModelo || !imagem1 ||
+                !idCor || !idTamanho || !idModelo || !imagens.imagem1 ||
                 estoque === undefined
             ) {
-                return res.status(400).json({
-                    sucesso: false,
-                    erro: 'Todos os campos obrigatórios devem ser preenchidos, incluindo imagem1'
-                });
+                throw new ProdutoInvalidoError('Todos os campos obrigatórios devem ser preenchidos, incluindo a imagem principal.');
+            }
+
+            const generoNormalizado = genero ? genero.trim() : 'Unissex';
+            if (!GENEROS_VALIDOS.has(generoNormalizado)) {
+                throw new ProdutoInvalidoError('Gênero inválido.');
             }
 
             const dadosProduto = {
                 sku: sku.trim(),
                 nome: nome.trim(),
+                slugModelo: criarSlugModelo(nome, idModelo),
                 nomeCombinacao: nomeCombinacao.trim(),
                 descricao: descricao.trim(),
-                genero: genero ? genero.trim() : 'Unissex',
-                preco: parseFloat(preco),
-                idCategoria: parseInt(idCategoria, 10),
-                idSubcategoria: parseInt(idSubcategoria, 10),
-                idCor: parseInt(idCor, 10),
-                idTamanho: parseInt(idTamanho, 10),
-                idModelo: parseInt(idModelo, 10),
-                estoque: parseInt(estoque, 10),
-                imagem1: imagem1.trim(),
-                imagem2: imagem2 ? imagem2.trim() : null,
-                imagem3: imagem3 ? imagem3.trim() : null,
-                imagem4: imagem4 ? imagem4.trim() : null
+                genero: generoNormalizado,
+                preco: validarNumero(preco, 'Preço'),
+                idCategoria: validarNumero(idCategoria, 'Categoria', { inteiro: true, minimo: 1 }),
+                idSubcategoria: validarNumero(idSubcategoria, 'Subcategoria', { inteiro: true, minimo: 1 }),
+                idCor: validarNumero(idCor, 'Cor', { inteiro: true, minimo: 1 }),
+                idTamanho: validarNumero(idTamanho, 'Tamanho', { inteiro: true, minimo: 1 }),
+                idModelo: validarNumero(idModelo, 'Modelo', { inteiro: true, minimo: 1 }),
+                estoque: validarNumero(estoque, 'Estoque', { inteiro: true }),
+                ...imagens
             };
+
+            if (!await ProdutoModel.tamanhoCompativel(
+                dadosProduto.idSubcategoria,
+                dadosProduto.idTamanho
+            )) {
+                throw new ProdutoInvalidoError(
+                    'O tamanho selecionado não é compatível com a subcategoria do produto.'
+                );
+            }
 
             const idProduto = await ProdutoModel.criar(dadosProduto);
 
@@ -401,7 +399,12 @@ class ProdutoController {
                 dados: { idProduto, ...dadosProduto }
             });
         } catch (error) {
+            await limparImagens(imagensEnviadas);
             console.error('Erro ao criar produto:', error);
+
+            if (error instanceof ProdutoInvalidoError) {
+                return res.status(400).json({ sucesso: false, erro: error.message });
+            }
 
             if (error.code === 'ER_DUP_ENTRY') {
                 return res.status(409).json({
@@ -419,16 +422,19 @@ class ProdutoController {
 
     // PUT /produtos/:id (ADMIN)
     static async atualizar(req, res) {
+        const imagensEnviadas = obterImagensEnviadas(req);
         try {
             const { id } = req.params;
 
             if (!id || Number.isNaN(Number(id))) {
+                await limparImagens(imagensEnviadas);
                 return res.status(400).json({ sucesso: false, erro: 'ID inválido' });
             }
 
             const produtoExistente = await ProdutoModel.buscarPorId(id);
 
             if (!produtoExistente) {
+                await limparImagens(imagensEnviadas);
                 return res.status(404).json({
                     sucesso: false,
                     erro: 'Produto não encontrado'
@@ -437,18 +443,53 @@ class ProdutoController {
 
             const camposPermitidos = [
                 'sku', 'nome', 'nomeCombinacao', 'descricao', 'genero', 'preco',
-                'idCategoria', 'idSubcategoria', 'idCor', 'idTamanho', 'idModelo',
-                'estoque', 'imagem1', 'imagem2', 'imagem3', 'imagem4'
+                ...CAMPOS_INTEIROS
             ];
             const dadosAtualizacao = {};
 
             camposPermitidos.forEach((campo) => {
-                if (req.body[campo] !== undefined) {
+                if (req.body?.[campo] !== undefined) {
                     dadosAtualizacao[campo] = typeof req.body[campo] === 'string'
                         ? req.body[campo].trim()
                         : req.body[campo];
                 }
             });
+
+            Object.assign(dadosAtualizacao, imagensEnviadas);
+
+            if (dadosAtualizacao.genero !== undefined && !GENEROS_VALIDOS.has(dadosAtualizacao.genero)) {
+                throw new ProdutoInvalidoError('Gênero inválido.');
+            }
+            if (dadosAtualizacao.preco !== undefined) {
+                dadosAtualizacao.preco = validarNumero(dadosAtualizacao.preco, 'Preço');
+            }
+            CAMPOS_INTEIROS.forEach((campo) => {
+                if (dadosAtualizacao[campo] !== undefined) {
+                    dadosAtualizacao[campo] = validarNumero(
+                        dadosAtualizacao[campo],
+                        campo,
+                        { inteiro: true, minimo: campo === 'estoque' ? 0 : 1 }
+                    );
+                }
+            });
+
+            const idSubcategoriaFinal = dadosAtualizacao.idSubcategoria
+                ?? produtoExistente.idSubcategoria;
+            const idTamanhoFinal = dadosAtualizacao.idTamanho
+                ?? produtoExistente.idTamanho;
+
+            if (!await ProdutoModel.tamanhoCompativel(idSubcategoriaFinal, idTamanhoFinal)) {
+                throw new ProdutoInvalidoError(
+                    'O tamanho selecionado não é compatível com a subcategoria do produto.'
+                );
+            }
+
+            if (dadosAtualizacao.nome !== undefined || dadosAtualizacao.idModelo !== undefined) {
+                dadosAtualizacao.slugModelo = criarSlugModelo(
+                    dadosAtualizacao.nome ?? produtoExistente.nome,
+                    dadosAtualizacao.idModelo ?? produtoExistente.idModelo
+                );
+            }
 
             if (Object.keys(dadosAtualizacao).length === 0) {
                 return res.status(400).json({
@@ -459,12 +500,25 @@ class ProdutoController {
 
             await ProdutoModel.atualizar(id, dadosAtualizacao);
 
+            const imagensSubstituidas = CAMPOS_IMAGEM
+                .filter((campo) => imagensEnviadas[campo] && produtoExistente[campo])
+                .map((campo) => produtoExistente[campo]);
+            await Promise.all(imagensSubstituidas.map((imagem) => removerArquivoAntigo(imagem)));
+
+            const produtoAtualizado = await ProdutoModel.buscarPorId(id);
+
             return res.status(200).json({
                 sucesso: true,
-                mensagem: 'Produto atualizado com sucesso'
+                mensagem: 'Produto atualizado com sucesso',
+                dados: produtoAtualizado
             });
         } catch (error) {
+            await limparImagens(imagensEnviadas);
             console.error('Erro ao atualizar produto:', error);
+
+            if (error instanceof ProdutoInvalidoError) {
+                return res.status(400).json({ sucesso: false, erro: error.message });
+            }
 
             if (error.code === 'ER_DUP_ENTRY') {
                 return res.status(409).json({
