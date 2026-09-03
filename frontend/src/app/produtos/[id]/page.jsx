@@ -57,6 +57,7 @@ export default function ProductPage() {
   const [selectedColorId, setSelectedColorId] = useState('');
   const [selectedSizeId, setSelectedSizeId] = useState('');
   const [imagemAtiva, setImagemAtiva] = useState(0);
+  const [imagensComErro, setImagensComErro] = useState(() => new Set());
   const [alertaCompra, setAlertaCompra] = useState(null);
   const [adicionandoCarrinho, setAdicionandoCarrinho] = useState(false);
 
@@ -109,6 +110,7 @@ export default function ProductPage() {
         );
         setSelectedSizeId('');
         setImagemAtiva(0);
+        setImagensComErro(new Set());
       } catch (error) {
         if (error.name !== 'AbortError') {
           setErro(error.message || 'Erro ao carregar o produto');
@@ -203,6 +205,7 @@ export default function ProductPage() {
     setSelectedColorId(String(idCor));
     setSelectedSizeId('');
     setImagemAtiva(0);
+    setImagensComErro(new Set());
     setAlertaCompra(null);
   }
 
@@ -211,6 +214,7 @@ export default function ProductPage() {
 
     setSelectedSizeId(String(tamanho.idTamanho));
     setImagemAtiva(0);
+    setImagensComErro(new Set());
     setAlertaCompra(null);
   }
 
@@ -359,10 +363,17 @@ export default function ProductPage() {
         <div className="product-layout">
           <section className="gallery-card" aria-label="Imagens do produto">
             <div className="main-image">
-              {imagens[imagemAtiva] ? (
+              {imagens[imagemAtiva] && !imagensComErro.has(imagens[imagemAtiva]) ? (
                 <img
                   src={imagens[imagemAtiva]}
                   alt={`${titulo} - imagem ${imagemAtiva + 1}`}
+                  onError={() => {
+                    setImagensComErro((atuais) => {
+                      const proximas = new Set(atuais);
+                      proximas.add(imagens[imagemAtiva]);
+                      return proximas;
+                    });
+                  }}
                 />
               ) : (
                 <div className="image-fallback">
@@ -376,7 +387,10 @@ export default function ProductPage() {
 
             {imagens.length > 1 ? (
               <div className="thumbnails" aria-label="Outras imagens">
-                {imagens.map((imagem, index) => (
+                {imagens
+                  .map((imagem, index) => ({ imagem, index }))
+                  .filter(({ imagem }) => !imagensComErro.has(imagem))
+                  .map(({ imagem, index }) => (
                   <button
                     key={imagem}
                     type="button"
@@ -385,7 +399,17 @@ export default function ProductPage() {
                     aria-label={`Visualizar imagem ${index + 1}`}
                     aria-pressed={imagemAtiva === index}
                   >
-                    <img src={imagem} alt="" />
+                    <img
+                      src={imagem}
+                      alt=""
+                      onError={() => {
+                        setImagensComErro((atuais) => {
+                          const proximas = new Set(atuais);
+                          proximas.add(imagem);
+                          return proximas;
+                        });
+                      }}
+                    />
                   </button>
                 ))}
               </div>

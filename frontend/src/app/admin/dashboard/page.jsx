@@ -162,7 +162,8 @@ async function apiFetch(endpoint) {
 }
 
 async function fetchAllPages(endpoint, limit = 100) {
-  const first = await apiFetch(`${endpoint}?pagina=1&limite=${limit}`);
+  const separator = endpoint.includes('?') ? '&' : '?';
+  const first = await apiFetch(`${endpoint}${separator}pagina=1&limite=${limit}`);
 
   const firstData = Array.isArray(first?.dados) ? first.dados : [];
 
@@ -180,7 +181,7 @@ async function fetchAllPages(endpoint, limit = 100) {
   const requests = [];
 
   for (let page = 2; page <= totalPaginas; page += 1) {
-    requests.push(apiFetch(`${endpoint}?pagina=${page}&limite=${limit}`));
+    requests.push(apiFetch(`${endpoint}${separator}pagina=${page}&limite=${limit}`));
   }
 
   const rest = await Promise.all(requests);
@@ -228,7 +229,7 @@ export default function DashboardPage() {
 
       const [vendasResult, produtosResult, usuariosResult] = await Promise.all([
         fetchAllPages('/vendas', 100),
-        fetchAllPages('/produtos', 100),
+        fetchAllPages('/produtos?agruparModelos=false', 100),
         fetchAllPages('/usuarios', 100),
       ]);
 

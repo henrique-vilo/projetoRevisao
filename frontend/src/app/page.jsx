@@ -185,7 +185,9 @@ export default function Home() {
         }
 
         setMaisDesejados(
-          resultado.dados.filter((produto) => Number(produto.quantidadeVendas) > 0),
+          resultado.dados.filter(
+            (produto) => Number(produto.quantidadeVendasModelo ?? produto.quantidadeVendas) > 0,
+          ),
         );
         setErroMaisDesejados("");
 
@@ -717,7 +719,7 @@ export default function Home() {
 
               <div className="col-12 col-sm-6 col-md-3" key={prod.idProduto}>
 
-                <Link href={`/produtos/${prod.idProduto}`} className="text-decoration-none text-dark d-block h-100">
+                <Link href={`/produtos/${prod.slugModelo || prod.idProduto}`} className="text-decoration-none text-dark d-block h-100">
 
                   <div className="product-card-clean h-100">
 
@@ -725,7 +727,9 @@ export default function Home() {
 
                       <span className="product-tag-pill badge-dark">
 
-                        {formatarQuantidadeVendas(prod.quantidadeVendas)}
+                        {formatarQuantidadeVendas(
+                          prod.quantidadeVendasModelo ?? prod.quantidadeVendas,
+                        )}
 
                       </span>
 

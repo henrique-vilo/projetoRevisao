@@ -63,7 +63,7 @@ class ProdutoModel {
                     FROM categorias
                     UNION ALL
                     SELECT idSubcategoria AS id, nomeSubcategoria AS nome, 'subcategoria' AS tipo
-                    FROM subCategorias
+                    FROM subcategorias
                 `);
 
                 if (params.categoria) {
