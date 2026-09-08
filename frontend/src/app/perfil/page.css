@@ -629,3 +629,20 @@
     animation-iteration-count: 1;
   }
 }
+/* Superficies e textos seguem o tema selecionado. */
+html:is(.dark, [data-bs-theme="dark"]) .perfil-page {
+  --perfil-ink: var(--text-primary);
+  --perfil-muted: var(--text-secondary);
+  --perfil-border: var(--border-color);
+  --perfil-surface: var(--card-bg);
+  --perfil-background: var(--background);
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .perfil-danger-spaced,
+html:is(.dark, [data-bs-theme="dark"]) .perfil-danger-content {
+  background: var(--card-bg);
+  border-color: #7f3541;
+}
+html:is(.dark, [data-bs-theme="dark"]) .perfil-danger-spaced :is(h3, p, strong) {
+  color: #fca5a5;
+}

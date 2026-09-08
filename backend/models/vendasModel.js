@@ -58,6 +58,39 @@ class VendaModel {
         return consultar(`${SELECT_VENDAS} WHERE v.idUsuario = ? ORDER BY v.idVendas DESC`, [idUsuario]);
     }
 
+    static async buscarCarrinho(idUsuario) {
+        const rows = await consultar(
+            `SELECT
+                v.idProduto,
+                GROUP_CONCAT(v.idVendas ORDER BY v.idVendas) AS idsVendas,
+                COUNT(*) AS quantidade,
+                p.nome,
+                p.nomeCombinacao AS variacao,
+                p.preco,
+                p.imagem1 AS imagem,
+                p.estoque
+             FROM vendas v
+             INNER JOIN produtos p ON p.idProduto = v.idProduto
+             WHERE v.idUsuario = ? AND v.STATUS = 'carrinho'
+             GROUP BY
+                v.idProduto, p.nome, p.nomeCombinacao, p.preco,
+                p.imagem1, p.estoque
+             ORDER BY MIN(v.idVendas) DESC`,
+            [idUsuario]
+        );
+
+        return rows.map((item) => ({
+            ...item,
+            idsVendas: String(item.idsVendas)
+                .split(',')
+                .map(Number)
+                .filter(Number.isSafeInteger),
+            quantidade: Number(item.quantidade),
+            preco: Number(item.preco),
+            estoque: Number(item.estoque),
+        }));
+    }
+
     static async buscarUsuarioVenda(idUsuario) {
         const rows = await consultar('SELECT idUsuario, cep FROM usuarios WHERE idUsuario = ?', [idUsuario]);
         return rows[0] || null;
@@ -72,6 +105,137 @@ class VendaModel {
         const entries = camposValidos(dadosVenda);
         const result = await consultar(`INSERT INTO vendas (${entries.map(([key]) => key).join(', ')}) VALUES (${entries.map(() => '?').join(', ')})`, entries.map(([, value]) => value));
         return result.insertId;
+    }
+
+    static async adicionarAoCarrinho(idUsuario, idProduto) {
+        const connection = await getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const [produtos] = await connection.execute(
+                `SELECT idProduto, estoque, ativo
+                 FROM produtos
+                 WHERE idProduto = ?
+                 FOR UPDATE`,
+                [idProduto]
+            );
+            const produto = produtos[0];
+
+            if (!produto || !Number(produto.ativo)) {
+                const error = new Error('Produto não encontrado ou indisponível.');
+                error.code = 'PRODUTO_INDISPONIVEL';
+                throw error;
+            }
+
+            const [quantidades] = await connection.execute(
+                `SELECT COUNT(*) AS quantidade
+                 FROM vendas
+                 WHERE idUsuario = ? AND idProduto = ? AND STATUS = 'carrinho'`,
+                [idUsuario, idProduto]
+            );
+
+            if (Number(quantidades[0].quantidade) >= Number(produto.estoque)) {
+                const error = new Error('Não há mais unidades disponíveis deste produto.');
+                error.code = 'ESTOQUE_INSUFICIENTE';
+                throw error;
+            }
+
+            const [resultado] = await connection.execute(
+                `INSERT INTO vendas (idUsuario, idProduto, dataPedido, dataEntrega, STATUS)
+                 VALUES (?, ?, NULL, NULL, 'carrinho')`,
+                [idUsuario, idProduto]
+            );
+
+            await connection.commit();
+            return resultado.insertId;
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+
+    static async removerDoCarrinho(idVenda, idUsuario) {
+        const result = await consultar(
+            `DELETE FROM vendas
+             WHERE idVendas = ? AND idUsuario = ? AND STATUS = 'carrinho'`,
+            [idVenda, idUsuario]
+        );
+        return result.affectedRows;
+    }
+
+    static async confirmarCarrinho(idUsuario, dataPedido, dataEntrega) {
+        const connection = await getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const [itens] = await connection.execute(
+                `SELECT v.idVendas, v.idProduto, p.nome, p.estoque, p.ativo
+                 FROM vendas v
+                 INNER JOIN produtos p ON p.idProduto = v.idProduto
+                 WHERE v.idUsuario = ? AND v.STATUS = 'carrinho'
+                 ORDER BY v.idVendas
+                 FOR UPDATE`,
+                [idUsuario]
+            );
+
+            if (!itens.length) {
+                const error = new Error('Seu carrinho está vazio.');
+                error.code = 'CARRINHO_VAZIO';
+                throw error;
+            }
+
+            const produtos = new Map();
+            for (const item of itens) {
+                const atual = produtos.get(item.idProduto);
+                produtos.set(item.idProduto, {
+                    nome: item.nome,
+                    estoque: Number(item.estoque),
+                    ativo: Number(item.ativo),
+                    quantidade: (atual?.quantidade || 0) + 1,
+                });
+            }
+
+            for (const [idProduto, produto] of produtos) {
+                if (!produto.ativo || produto.estoque < produto.quantidade) {
+                    const error = new Error(`Estoque insuficiente para ${produto.nome || `produto ${idProduto}`}.`);
+                    error.code = 'ESTOQUE_INSUFICIENTE';
+                    throw error;
+                }
+
+                const [resultadoEstoque] = await connection.execute(
+                    `UPDATE produtos
+                     SET estoque = estoque - ?
+                     WHERE idProduto = ? AND ativo = 1 AND estoque >= ?`,
+                    [produto.quantidade, idProduto, produto.quantidade]
+                );
+
+                if (!resultadoEstoque.affectedRows) {
+                    const error = new Error(`Estoque insuficiente para ${produto.nome || `produto ${idProduto}`}.`);
+                    error.code = 'ESTOQUE_INSUFICIENTE';
+                    throw error;
+                }
+            }
+
+            const [resultado] = await connection.execute(
+                `UPDATE vendas
+                 SET dataPedido = ?, dataEntrega = ?, STATUS = 'processando'
+                 WHERE idUsuario = ? AND STATUS = 'carrinho'`,
+                [dataPedido, dataEntrega, idUsuario]
+            );
+
+            await connection.commit();
+            return {
+                idsVendas: itens.map((item) => item.idVendas),
+                quantidadeItens: resultado.affectedRows,
+            };
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
     static async atualizar(id, dadosVenda) {

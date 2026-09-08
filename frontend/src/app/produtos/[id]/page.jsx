@@ -438,7 +438,6 @@ export default function ProductPage() {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        idUsuario,
         idProduto: variacaoSelecionada.idProduto,
       }),
     });

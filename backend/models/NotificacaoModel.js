@@ -30,15 +30,21 @@ class NotificacaoModel {
             );
 
             const [totalResult] = await connection.query(
-                'SELECT COUNT(*) as total FROM notificacoes WHERE idUsuario = ?',
+                `SELECT
+                    COUNT(*) AS total,
+                    COALESCE(SUM(CASE WHEN lida = 0 OR lida IS NULL THEN 1 ELSE 0 END), 0) AS naoLidas
+                FROM notificacoes
+                WHERE idUsuario = ?`,
                 [parseInt(idUsuario)]
             );
 
-            const total = totalResult[0].total;
+            const total = Number(totalResult[0].total) || 0;
+            const naoLidas = Number(totalResult[0].naoLidas) || 0;
 
             return {
                 notificacoes,
                 total,
+                naoLidas,
                 pagina,
                 limite,
                 totalPaginas: Math.ceil(total / limite)

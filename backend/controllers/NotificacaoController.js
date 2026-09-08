@@ -44,6 +44,7 @@ class NotificacaoController {
                     pagina: resultado.pagina,
                     limite: resultado.limite,
                     total: resultado.total,
+                    naoLidas: resultado.naoLidas,
                     totalPaginas: resultado.totalPaginas
                 }
             });
@@ -79,8 +80,8 @@ class NotificacaoController {
                 });
             }
 
-            // Ajustado para idUsuario em ambos os lados
-            if (Number(notificacao.idUsuario) !== Number(req.usuario.idUsuario)) {
+            const idUsuario = req.usuario?.idUsuario || req.usuario?.id;
+            if (Number(notificacao.idUsuario) !== Number(idUsuario)) {
                 return res.status(403).json({
                     sucesso: false,
                     erro: 'Acesso negado',

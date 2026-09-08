@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import "./page.css";
 
-const API_URL = (
+const API_ORIGIN = (
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
-).replace(/\/$/, "");
+)
+  .replace(/\/api\/?$/, "")
+  .replace(/\/$/, "");
 
 export default function Notificacoes() {
   const [notificacoes, setNotificacoes] = useState([]);
@@ -42,7 +44,7 @@ export default function Notificacoes() {
       }
 
       const resposta = await fetch(
-        `${API_URL}/api/notificacoes?pagina=${paginaAtual}&limite=${LIMITE}`,
+        `${API_ORIGIN}/api/notificacoes?pagina=${paginaAtual}&limite=${LIMITE}`,
         {
           method: "GET",
           headers: {
@@ -107,7 +109,7 @@ export default function Notificacoes() {
       }
 
       const resposta = await fetch(
-        `${API_URL}/api/notificacoes/${notificacao.idNotificacao}/lida`,
+        `${API_ORIGIN}/api/notificacoes/${notificacao.idNotificacao}/lida`,
         {
           method: "PUT",
           headers: {
@@ -137,6 +139,7 @@ export default function Notificacoes() {
             : item
         )
       );
+      window.dispatchEvent(new Event("notificacoes-atualizadas"));
     } catch (error) {
       console.error("Erro ao marcar notificação:", error);
 
@@ -162,7 +165,7 @@ export default function Notificacoes() {
       }
 
       const resposta = await fetch(
-        `${API_URL}/api/notificacoes/lidas`,
+        `${API_ORIGIN}/api/notificacoes/lidas`,
         {
           method: "PUT",
           headers: {
@@ -188,6 +191,7 @@ export default function Notificacoes() {
           lida: 1,
         }))
       );
+      window.dispatchEvent(new Event("notificacoes-atualizadas"));
     } catch (error) {
       console.error("Erro ao marcar todas:", error);
 

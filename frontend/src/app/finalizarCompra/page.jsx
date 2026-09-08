@@ -9,8 +9,55 @@ import "./page.css";
 const API_ORIGIN = (
 process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
 )
+  .replace(/\/+$/, "")
+  .replace(/\/api$/, "");
 
 const API_BASE_URL = `${API_ORIGIN}/api`;
+
+function resolverImagem(caminho) {
+  if (!caminho) return null;
+  if (/^https?:\/\//i.test(caminho)) return caminho;
+  return `${API_ORIGIN}${caminho.startsWith("/") ? caminho : `/${caminho}`}`;
+}
+
+function somenteNumeros(valor, limite) {
+  return String(valor ?? "").replace(/\D/g, "").slice(0, limite);
+}
+
+function formatarCpf(valor) {
+  const numeros = somenteNumeros(valor, 11);
+  if (numeros.length <= 3) return numeros;
+  if (numeros.length <= 6) return `${numeros.slice(0, 3)}.${numeros.slice(3)}`;
+  if (numeros.length <= 9) {
+    return `${numeros.slice(0, 3)}.${numeros.slice(3, 6)}.${numeros.slice(6)}`;
+  }
+  return `${numeros.slice(0, 3)}.${numeros.slice(3, 6)}.${numeros.slice(6, 9)}-${numeros.slice(9)}`;
+}
+
+function formatarTelefone(valor) {
+  const numeros = somenteNumeros(valor, 11);
+  if (numeros.length <= 2) return numeros;
+  if (numeros.length <= 6) return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
+  if (numeros.length <= 10) {
+    return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 6)}-${numeros.slice(6)}`;
+  }
+  return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
+}
+
+function formatarCep(valor) {
+  const numeros = somenteNumeros(valor, 8);
+  if (numeros.length <= 5) return numeros;
+  return `${numeros.slice(0, 5)}-${numeros.slice(5)}`;
+}
+
+async function consultarCep(cep, signal) {
+  const resposta = await fetch(`https://viacep.com.br/ws/${cep}/json/`, { signal });
+  if (!resposta.ok) throw new Error("Não foi possível consultar o CEP.");
+
+  const dados = await resposta.json();
+  if (dados.erro) throw new Error("CEP não encontrado.");
+  return dados;
+}
 
 export default function FinalizarCompra() {
 const router = useRouter();
@@ -47,82 +94,99 @@ cvv: "",
 const [carregandoCep, setCarregandoCep] = useState(false);
 const [finalizando, setFinalizando] = useState(false);
 
-// --------------------------------------------------
-// BUSCAR CARRINHO NO BACKEND
-// --------------------------------------------------
-
-async function buscarCarrinho() {
-try {
-setCarregando(true);
-
-
-  const token = localStorage.getItem("token");
-  const usuarioSalvo = localStorage.getItem("usuario");
-
-  if (!token || !usuarioSalvo) {
-    router.push("/login");
-    return;
-  }
-
-  const usuario = JSON.parse(usuarioSalvo);
-
-  const idUsuario = usuario.idUsuario ?? usuario.id;
-
-  if (!idUsuario) {
-    console.error(
-      "Usuário encontrado, mas o ID não foi localizado:",
-      usuario
-    );
-
-    setCarrinho([]);
-    return;
-  }
-
-  const resposta = await fetch(
-    `${API_BASE_URL}/vendas/carrinho/${idUsuario}`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  const dados = await resposta.json();
-
-  if (!resposta.ok) {
-    throw new Error(
-      dados?.mensagem ||
-        dados?.erro ||
-        "Não foi possível carregar o carrinho."
-    );
-  }
-
-  const produtosCarrinho = Array.isArray(dados?.dados)
-    ? dados.dados
-    : [];
-
-  console.log("Carrinho carregado no checkout:", produtosCarrinho);
-
-  setCarrinho(produtosCarrinho);
-} catch (error) {
-  console.error("Erro ao carregar carrinho:", error);
-  setCarrinho([]);
-} finally {
-  setCarregando(false);
-}
-
-
-}
-
-// --------------------------------------------------
-// CARREGAR CARRINHO AO ABRIR O CHECKOUT
-// --------------------------------------------------
-
 useEffect(() => {
-buscarCarrinho();
-}, []);
+  const abortController = new AbortController();
+
+  async function carregarCheckout() {
+    try {
+      setCarregando(true);
+      const token = localStorage.getItem("token");
+      const usuarioSalvo = localStorage.getItem("usuario");
+
+      if (!token || !usuarioSalvo) {
+        router.replace("/login");
+        return;
+      }
+
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      };
+      const [respostaCarrinho, respostaPerfil] = await Promise.all([
+        fetch(`${API_BASE_URL}/vendas/carrinho`, {
+          headers,
+          cache: "no-store",
+          signal: abortController.signal,
+        }),
+        fetch(`${API_BASE_URL}/auth/perfil`, {
+          headers,
+          cache: "no-store",
+          signal: abortController.signal,
+        }),
+      ]);
+      const [dadosCarrinho, dadosPerfil] = await Promise.all([
+        respostaCarrinho.json().catch(() => ({})),
+        respostaPerfil.json().catch(() => ({})),
+      ]);
+
+      if ([respostaCarrinho.status, respostaPerfil.status].some((status) => status === 401)) {
+        router.replace("/login");
+        return;
+      }
+      if (!respostaCarrinho.ok) {
+        throw new Error(dadosCarrinho.mensagem || dadosCarrinho.erro || "Não foi possível carregar o carrinho.");
+      }
+      if (!respostaPerfil.ok) {
+        throw new Error(dadosPerfil.mensagem || dadosPerfil.erro || "Não foi possível carregar seus dados.");
+      }
+
+      const perfil = dadosPerfil.dados?.usuario || dadosPerfil.dados || dadosPerfil.usuario;
+      if (!perfil) throw new Error("Os dados do usuário logado não foram encontrados.");
+
+      setCarrinho(Array.isArray(dadosCarrinho.dados) ? dadosCarrinho.dados : []);
+      setDadosPessoais({
+        nome: perfil.nome || "",
+        email: perfil.email || "",
+        cpf: formatarCpf(perfil.cpf),
+        telefone: formatarTelefone(perfil.telefone),
+      });
+
+      const cepFormatado = formatarCep(perfil.cep);
+      setEndereco((enderecoAtual) => ({ ...enderecoAtual, cep: cepFormatado }));
+
+      const cepLimpo = somenteNumeros(cepFormatado, 8);
+      if (cepLimpo.length === 8) {
+        try {
+          setCarregandoCep(true);
+          const dadosCep = await consultarCep(cepLimpo, abortController.signal);
+          if (!abortController.signal.aborted) {
+            setEndereco((enderecoAtual) => ({
+              ...enderecoAtual,
+              rua: dadosCep.logradouro || "",
+              bairro: dadosCep.bairro || "",
+              cidade: dadosCep.localidade || "",
+              estado: dadosCep.uf || "",
+            }));
+          }
+        } catch (error) {
+          if (error.name === "AbortError") return;
+        } finally {
+          if (!abortController.signal.aborted) setCarregandoCep(false);
+        }
+      }
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        console.error("Erro ao carregar o checkout:", error);
+        setCarrinho([]);
+      }
+    } finally {
+      if (!abortController.signal.aborted) setCarregando(false);
+    }
+  }
+
+  carregarCheckout();
+  return () => abortController.abort();
+}, [router]);
 
 // --------------------------------------------------
 // ALTERAR DADOS PESSOAIS
@@ -130,11 +194,15 @@ buscarCarrinho();
 
 function alterarDadosPessoais(e) {
 const { name, value } = e.target;
-
+const valorFormatado = name === "cpf"
+  ? formatarCpf(value)
+  : name === "telefone"
+    ? formatarTelefone(value)
+    : value;
 
 setDadosPessoais((dadosAtuais) => ({
   ...dadosAtuais,
-  [name]: value,
+  [name]: valorFormatado,
 }));
 
 
@@ -146,11 +214,15 @@ setDadosPessoais((dadosAtuais) => ({
 
 function alterarEndereco(e) {
 const { name, value } = e.target;
-
+const valorFormatado = name === "cep"
+  ? formatarCep(value)
+  : name === "estado"
+    ? value.replace(/[^a-z]/gi, "").slice(0, 2).toUpperCase()
+    : value;
 
 setEndereco((enderecoAtual) => ({
   ...enderecoAtual,
-  [name]: value,
+  [name]: valorFormatado,
 }));
 
 
@@ -177,7 +249,7 @@ setCartao((cartaoAtual) => ({
 // --------------------------------------------------
 
 async function buscarCep() {
-const cepLimpo = endereco.cep.replace(/\D/g, "");
+const cepLimpo = somenteNumeros(endereco.cep, 8);
 
 
 if (cepLimpo.length !== 8) {
@@ -187,16 +259,7 @@ if (cepLimpo.length !== 8) {
 try {
   setCarregandoCep(true);
 
-  const resposta = await fetch(
-    `https://viacep.com.br/ws/${cepLimpo}/json/`
-  );
-
-  const dados = await resposta.json();
-
-  if (dados.erro) {
-    alert("CEP não encontrado.");
-    return;
-  }
+  const dados = await consultarCep(cepLimpo);
 
   setEndereco((enderecoAtual) => ({
     ...enderecoAtual,
@@ -207,7 +270,7 @@ try {
   }));
 } catch (error) {
   console.error("Erro ao buscar CEP:", error);
-  alert("Não foi possível buscar o CEP.");
+  alert(error.message || "Não foi possível buscar o CEP.");
 } finally {
   setCarregandoCep(false);
 }
@@ -284,56 +347,8 @@ try {
     throw new Error("Não foi possível identificar o usuário.");
   }
 
-  // --------------------------------------------------
-  // PRODUTOS QUE SERÃO ENVIADOS
-  // --------------------------------------------------
-
-  const itens = carrinho.map((item) => ({
-    idProduto: item.idProduto,
-    quantidade: Number(item.quantidade) || 1,
-    preco: Number(item.preco) || 0,
-    tamanho: item.variacao || item.tamanho || null,
-  }));
-
-  const pedido = {
-    idUsuario,
-
-    cliente: dadosPessoais,
-
-    endereco,
-
-    pagamento: {
-      tipo: formaPagamento,
-      ...(formaPagamento !== "pix"
-        ? {
-            cartao: {
-              nome: cartao.nome,
-              numero: cartao.numero,
-              validade: cartao.validade,
-              cvv: cartao.cvv,
-            },
-          }
-        : {}),
-    },
-
-    itens,
-
-    subtotal,
-    frete,
-    total,
-  };
-
-  console.log("PEDIDO ENVIADO:", pedido);
-
-  // --------------------------------------------------
-  // POST DO PEDIDO
-  // --------------------------------------------------
-  //
-  // Quando sua rota estiver pronta, descomente:
-  //
-  /*
   const resposta = await fetch(
-    `${API_BASE_URL}/pedidos`,
+    `${API_BASE_URL}/vendas/carrinho/confirmar`,
     {
       method: "POST",
 
@@ -341,8 +356,6 @@ try {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-
-      body: JSON.stringify(pedido),
     }
   );
 
@@ -355,13 +368,8 @@ try {
       "Erro ao finalizar pedido."
     );
   }
-  */
 
-  alert("Pedido realizado com sucesso!");
-
-  // Não usamos mais:
-  // localStorage.removeItem("carrinho");
-
+  window.dispatchEvent(new Event("carrinho-atualizado"));
   router.push("/compraSucesso");
 } catch (error) {
   console.error("Erro ao finalizar pedido:", error);
@@ -496,6 +504,7 @@ return ( <main className="checkoutPage"> <div className="checkoutContainer">
                   placeholder="Digite seu nome completo"
                   value={dadosPessoais.nome}
                   onChange={alterarDadosPessoais}
+                  autoComplete="name"
                   required
                 />
 
@@ -511,6 +520,7 @@ return ( <main className="checkoutPage"> <div className="checkoutContainer">
                   placeholder="seuemail@email.com"
                   value={dadosPessoais.email}
                   onChange={alterarDadosPessoais}
+                  autoComplete="email"
                   required
                 />
 
@@ -526,6 +536,10 @@ return ( <main className="checkoutPage"> <div className="checkoutContainer">
                   placeholder="000.000.000-00"
                   value={dadosPessoais.cpf}
                   onChange={alterarDadosPessoais}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  minLength={14}
+                  maxLength={14}
                   required
                 />
 
@@ -536,11 +550,15 @@ return ( <main className="checkoutPage"> <div className="checkoutContainer">
                 <label>Telefone</label>
 
                 <input
-                  type="text"
+                  type="tel"
                   name="telefone"
                   placeholder="(00) 00000-0000"
                   value={dadosPessoais.telefone}
                   onChange={alterarDadosPessoais}
+                  inputMode="tel"
+                  autoComplete="tel"
+                  minLength={14}
+                  maxLength={15}
                   required
                 />
 
@@ -582,6 +600,10 @@ return ( <main className="checkoutPage"> <div className="checkoutContainer">
                     value={endereco.cep}
                     onChange={alterarEndereco}
                     onBlur={buscarCep}
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    minLength={9}
+                    maxLength={9}
                     required
                   />
 
@@ -605,6 +627,7 @@ return ( <main className="checkoutPage"> <div className="checkoutContainer">
                   placeholder="Rua"
                   value={endereco.rua}
                   onChange={alterarEndereco}
+                  autoComplete="address-line1"
                   required
                 />
 
@@ -620,6 +643,7 @@ return ( <main className="checkoutPage"> <div className="checkoutContainer">
                   placeholder="Número"
                   value={endereco.numero}
                   onChange={alterarEndereco}
+                  autoComplete="address-line2"
                   required
                 />
 
@@ -635,6 +659,7 @@ return ( <main className="checkoutPage"> <div className="checkoutContainer">
                   placeholder="Apartamento, bloco..."
                   value={endereco.complemento}
                   onChange={alterarEndereco}
+                  autoComplete="address-line3"
                 />
 
               </div>
@@ -649,6 +674,7 @@ return ( <main className="checkoutPage"> <div className="checkoutContainer">
                   placeholder="Bairro"
                   value={endereco.bairro}
                   onChange={alterarEndereco}
+                  autoComplete="address-level3"
                   required
                 />
 
@@ -664,6 +690,7 @@ return ( <main className="checkoutPage"> <div className="checkoutContainer">
                   placeholder="Cidade"
                   value={endereco.cidade}
                   onChange={alterarEndereco}
+                  autoComplete="address-level2"
                   required
                 />
 
@@ -680,6 +707,7 @@ return ( <main className="checkoutPage"> <div className="checkoutContainer">
                   maxLength="2"
                   value={endereco.estado}
                   onChange={alterarEndereco}
+                  autoComplete="address-level1"
                   required
                 />
 
@@ -921,11 +949,12 @@ return ( <main className="checkoutPage"> <div className="checkoutContainer">
                 const id =
                   item.idProduto || index;
 
-                const imagem =
+                const imagem = resolverImagem(
                   item.imagem ||
                   item.imagem1 ||
                   item.image ||
-                  null;
+                  null
+                );
 
                 const preco =
                   Number(item.preco) || 0;

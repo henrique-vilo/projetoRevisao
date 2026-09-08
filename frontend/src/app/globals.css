@@ -2,6 +2,7 @@
    1. VARIÁVEIS DE TEMA (CLARO / ESCURO)
    ========================================================================== */
 :root {
+  color-scheme: light;
   --background: #ffffff;
   --foreground: #0f172a;
   --card-bg: #ffffff;
@@ -48,81 +49,7 @@ a {
   text-decoration: none;
 }
 
-/* ==========================================================================
-   3. HEADER - CENTRALIZAÇÃO E ESPAÇAMENTO DOS CONTEÚDOS
-   ========================================================================== */
-header,
-.header,
-.navbar {
-  width: 100%;
-  padding: 0.75rem 2rem;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 1.25rem !important;
-  box-sizing: border-box;
-}
-
-.header-logo,
-header img,
-.navbar-brand {
-  flex-shrink: 0 !important;
-}
-
-.header-nav,
-.nav-links,
-header nav {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex: 1 !important;
-  gap: 1.25rem !important;
-  margin: 0 !important;
-  white-space: nowrap;
-}
-
-.nav-item-container {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.nav-item-container > a,
-.nav-item-container > button,
-.header-nav a,
-.nav-links a {
-  font-size: 0.88rem;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.4rem 0.2rem;
-  color: var(--foreground);
-  transition: color 0.15s ease;
-}
-
-.nav-item-container > a:hover,
-.nav-item-container > button:hover {
-  color: var(--accent-color);
-}
-
-.header-search,
-.search-container,
-header form,
-header [class*="search"] {
-  flex-shrink: 0 !important;
-  width: 240px;
-}
-
-.header-actions,
-.header-icons,
-header [class*="actions"],
-header [class*="icons"] {
-  display: flex !important;
-  align-items: center !important;
-  gap: 1rem !important;
-  flex-shrink: 0 !important;
-}
+/* O layout do header pertence a components/Header.css. */
 
 /* ==========================================================================
    4. DROPDOWN DO HEADER (MODO CLARO)
@@ -223,10 +150,8 @@ header [class*="icons"] {
    5. DROPDOWN NO MODO ESCURO
    ========================================================================== */
 html.dark .dropdown-menu,
-html.dark [class*="dropdown"],
 html.dark .nav-item-container > div,
 html[data-bs-theme="dark"] .dropdown-menu,
-html[data-bs-theme="dark"] [class*="dropdown"],
 html[data-bs-theme="dark"] .nav-item-container > div {
   background-color: #1e293b !important;
   background: #1e293b !important;
@@ -235,10 +160,8 @@ html[data-bs-theme="dark"] .nav-item-container > div {
 }
 
 html.dark .dropdown-menu *,
-html.dark [class*="dropdown"] *,
 html.dark .nav-item-container > div *,
 html[data-bs-theme="dark"] .dropdown-menu *,
-html[data-bs-theme="dark"] [class*="dropdown"] *,
 html[data-bs-theme="dark"] .nav-item-container > div * {
   color: #f8fafc !important;
   background-color: transparent !important;
@@ -282,13 +205,9 @@ html[data-bs-theme="dark"] .dropdown-footer-link {
 html.dark main,
 html.dark section,
 html.dark article,
-html.dark header,
-html.dark nav,
 html[data-bs-theme="dark"] main,
 html[data-bs-theme="dark"] section,
-html[data-bs-theme="dark"] article,
-html[data-bs-theme="dark"] header,
-html[data-bs-theme="dark"] nav {
+html[data-bs-theme="dark"] article {
   background-color: var(--background) !important;
   color: var(--foreground) !important;
 }
@@ -304,24 +223,8 @@ html[data-bs-theme="dark"] .bg-body {
 }
 
 /* Texto geral do modo escuro (Exclui botões e badges para não forçar texto branco em fundo claro) */
-html.dark h1:not([class*="btn"]):not([class*="badge"]),
-html.dark h2:not([class*="btn"]):not([class*="badge"]),
-html.dark h3:not([class*="btn"]):not([class*="badge"]), 
-html.dark h4:not([class*="btn"]):not([class*="badge"]),
-html.dark h5:not([class*="btn"]):not([class*="badge"]),
-html.dark h6:not([class*="btn"]):not([class*="badge"]), 
-html.dark p:not([class*="btn"]), html.dark label, html.dark li, 
-html.dark strong:not([class*="btn"]), html.dark b, html.dark small,
-html[data-bs-theme="dark"] h1:not([class*="btn"]):not([class*="badge"]),
-html[data-bs-theme="dark"] h2:not([class*="btn"]):not([class*="badge"]),
-html[data-bs-theme="dark"] h3:not([class*="btn"]):not([class*="badge"]), 
-html[data-bs-theme="dark"] h4:not([class*="btn"]):not([class*="badge"]),
-html[data-bs-theme="dark"] h5:not([class*="btn"]):not([class*="badge"]),
-html[data-bs-theme="dark"] h6:not([class*="btn"]):not([class*="badge"]), 
-html[data-bs-theme="dark"] p:not([class*="btn"]),
-html[data-bs-theme="dark"] label, html[data-bs-theme="dark"] li, 
-html[data-bs-theme="dark"] strong:not([class*="btn"]), html[data-bs-theme="dark"] b, html[data-bs-theme="dark"] small {
-  color: var(--foreground) !important;
+:where(html.dark, html[data-bs-theme="dark"]) :where(h1, h2, h3, h4, h5, h6, p, label, li, strong, b, small) {
+  color: var(--foreground);
 }
 
 html.dark .text-muted,
@@ -451,14 +354,7 @@ html[data-bs-theme="dark"] [class*="banner"] [class*="cta"] * {
 /* ==========================================================================
    9. CORREÇÃO DA BARRA LATERAL DE FILTROS & PRODUTOS (MODO ESCURO)
    ========================================================================== */
-html.dark [class*="filter"],
-html.dark [class*="sidebar"],
-html.dark [class*="filtros"],
-html.dark [class*="aside"],
-html[data-bs-theme="dark"] [class*="filter"],
-html[data-bs-theme="dark"] [class*="sidebar"],
-html[data-bs-theme="dark"] [class*="filtros"],
-html[data-bs-theme="dark"] [class*="aside"] {
+html:is(.dark, [data-bs-theme="dark"]) aside {
   background-color: var(--card-bg) !important;
   border: 1px solid var(--card-border) !important;
   color: var(--foreground) !important;

@@ -74,6 +74,15 @@ async function validarReferencias(dados) {
 function responderErro(res, error) {
     console.error('Erro na operação de vendas:', error);
     if (error.status) return res.status(error.status).json({ sucesso: false, mensagem: error.message });
+    if (error.code === 'PRODUTO_INDISPONIVEL') {
+        return res.status(404).json({ sucesso: false, mensagem: error.message });
+    }
+    if (error.code === 'ESTOQUE_INSUFICIENTE') {
+        return res.status(409).json({ sucesso: false, mensagem: error.message });
+    }
+    if (error.code === 'CARRINHO_VAZIO') {
+        return res.status(400).json({ sucesso: false, mensagem: error.message });
+    }
     if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.code === 'ER_ROW_IS_REFERENCED') {
         return res.status(409).json({ sucesso: false, mensagem: 'Este pedido possui registros vinculados e não pode ser excluído.' });
     }
@@ -106,12 +115,67 @@ class VendaController {
         try {
             const usuario = identidade(req);
             const body = req.body || {};
-            const idUsuario = body.idUsuario == null ? usuario.id : idValido(body.idUsuario, 'ID do usuário');
-            exigirProprietario(req, idUsuario);
-            const dados = { idUsuario, idProduto: idValido(body.idProduto, 'ID do produto'), dataPedido: null, dataEntrega: null, status: 'carrinho' };
-            await validarReferencias(dados);
-            const id = await VendaModel.criar(dados);
-            return res.status(201).json({ sucesso: true, mensagem: 'Adicionado ao carrinho.', dados: serializar(await obterVenda(id)) });
+            const idProduto = idValido(body.idProduto, 'ID do produto');
+            const id = await VendaModel.adicionarAoCarrinho(usuario.id, idProduto);
+            return res.status(201).json({
+                sucesso: true,
+                mensagem: 'Produto adicionado ao carrinho.',
+                dados: { idVendas: id, idProduto },
+            });
+        } catch (error) { return responderErro(res, error); }
+    }
+
+    static async listarCarrinho(req, res) {
+        try {
+            const usuario = identidade(req);
+            let idUsuario = usuario.id;
+
+            if (req.params.idUsuario != null) {
+                idUsuario = idValido(req.params.idUsuario, 'ID do usuário');
+                exigirProprietario(req, idUsuario);
+            }
+
+            const itens = await VendaModel.buscarCarrinho(idUsuario);
+            return res.status(200).json({ sucesso: true, dados: itens });
+        } catch (error) { return responderErro(res, error); }
+    }
+
+    static async removerCarrinho(req, res) {
+        try {
+            const usuario = identidade(req);
+            const idVenda = idValido(req.params.id, 'ID do item');
+            const removidos = await VendaModel.removerDoCarrinho(idVenda, usuario.id);
+            if (!removidos) falhar(404, 'Item não encontrado no seu carrinho.');
+            return res.status(200).json({ sucesso: true, mensagem: 'Produto removido do carrinho.' });
+        } catch (error) { return responderErro(res, error); }
+    }
+
+    static async confirmarCarrinho(req, res) {
+        try {
+            const usuario = identidade(req);
+            const cadastro = await VendaModel.buscarUsuarioVenda(usuario.id);
+            const cep = String(cadastro?.cep ?? '').replace(/\D/g, '');
+            if (!/^\d{8}$/.test(cep)) falhar(400, 'Cadastre um CEP válido no seu perfil antes de finalizar a compra.');
+
+            const previsaoEntregaDias = Number(cep[0]) === 0 ? 2 : Number(cep[0]) + 2;
+            const hoje = new Date();
+            const entrega = new Date(hoje);
+            entrega.setUTCDate(entrega.getUTCDate() + previsaoEntregaDias);
+            const dataPedido = hoje.toISOString().slice(0, 10);
+            const dataEntrega = entrega.toISOString().slice(0, 10);
+            const resultado = await VendaModel.confirmarCarrinho(usuario.id, dataPedido, dataEntrega);
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: 'Compra confirmada. Seu pedido está em processamento.',
+                dados: {
+                    ...resultado,
+                    previsaoEntregaDias,
+                    dataPedidoBR: formatarDataBR(dataPedido),
+                    dataEntregaBR: formatarDataBR(dataEntrega),
+                    status: 'processando',
+                },
+            });
         } catch (error) { return responderErro(res, error); }
     }
 

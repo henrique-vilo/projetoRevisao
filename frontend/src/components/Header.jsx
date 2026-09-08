@@ -76,6 +76,26 @@ function normalizarItemCarrinho(item) {
   };
 }
 
+function notificacaoNaoLida(notificacao) {
+  return (
+    notificacao?.lida === 0 ||
+    notificacao?.lida === false ||
+    notificacao?.lida === null
+  );
+}
+
+function formatarDataNotificacao(data) {
+  if (!data) return "";
+  const dataNotificacao = new Date(data);
+  if (Number.isNaN(dataNotificacao.getTime())) return "";
+  return dataNotificacao.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function Header() {
   const pathname = usePathname();
   const [categorias, setCategorias] = useState([]);
@@ -91,8 +111,15 @@ export default function Header() {
   const [erroCarrinho, setErroCarrinho] = useState("");
   const [itemCarrinhoPendente, setItemCarrinhoPendente] = useState(null);
   const [carrinhoAberto, setCarrinhoAberto] = useState(false);
+  const [notificacoes, setNotificacoes] = useState([]);
+  const [totalNaoLidas, setTotalNaoLidas] = useState(0);
+  const [carregandoNotificacoes, setCarregandoNotificacoes] = useState(false);
+  const [erroNotificacoes, setErroNotificacoes] = useState("");
+  const [notificacaoPendente, setNotificacaoPendente] = useState(null);
+  const [notificacoesAbertas, setNotificacoesAbertas] = useState(false);
   const perfilRef = useRef(null);
   const carrinhoRef = useRef(null);
+  const notificacoesRef = useRef(null);
 
   const totalItensCarrinho = itensCarrinho.reduce(
     (total, item) => total + item.quantidade,
@@ -135,7 +162,10 @@ export default function Header() {
     localStorage.removeItem(USER_KEY);
     setUsuario(null);
     setItensCarrinho([]);
+    setNotificacoes([]);
+    setTotalNaoLidas(0);
     setPerfilAberto(false);
+    setNotificacoesAbertas(false);
     window.dispatchEvent(new Event("auth-changed"));
   }
 
@@ -171,8 +201,7 @@ export default function Header() {
   const carregarCarrinho = useCallback(
     async ({ signal, exibirCarregamento = true } = {}) => {
       const sessao = lerUsuarioSalvo();
-      const idUsuario = obterIdUsuario(usuario || sessao.usuario);
-      if (!sessao.token || !idUsuario) {
+      if (!sessao.token || !obterIdUsuario(usuario || sessao.usuario)) {
         setItensCarrinho([]);
         setErroCarrinho("");
         setCarregandoCarrinho(false);
@@ -182,7 +211,7 @@ export default function Header() {
       setErroCarrinho("");
       try {
         const response = await fetch(
-          `${API_ORIGIN}/api/vendas/carrinho/${idUsuario}`,
+          `${API_ORIGIN}/api/vendas/carrinho`,
           {
             headers: {
               Accept: "application/json",
@@ -234,6 +263,76 @@ export default function Header() {
       window.removeEventListener("carrinho-atualizado", atualizarCarrinho);
     };
   }, [carregarCarrinho]);
+
+  const carregarNotificacoes = useCallback(
+    async ({ signal, exibirCarregamento = true } = {}) => {
+      const { token } = lerUsuarioSalvo();
+      if (!token) {
+        setNotificacoes([]);
+        setTotalNaoLidas(0);
+        setErroNotificacoes("");
+        setCarregandoNotificacoes(false);
+        return;
+      }
+      if (exibirCarregamento) setCarregandoNotificacoes(true);
+      setErroNotificacoes("");
+      try {
+        const response = await fetch(
+          `${API_ORIGIN}/api/notificacoes?pagina=1&limite=5`,
+          {
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            signal,
+            cache: "no-store",
+          },
+        );
+        const resultado = await response.json().catch(() => ({}));
+        if (!response.ok || !resultado.sucesso) {
+          if ([401, 403].includes(response.status)) {
+            throw new Error(
+              "Sua sessão expirou. Entre novamente para ver as notificações.",
+            );
+          }
+          throw new Error(
+            resultado.mensagem || "Não foi possível carregar suas notificações.",
+          );
+        }
+        const dados = Array.isArray(resultado.dados) ? resultado.dados : [];
+        setNotificacoes(dados);
+        setTotalNaoLidas(
+          Number.isInteger(Number(resultado.paginacao?.naoLidas))
+            ? Number(resultado.paginacao.naoLidas)
+            : dados.filter(notificacaoNaoLida).length,
+        );
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setErroNotificacoes(
+            error.message || "Não foi possível carregar suas notificações.",
+          );
+        }
+      } finally {
+        if (!signal?.aborted) setCarregandoNotificacoes(false);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    carregarNotificacoes({ signal: abortController.signal });
+    function atualizarNotificacoes() {
+      carregarNotificacoes({ exibirCarregamento: false });
+    }
+    window.addEventListener("notificacoes-atualizadas", atualizarNotificacoes);
+    window.addEventListener("auth-changed", atualizarNotificacoes);
+    return () => {
+      abortController.abort();
+      window.removeEventListener("notificacoes-atualizadas", atualizarNotificacoes);
+      window.removeEventListener("auth-changed", atualizarNotificacoes);
+    };
+  }, [carregarNotificacoes]);
 
   useEffect(() => {
     let ativo = true;
@@ -311,6 +410,12 @@ export default function Header() {
       if (carrinhoRef.current && !carrinhoRef.current.contains(event.target)) {
         setCarrinhoAberto(false);
       }
+      if (
+        notificacoesRef.current &&
+        !notificacoesRef.current.contains(event.target)
+      ) {
+        setNotificacoesAbertas(false);
+      }
     }
     document.addEventListener("pointerdown", fecharAoClicarFora);
     return () => document.removeEventListener("pointerdown", fecharAoClicarFora);
@@ -347,8 +452,7 @@ export default function Header() {
 
   async function alterarQuantidade(idItem, delta) {
     const item = itensCarrinho.find((itemAtual) => itemAtual.id === idItem);
-    const idUsuario = obterIdUsuario(usuario);
-    if (!item || !idUsuario || itemCarrinhoPendente === idItem) return;
+    if (!item || !obterIdUsuario(usuario) || itemCarrinhoPendente === idItem) return;
     if (delta < 0 && item.quantidade <= 1) return;
     setItemCarrinhoPendente(idItem);
     setErroCarrinho("");
@@ -356,7 +460,7 @@ export default function Header() {
       if (delta > 0) {
         await requisitarCarrinho("/api/vendas/carrinho", {
           method: "POST",
-          body: JSON.stringify({ idUsuario, idProduto: item.idProduto }),
+          body: JSON.stringify({ idProduto: item.idProduto }),
         });
       } else {
         const idVenda = item.idsVendas[item.idsVendas.length - 1];
@@ -402,7 +506,62 @@ export default function Header() {
   function alternarCarrinhoMenu() {
     const vaiAbrir = !carrinhoAberto;
     setCarrinhoAberto(vaiAbrir);
-    if (vaiAbrir && usuario) carregarCarrinho();
+    if (vaiAbrir) {
+      setPerfilAberto(false);
+      setNotificacoesAbertas(false);
+      if (usuario) carregarCarrinho();
+    }
+  }
+
+  function alternarNotificacoesMenu() {
+    const vaiAbrir = !notificacoesAbertas;
+    setNotificacoesAbertas(vaiAbrir);
+    if (vaiAbrir) {
+      setPerfilAberto(false);
+      setCarrinhoAberto(false);
+      if (usuario) carregarNotificacoes();
+    }
+  }
+
+  async function marcarNotificacaoComoLida(notificacao) {
+    if (!notificacaoNaoLida(notificacao) || notificacaoPendente) return;
+    const { token } = lerUsuarioSalvo();
+    if (!token) return;
+    setNotificacaoPendente(notificacao.idNotificacao);
+    setErroNotificacoes("");
+    try {
+      const response = await fetch(
+        `${API_ORIGIN}/api/notificacoes/${notificacao.idNotificacao}/lida`,
+        {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      const resultado = await response.json().catch(() => ({}));
+      if (!response.ok || !resultado.sucesso) {
+        throw new Error(
+          resultado.mensagem || "Não foi possível marcar a notificação como lida.",
+        );
+      }
+      setNotificacoes((lista) =>
+        lista.map((item) =>
+          item.idNotificacao === notificacao.idNotificacao
+            ? { ...item, lida: 1 }
+            : item,
+        ),
+      );
+      setTotalNaoLidas((totalAtual) => Math.max(0, totalAtual - 1));
+      window.dispatchEvent(new Event("notificacoes-atualizadas"));
+    } catch (error) {
+      setErroNotificacoes(
+        error.message || "Não foi possível atualizar a notificação.",
+      );
+    } finally {
+      setNotificacaoPendente(null);
+    }
   }
 
   return (
@@ -414,6 +573,7 @@ export default function Header() {
           setCategoriaAtiva(null);
           setPerfilAberto(false);
           setCarrinhoAberto(false);
+          setNotificacoesAbertas(false);
         }
       }}
     >
@@ -535,9 +695,155 @@ export default function Header() {
           >
             <i className={`bi ${modoEscuro ? "bi-sun-fill" : "bi-moon-fill"}`} aria-hidden="true" />
           </button>
-          <button type="button" className="header-action-button" aria-label="Notificações">
-            <i className="bi bi-bell" aria-hidden="true" />
-          </button>
+          <div className="notification-menu" ref={notificacoesRef}>
+            <button
+              type="button"
+              className={`header-action-button ${notificacoesAbertas ? "active" : ""}`}
+              aria-label={`Abrir notificações${
+                totalNaoLidas > 0 ? `, ${totalNaoLidas} não lidas` : ""
+              }`}
+              aria-expanded={notificacoesAbertas}
+              aria-haspopup="dialog"
+              aria-controls="header-notification-dropdown"
+              onClick={alternarNotificacoesMenu}
+            >
+              <i className="bi bi-bell" aria-hidden="true" />
+              {totalNaoLidas > 0 ? (
+                <span className="notification-badge">
+                  {totalNaoLidas > 9 ? "9+" : totalNaoLidas}
+                </span>
+              ) : null}
+            </button>
+            {notificacoesAbertas ? (
+              <div
+                id="header-notification-dropdown"
+                className="notification-dropdown"
+                role="dialog"
+                aria-label="Notificações"
+                aria-busy={carregandoNotificacoes}
+              >
+                <div className="notification-dropdown-header">
+                  <div>
+                    <strong>Notificações</strong>
+                    <span>Atualizações da sua conta</span>
+                  </div>
+                  {totalNaoLidas > 0 ? (
+                    <span className="notification-unread-count">
+                      {totalNaoLidas} não lida{totalNaoLidas === 1 ? "" : "s"}
+                    </span>
+                  ) : null}
+                </div>
+                {carregandoUsuario && !usuario ? (
+                  <div className="notification-empty" role="status">
+                    <span className="spinner-border spinner-border-sm" aria-hidden="true" />
+                    <strong>Verificando sua conta...</strong>
+                  </div>
+                ) : !usuario ? (
+                  <div className="notification-empty">
+                    <span className="notification-empty-icon" aria-hidden="true">
+                      <i className="bi bi-person-lock" />
+                    </span>
+                    <strong>Entre para ver suas notificações</strong>
+                    <p>Os avisos e atualizações são vinculados à sua conta Everett.</p>
+                    <Link
+                      href="/login"
+                      className="notification-primary-link"
+                      onClick={() => setNotificacoesAbertas(false)}
+                    >
+                      Entrar
+                    </Link>
+                  </div>
+                ) : carregandoNotificacoes ? (
+                  <div className="notification-empty" role="status">
+                    <span className="spinner-border spinner-border-sm" aria-hidden="true" />
+                    <strong>Carregando notificações...</strong>
+                  </div>
+                ) : erroNotificacoes && notificacoes.length === 0 ? (
+                  <div className="notification-empty" role="alert">
+                    <span className="notification-empty-icon" aria-hidden="true">
+                      <i className="bi bi-wifi-off" />
+                    </span>
+                    <strong>Não foi possível carregar</strong>
+                    <p>{erroNotificacoes}</p>
+                    <button
+                      type="button"
+                      className="notification-primary-link"
+                      onClick={() => carregarNotificacoes()}
+                    >
+                      Tentar novamente
+                    </button>
+                  </div>
+                ) : notificacoes.length === 0 ? (
+                  <div className="notification-empty">
+                    <span className="notification-empty-icon" aria-hidden="true">
+                      <i className="bi bi-bell-slash" />
+                    </span>
+                    <strong>Nenhuma notificação</strong>
+                    <p>Seus novos avisos aparecerão aqui.</p>
+                  </div>
+                ) : (
+                  <>
+                    {erroNotificacoes ? (
+                      <p className="notification-inline-error" role="alert">
+                        {erroNotificacoes}
+                      </p>
+                    ) : null}
+                    <ul className="notification-list">
+                      {notificacoes.map((notificacao) => {
+                        const naoLida = notificacaoNaoLida(notificacao);
+                        return (
+                          <li
+                            key={notificacao.idNotificacao}
+                            className={`notification-item ${naoLida ? "unread" : ""}`}
+                          >
+                            <span className="notification-item-icon" aria-hidden="true">
+                              <i className="bi bi-bell" />
+                            </span>
+                            <div className="notification-item-content">
+                              <strong>{notificacao.titulo || "Nova notificação"}</strong>
+                              <p>
+                                {notificacao.mensagem ||
+                                  notificacao.texto ||
+                                  "Você recebeu uma nova notificação."}
+                              </p>
+                              <time dateTime={notificacao.dataCriacao || undefined}>
+                                {formatarDataNotificacao(notificacao.dataCriacao)}
+                              </time>
+                            </div>
+                            {naoLida ? (
+                              <button
+                                type="button"
+                                className="notification-read-button"
+                                aria-label={`Marcar ${notificacao.titulo || "notificação"} como lida`}
+                                title="Marcar como lida"
+                                disabled={notificacaoPendente === notificacao.idNotificacao}
+                                onClick={() => marcarNotificacaoComoLida(notificacao)}
+                              >
+                                {notificacaoPendente === notificacao.idNotificacao ? (
+                                  <span className="spinner-border spinner-border-sm" aria-hidden="true" />
+                                ) : (
+                                  <i className="bi bi-check2" aria-hidden="true" />
+                                )}
+                              </button>
+                            ) : null}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </>
+                )}
+                <div className="notification-dropdown-footer">
+                  <Link
+                    href="/notificacao"
+                    onClick={() => setNotificacoesAbertas(false)}
+                  >
+                    Ver todas as notificações
+                    <i className="bi bi-arrow-right" aria-hidden="true" />
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+          </div>
           <div className="cart-menu" ref={carrinhoRef}>
             <button
               type="button"
@@ -734,7 +1040,11 @@ export default function Header() {
               aria-label="Abrir menu do perfil"
               aria-expanded={perfilAberto}
               aria-haspopup="dialog"
-              onClick={() => setPerfilAberto((aberto) => !aberto)}
+              onClick={() => {
+                setPerfilAberto((aberto) => !aberto);
+                setCarrinhoAberto(false);
+                setNotificacoesAbertas(false);
+              }}
             >
               <i className="bi bi-person" aria-hidden="true" />
             </button>
@@ -771,23 +1081,14 @@ export default function Header() {
                         </span>
                       </p>
                     </div>
-                    <div className="profile-auth-actions mt-2">
+                    <div className="profile-auth-actions">
+                      <Link href="/perfil" className="profile-login" onClick={() => setPerfilAberto(false)}>
+                        Meu perfil
+                      </Link>
                       <button
                         type="button"
                         className="profile-logout-button"
                         onClick={fazerLogout}
-                        style={{
-                          width: "100%",
-                          padding: "0.5rem 1rem",
-                          border: "1px solid currentColor",
-                          borderRadius: "0.375rem",
-                          background: "transparent",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "0.5rem",
-                        }}
                       >
                         <i className="bi bi-box-arrow-right" aria-hidden="true" />
                         <span>Sair da conta</span>

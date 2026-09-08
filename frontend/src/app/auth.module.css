@@ -83,7 +83,7 @@
 .formLabel {
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #25282c;
+  color: var(--everett-ink);
 }
 
 .formControl {
@@ -123,7 +123,7 @@
   display: inline-grid;
   place-items: center;
   padding: 0;
-  color: #344054;
+  color: var(--everett-muted);
   background: transparent;
   border: 0;
   border-radius: 50%;
@@ -232,4 +232,19 @@
     animation-duration: 0.01ms;
     animation-iteration-count: 1;
   }
+}
+
+/* Superficies e textos seguem o tema selecionado. */
+:global(html.dark) .authPage,
+:global(html[data-bs-theme="dark"]) .authPage {
+  --everett-ink: var(--text-primary);
+  --everett-muted: var(--text-secondary);
+  --everett-border: var(--border-color);
+  --everett-surface: var(--card-bg);
+  --everett-background: var(--background);
+}
+
+:global(html.dark) .authCard,
+:global(html[data-bs-theme="dark"]) .authCard {
+  background-color: var(--everett-surface) !important;
 }

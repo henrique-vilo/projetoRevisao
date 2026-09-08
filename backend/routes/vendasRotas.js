@@ -12,9 +12,13 @@ router.use((req, res, next) => {
     next();
 });
 
-router.post('/', authMiddleware, adminMiddleware, VendaController.criar);
+router.get('/carrinho', authMiddleware, VendaController.listarCarrinho);
+router.get('/carrinho/:idUsuario', authMiddleware, VendaController.listarCarrinho);
 router.post('/carrinho', authMiddleware, VendaController.adicionarCarrinho);
+router.post('/carrinho/confirmar', authMiddleware, VendaController.confirmarCarrinho);
+router.delete('/carrinho/:id', authMiddleware, VendaController.removerCarrinho);
 router.post('/:id/confirmar', authMiddleware, VendaController.confirmarCompra);
+router.post('/', authMiddleware, adminMiddleware, VendaController.criar);
 router.get('/', authMiddleware, VendaController.listarTodos);
 router.get('/usuario/:idUsuario', authMiddleware, VendaController.buscarPorUsuario);
 router.get('/:id', authMiddleware, VendaController.buscarPorId);

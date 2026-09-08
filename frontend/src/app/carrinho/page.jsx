@@ -13,6 +13,12 @@ const API_ORIGIN = (
 
 const API_BASE_URL = `${API_ORIGIN}/api`;
 
+function resolverImagem(caminho) {
+  if (!caminho) return null;
+  if (/^https?:\/\//i.test(caminho)) return caminho;
+  return `${API_ORIGIN}${caminho.startsWith("/") ? caminho : `/${caminho}`}`;
+}
+
 export default function CarrinhoPage() {
   const router = useRouter();
 
@@ -49,7 +55,7 @@ async function buscarCarrinho() {
     }
 
     const resposta = await fetch(
-      `${API_BASE_URL}/vendas/carrinho/${idUsuario}`,
+      `${API_BASE_URL}/vendas/carrinho`,
       {
         method: "GET",
         headers: {
@@ -274,9 +280,9 @@ async function buscarCarrinho() {
 
                   {/* IMAGEM */}
                   <div className="summaryImage">
-                    {produto.imagem ? (
+                    {resolverImagem(produto.imagem) ? (
                       <img
-                        src={produto.imagem}
+                        src={resolverImagem(produto.imagem)}
                         alt={produto.nome || "Produto"}
                       />
                     ) : (
