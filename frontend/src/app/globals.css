@@ -648,3 +648,135 @@ html[data-bs-theme="dark"] .bg-white[class*="tag"] *,
 html[data-bs-theme="dark"] .bg-white[class*="selo"] * {
   color: #0f172a !important;
 }
+
+/* ==========================================================================
+   12. CORREÇÃO DA FAIXA DE BENEFÍCIOS, BARRA INFERIOR E PONTOS DO CARROSSEL
+   ========================================================================== */
+
+/* Indicadores de navegação (bolinhas/barras do carrossel) */
+.carousel-indicators [data-bs-target],
+.carousel-indicators button,
+.swiper-pagination-bullet,
+.slick-dots li button {
+  background-color: #ffffff !important;
+  opacity: 0.5 !important;
+}
+
+.carousel-indicators .active,
+.swiper-pagination-bullet-active,
+.slick-dots li.slick-active button {
+  background-color: var(--accent-color) !important;
+  opacity: 1 !important;
+}
+
+/* Faixa de benefícios / Informações / Diferenciais abaixo do banner */
+[class*="benefit"],
+[class*="vantag"],
+[class*="feature"],
+[class*="diferenc"],
+[class*="info-bar"],
+[class*="top-bar"],
+[class*="sub-header"],
+[class*="bar-info"],
+[class*="hero-bottom"],
+[class*="hero-footer"],
+html.dark [class*="benefit"],
+html.dark [class*="vantag"],
+html.dark [class*="feature"],
+html.dark [class*="diferenc"],
+html.dark [class*="info-bar"],
+html.dark [class*="top-bar"],
+html.dark [class*="sub-header"],
+html.dark [class*="bar-info"],
+html.dark [class*="hero-bottom"],
+html.dark [class*="hero-footer"],
+html[data-bs-theme="dark"] [class*="benefit"],
+html[data-bs-theme="dark"] [class*="vantag"],
+html[data-bs-theme="dark"] [class*="feature"],
+html[data-bs-theme="dark"] [class*="diferenc"],
+html[data-bs-theme="dark"] [class*="info-bar"],
+html[data-bs-theme="dark"] [class*="top-bar"],
+html[data-bs-theme="dark"] [class*="sub-header"],
+html[data-bs-theme="dark"] [class*="bar-info"],
+html[data-bs-theme="dark"] [class*="hero-bottom"],
+html[data-bs-theme="dark"] [class*="hero-footer"] {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+/* Visibilidade total dos textos dentro dessa faixa */
+html.dark [class*="benefit"] *,
+html.dark [class*="vantag"] *,
+html.dark [class*="feature"] *,
+html.dark [class*="diferenc"] *,
+html.dark [class*="info-bar"] *,
+html.dark [class*="top-bar"] *,
+html.dark [class*="sub-header"] *,
+html.dark [class*="bar-info"] *,
+html.dark [class*="hero-bottom"] *,
+html.dark [class*="hero-footer"] *,
+html[data-bs-theme="dark"] [class*="benefit"] *,
+html[data-bs-theme="dark"] [class*="vantag"] *,
+html[data-bs-theme="dark"] [class*="feature"] *,
+html[data-bs-theme="dark"] [class*="diferenc"] *,
+html[data-bs-theme="dark"] [class*="info-bar"] *,
+html[data-bs-theme="dark"] [class*="top-bar"] *,
+html[data-bs-theme="dark"] [class*="sub-header"] *,
+html[data-bs-theme="dark"] [class*="bar-info"] *,
+html[data-bs-theme="dark"] [class*="hero-bottom"] *,
+html[data-bs-theme="dark"] [class*="hero-footer"] * {
+  color: #f8fafc !important;
+}
+
+/* Visibilidade total de Ícones (SVG, FontAwesome, Bootstrap Icons) */
+html.dark [class*="benefit"] svg,
+html.dark [class*="vantag"] svg,
+html.dark [class*="feature"] svg,
+html.dark [class*="diferenc"] svg,
+html.dark [class*="info-bar"] svg,
+html.dark [class*="top-bar"] svg,
+html.dark [class*="sub-header"] svg,
+html.dark [class*="bar-info"] svg,
+html.dark [class*="hero-bottom"] svg,
+html.dark [class*="hero-footer"] svg,
+html.dark [class*="benefit"] i,
+html.dark [class*="vantag"] i,
+html.dark [class*="feature"] i,
+html.dark [class*="diferenc"] i,
+html.dark [class*="info-bar"] i,
+html.dark [class*="top-bar"] i,
+html.dark [class*="sub-header"] i,
+html.dark [class*="bar-info"] i,
+html.dark [class*="hero-bottom"] i,
+html.dark [class*="hero-footer"] i,
+html[data-bs-theme="dark"] [class*="benefit"] svg,
+html[data-bs-theme="dark"] [class*="vantag"] svg,
+html[data-bs-theme="dark"] [class*="feature"] svg,
+html[data-bs-theme="dark"] [class*="diferenc"] svg,
+html[data-bs-theme="dark"] [class*="info-bar"] svg,
+html[data-bs-theme="dark"] [class*="top-bar"] svg,
+html[data-bs-theme="dark"] [class*="sub-header"] svg,
+html[data-bs-theme="dark"] [class*="bar-info"] svg,
+html[data-bs-theme="dark"] [class*="hero-bottom"] svg,
+html[data-bs-theme="dark"] [class*="hero-footer"] svg {
+  color: #38bdf8 !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* Para ícones de imagem (tag <img>) que sejam pretos/escuros por padrão */
+html.dark [class*="benefit"] img,
+html.dark [class*="vantag"] img,
+html.dark [class*="feature"] img,
+html.dark [class*="diferenc"] img,
+html.dark [class*="info-bar"] img,
+html.dark [class*="top-bar"] img,
+html[data-bs-theme="dark"] [class*="benefit"] img,
+html[data-bs-theme="dark"] [class*="vantag"] img,
+html[data-bs-theme="dark"] [class*="feature"] img,
+html[data-bs-theme="dark"] [class*="diferenc"] img,
+html[data-bs-theme="dark"] [class*="info-bar"] img,
+html[data-bs-theme="dark"] [class*="top-bar"] img {
+  filter: brightness(0) invert(1) !important;
+}
