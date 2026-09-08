@@ -11,9 +11,16 @@ function normalizarSlug(valor = '') {
 
 function encontrarOpcaoPorSlug(opcoes, slug, tipoPreferencial) {
     const procurado = normalizarSlug(slug);
+
+    if (!procurado) return null;
+
+    
     const candidatas = opcoes
         .filter((opcao) => !tipoPreferencial || opcao.tipo === tipoPreferencial)
-        .map((opcao) => ({ ...opcao, slug: normalizarSlug(opcao.nome) }));
+        .map((opcao) => ({
+            ...opcao,
+            slug: normalizarSlug(opcao.nome)
+        }));
 
     return candidatas.find((opcao) => opcao.slug === procurado)
         || candidatas.find((opcao) => opcao.slug.startsWith(`${procurado}-`))
@@ -26,17 +33,12 @@ function slugParaBusca(valor) {
 }
 
 class ProdutoModel {
-    static async buscarComFiltros(params) {
+    static async buscarComFiltros(params = {}) {
         const {
             pagina = 1,
             limite = 10,
             busca,
             genero,
-            idCategoria,
-            idSubcategoria,
-            idCor,
-            idTamanho,
-            idModelo,
             precoMin,
             precoMax,
             emEstoque,
@@ -47,22 +49,37 @@ class ProdutoModel {
 
         try {
             const paginaNumero = Math.max(1, parseInt(pagina, 10) || 1);
-            const limiteNumero = Math.min(100, Math.max(1, parseInt(limite, 10) || 10));
+            const limiteNumero = Math.min(
+                100,
+                Math.max(1, parseInt(limite, 10) || 10)
+            );
+
             const offset = (paginaNumero - 1) * limiteNumero;
             const conditions = ['p.ativo = 1'];
             const queryParams = [];
 
             if (params.categoria || params.tipo) {
                 const [opcoesTextuais] = await connection.query(`
-                    SELECT idCategoria AS id, nomeCategoria AS nome, 'categoria' AS tipo
+                    SELECT
+                        idCategoria AS id,
+                        nomeCategoria AS nome,
+                        'categoria' AS tipo
                     FROM categorias
+
                     UNION ALL
-                    SELECT idSubcategoria AS id, nomeSubcategoria AS nome, 'subcategoria' AS tipo
+
+                    SELECT
+                        idSubcategoria AS id,
+                        nomeSubcategoria AS nome,
+                        'subcategoria' AS tipo
                     FROM subCategorias
                 `);
 
                 if (params.categoria) {
-                    const opcao = encontrarOpcaoPorSlug(opcoesTextuais, params.categoria);
+                    const opcao = encontrarOpcaoPorSlug(
+                        opcoesTextuais,
+                        params.categoria
+                    );
 
                     if (opcao?.tipo === 'categoria') {
                         conditions.push('p.idCategoria = ?');
@@ -72,8 +89,15 @@ class ProdutoModel {
                         queryParams.push(opcao.id);
                     } else {
                         const buscaTextual = slugParaBusca(params.categoria);
-                        conditions.push('(p.nome LIKE ? OR p.descricao LIKE ?)');
-                        queryParams.push(`%${buscaTextual}%`, `%${buscaTextual}%`);
+
+                        conditions.push(
+                            '(p.nome LIKE ? OR p.descricao LIKE ?)'
+                        );
+
+                        queryParams.push(
+                            `%${buscaTextual}%`,
+                            `%${buscaTextual}%`
+                        );
                     }
                 }
 
@@ -89,16 +113,29 @@ class ProdutoModel {
                         queryParams.push(opcao.id);
                     } else {
                         const buscaTextual = slugParaBusca(params.tipo);
-                        conditions.push('(p.nome LIKE ? OR p.descricao LIKE ?)');
-                        queryParams.push(`%${buscaTextual}%`, `%${buscaTextual}%`);
+
+                        conditions.push(
+                            '(p.nome LIKE ? OR p.descricao LIKE ?)'
+                        );
+
+                        queryParams.push(
+                            `%${buscaTextual}%`,
+                            `%${buscaTextual}%`
+                        );
                     }
                 }
             }
 
             if (busca) {
-                conditions.push(
-                    '(p.nome LIKE ? OR p.nomeCombinacao LIKE ? OR p.descricao LIKE ? OR p.sku LIKE ?)'
-                );
+                conditions.push(`
+                    (
+                        p.nome LIKE ?
+                        OR p.nomeCombinacao LIKE ?
+                        OR p.descricao LIKE ?
+                        OR p.sku LIKE ?
+                    )
+                `);
+
                 queryParams.push(
                     `%${busca}%`,
                     `%${busca}%`,
@@ -144,49 +181,66 @@ class ProdutoModel {
             }
 
             const whereClause = conditions.join(' AND ');
+
+            if (params.agrupar === true) {
+                return await this.buscarCatalogoAgrupado(connection, {
+                    whereClause,
+                    queryParams,
+                    pagina: paginaNumero,
+                    limite: limiteNumero,
+                    ordenarPor
+                });
+            }
+
             const ordenacoes = {
                 recente: 'p.idProduto DESC',
-                preco_asc: 'p.preco ASC',
-                preco_desc: 'p.preco DESC',
-                nome_asc: 'p.nome ASC',
+                preco_asc: 'p.preco ASC, p.idProduto ASC',
+                preco_desc: 'p.preco DESC, p.idProduto ASC',
+                nome_asc: 'p.nome ASC, p.idProduto ASC',
                 antigo: 'p.idProduto ASC'
             };
+
             const orderClause = ordenacoes[ordenarPor] || ordenacoes.recente;
 
-            const sql = `
-                SELECT
-                    p.*,
-                    c.nomeCategoria AS categoriaNome,
-                    s.nomeSubcategoria AS subcategoriaNome,
-                    cr.nomeCor AS corNome,
-                    cr.codigoCor,
-                    cr.tom AS corTom,
-                    t.codigoTamanho AS tamanhoNome,
-                    m.nomeModelo AS modeloNome
-                FROM produtos p
-                LEFT JOIN categorias c ON p.idCategoria = c.idCategoria
-                LEFT JOIN subCategorias s ON p.idSubcategoria = s.idSubcategoria
-                LEFT JOIN cores cr ON p.idCor = cr.idCor
-                LEFT JOIN tamanhos t ON p.idTamanho = t.idTamanho
-                LEFT JOIN modelos m ON p.idModelo = m.idModelo
-                WHERE ${whereClause}
-                ORDER BY ${orderClause}
-                LIMIT ? OFFSET ?
-            `;
+            const [produtos] = await connection.query(
+                `
+                    SELECT
+                        p.*,
+                        c.nomeCategoria AS categoriaNome,
+                        s.nomeSubcategoria AS subcategoriaNome,
+                        cr.nomeCor AS corNome,
+                        cr.codigoCor,
+                        cr.tom AS corTom,
+                        t.codigoTamanho AS tamanhoNome,
+                        m.nomeModelo AS modeloNome
+                    FROM produtos p
+                    LEFT JOIN categorias c
+                        ON p.idCategoria = c.idCategoria
+                    LEFT JOIN subCategorias s
+                        ON p.idSubcategoria = s.idSubcategoria
+                    LEFT JOIN cores cr
+                        ON p.idCor = cr.idCor
+                    LEFT JOIN tamanhos t
+                        ON p.idTamanho = t.idTamanho
+                    LEFT JOIN modelos m
+                        ON p.idModelo = m.idModelo
+                    WHERE ${whereClause}
+                    ORDER BY ${orderClause}
+                    LIMIT ? OFFSET ?
+                `,
+                [...queryParams, limiteNumero, offset]
+            );
 
-            const [produtos] = await connection.query(sql, [
-                ...queryParams,
-                limiteNumero,
-                offset
-            ]);
+            const [totalResult] = await connection.query(
+                `
+                    SELECT COUNT(*) AS total
+                    FROM produtos p
+                    WHERE ${whereClause}
+                `,
+                queryParams
+            );
 
-            const countSql = `
-                SELECT COUNT(*) AS total
-                FROM produtos p
-                WHERE ${whereClause}
-            `;
-            const [totalResult] = await connection.query(countSql, queryParams);
-            const total = totalResult[0].total;
+            const total = Number(totalResult[0].total);
 
             return {
                 produtos,
@@ -200,11 +254,145 @@ class ProdutoModel {
         }
     }
 
+    static async buscarCatalogoAgrupado(connection, {
+        whereClause,
+        queryParams,
+        pagina,
+        limite,
+        ordenarPor
+    }) {
+        const gruposSql = `
+            SELECT
+                MIN(p.idProduto) AS idGrupo,
+                COALESCE(
+                    MIN(
+                        CASE
+                            WHEN p.estoque > 0 THEN p.idProduto
+                        END
+                    ),
+                    MIN(p.idProduto)
+                ) AS idRepresentante,
+                MAX(p.idProduto) AS idMaisRecente,
+                MIN(p.preco) AS precoMinimo,
+                MAX(p.preco) AS precoMaximo,
+                SUM(
+                    GREATEST(COALESCE(p.estoque, 0), 0)
+                ) AS estoqueTotal,
+                COUNT(*) AS quantidadeVariacoes,
+                COUNT(DISTINCT p.idCor) AS quantidadeCores,
+                COUNT(DISTINCT p.idTamanho) AS quantidadeTamanhos
+            FROM produtos p
+            WHERE ${whereClause}
+            GROUP BY
+                p.nome,
+                p.genero,
+                p.idCategoria,
+                p.idSubcategoria,
+                p.idModelo
+        `;
+
+        const [contagem] = await connection.query(
+            `
+                SELECT COUNT(*) AS total
+                FROM (${gruposSql}) grupos
+            `,
+            queryParams
+        );
+
+        const total = Number(contagem[0].total);
+        const totalPaginas = Math.ceil(total / limite);
+        const paginaAtual = Math.min(
+            pagina,
+            Math.max(1, totalPaginas)
+        );
+
+        if (total === 0) {
+            return {
+                produtos: [],
+                total: 0,
+                pagina: paginaAtual,
+                limite,
+                totalPaginas: 0
+            };
+        }
+
+        const ordenacoes = {
+            recente: 'g.idMaisRecente DESC, g.idGrupo DESC',
+            antigo: 'g.idGrupo ASC',
+            preco_asc: 'g.precoMinimo ASC, g.idGrupo ASC',
+            preco_desc: 'g.precoMinimo DESC, g.idGrupo ASC',
+            nome_asc: 'p.nome ASC, g.idGrupo ASC'
+        };
+
+        const orderClause = ordenacoes[ordenarPor] || ordenacoes.recente;
+
+        const [rows] = await connection.query(
+            `
+                SELECT
+                    p.*,
+                    c.nomeCategoria AS categoriaNome,
+                    s.nomeSubcategoria AS subcategoriaNome,
+                    cr.nomeCor AS corNome,
+                    cr.codigoCor,
+                    cr.tom AS corTom,
+                    t.codigoTamanho AS tamanhoNome,
+                    m.nomeModelo AS modeloNome,
+                    g.idGrupo,
+                    g.precoMinimo,
+                    g.precoMaximo,
+                    g.estoqueTotal,
+                    g.quantidadeVariacoes,
+                    g.quantidadeCores,
+                    g.quantidadeTamanhos
+                FROM (${gruposSql}) g
+                INNER JOIN produtos p
+                    ON p.idProduto = g.idRepresentante
+                LEFT JOIN categorias c
+                    ON p.idCategoria = c.idCategoria
+                LEFT JOIN subCategorias s
+                    ON p.idSubcategoria = s.idSubcategoria
+                LEFT JOIN cores cr
+                    ON p.idCor = cr.idCor
+                LEFT JOIN tamanhos t
+                    ON p.idTamanho = t.idTamanho
+                LEFT JOIN modelos m
+                    ON p.idModelo = m.idModelo
+                ORDER BY ${orderClause}
+                LIMIT ? OFFSET ?
+            `,
+            [
+                ...queryParams,
+                limite,
+                (paginaAtual - 1) * limite
+            ]
+        );
+
+        const produtos = rows.map((produto) => ({
+            ...produto,
+            preco: Number(produto.preco),
+            estoque: Number(produto.estoque),
+            precoMinimo: Number(produto.precoMinimo),
+            precoMaximo: Number(produto.precoMaximo),
+            estoqueTotal: Number(produto.estoqueTotal),
+            quantidadeVariacoes: Number(produto.quantidadeVariacoes),
+            quantidadeCores: Number(produto.quantidadeCores),
+            quantidadeTamanhos: Number(produto.quantidadeTamanhos)
+        }));
+
+        return {
+            produtos,
+            total,
+            pagina: paginaAtual,
+            limite,
+            totalPaginas
+        };
+    }
+
     static async buscarOpcoesFiltros() {
         const connection = await getConnection();
 
         try {
-            const sql = `
+            const [rows] = await connection.query(`
                 SELECT DISTINCT
                     p.genero,
                     p.preco,
@@ -220,40 +408,45 @@ class ProdutoModel {
                     m.idModelo,
                     m.nomeModelo
                 FROM produtos p
-                LEFT JOIN categorias c ON p.idCategoria = c.idCategoria
-                LEFT JOIN subCategorias s ON p.idSubcategoria = s.idSubcategoria
-                LEFT JOIN cores cr ON p.idCor = cr.idCor
-                LEFT JOIN tamanhos t ON p.idTamanho = t.idTamanho
-                LEFT JOIN modelos m ON p.idModelo = m.idModelo
+                LEFT JOIN categorias c
+                    ON p.idCategoria = c.idCategoria
+                LEFT JOIN subCategorias s
+                    ON p.idSubcategoria = s.idSubcategoria
+                LEFT JOIN cores cr
+                    ON p.idCor = cr.idCor
+                LEFT JOIN tamanhos t
+                    ON p.idTamanho = t.idTamanho
+                LEFT JOIN modelos m
+                    ON p.idModelo = m.idModelo
                 WHERE p.ativo = 1
-            `;
+            `);
 
-            const [rows] = await connection.query(sql);
             const categorias = new Map();
             const subcategorias = new Map();
             const cores = new Map();
             const tamanhos = new Map();
             const modelos = new Map();
             const generos = new Set();
+
             let precoMin = null;
             let precoMax = null;
 
             for (const row of rows) {
-                if (row.idCategoria !== null) {
+                if (row.idCategoria != null) {
                     categorias.set(row.idCategoria, {
                         idCategoria: row.idCategoria,
                         nomeCategoria: row.nomeCategoria
                     });
                 }
 
-                if (row.idSubcategoria !== null) {
+                if (row.idSubcategoria != null) {
                     subcategorias.set(row.idSubcategoria, {
                         idSubcategoria: row.idSubcategoria,
                         nomeSubcategoria: row.nomeSubcategoria
                     });
                 }
 
-                if (row.idCor !== null) {
+                if (row.idCor != null) {
                     cores.set(row.idCor, {
                         idCor: row.idCor,
                         nomeCor: row.nomeCor,
@@ -261,14 +454,14 @@ class ProdutoModel {
                     });
                 }
 
-                if (row.idTamanho !== null) {
+                if (row.idTamanho != null) {
                     tamanhos.set(row.idTamanho, {
                         idTamanho: row.idTamanho,
                         codigoTamanho: row.codigoTamanho
                     });
                 }
 
-                if (row.idModelo !== null) {
+                if (row.idModelo != null) {
                     modelos.set(row.idModelo, {
                         idModelo: row.idModelo,
                         nomeModelo: row.nomeModelo
@@ -280,23 +473,47 @@ class ProdutoModel {
                 }
 
                 const preco = Number(row.preco);
+
                 if (Number.isFinite(preco)) {
-                    precoMin = precoMin === null ? preco : Math.min(precoMin, preco);
-                    precoMax = precoMax === null ? preco : Math.max(precoMax, preco);
+                    precoMin = precoMin === null
+                        ? preco
+                        : Math.min(precoMin, preco);
+
+                    precoMax = precoMax === null
+                        ? preco
+                        : Math.max(precoMax, preco);
                 }
             }
 
             const ordenarPorNome = (campo) => (a, b) =>
-                String(a[campo] || '').localeCompare(String(b[campo] || ''), 'pt-BR');
+                String(a[campo] || '').localeCompare(
+                    String(b[campo] || ''),
+                    'pt-BR'
+                );
 
             return {
-                categorias: Array.from(categorias.values()).sort(ordenarPorNome('nomeCategoria')),
-                subcategorias: Array.from(subcategorias.values()).sort(ordenarPorNome('nomeSubcategoria')),
-                cores: Array.from(cores.values()).sort(ordenarPorNome('nomeCor')),
-                tamanhos: Array.from(tamanhos.values()).sort(ordenarPorNome('codigoTamanho')),
-                modelos: Array.from(modelos.values()).sort(ordenarPorNome('nomeModelo')),
-                generos: Array.from(generos).sort((a, b) => a.localeCompare(b, 'pt-BR')),
-                faixaPreco: { minimo: precoMin, maximo: precoMax }
+                categorias: Array.from(categorias.values())
+                    .sort(ordenarPorNome('nomeCategoria')),
+
+                subcategorias: Array.from(subcategorias.values())
+                    .sort(ordenarPorNome('nomeSubcategoria')),
+
+                cores: Array.from(cores.values())
+                    .sort(ordenarPorNome('nomeCor')),
+
+                tamanhos: Array.from(tamanhos.values())
+                    .sort(ordenarPorNome('codigoTamanho')),
+
+                modelos: Array.from(modelos.values())
+                    .sort(ordenarPorNome('nomeModelo')),
+
+                generos: Array.from(generos)
+                    .sort((a, b) => a.localeCompare(b, 'pt-BR')),
+
+                faixaPreco: {
+                    minimo: precoMin,
+                    maximo: precoMax
+                }
             };
         } finally {
             connection.release();
@@ -304,27 +521,34 @@ class ProdutoModel {
     }
 
     static async buscarRegistroDetalhado(connection, id) {
-        const sql = `
-            SELECT
-                p.*,
-                c.nomeCategoria AS categoriaNome,
-                s.nomeSubcategoria AS subcategoriaNome,
-                cr.nomeCor AS corNome,
-                cr.codigoCor,
-                cr.tom AS corTom,
-                t.codigoTamanho AS tamanhoNome,
-                m.nomeModelo AS modeloNome
-            FROM produtos p
-            LEFT JOIN categorias c ON p.idCategoria = c.idCategoria
-            LEFT JOIN subCategorias s ON p.idSubcategoria = s.idSubcategoria
-            LEFT JOIN cores cr ON p.idCor = cr.idCor
-            LEFT JOIN tamanhos t ON p.idTamanho = t.idTamanho
-            LEFT JOIN modelos m ON p.idModelo = m.idModelo
-            WHERE p.idProduto = ? AND p.ativo = 1
-            LIMIT 1
-        `;
+        const [rows] = await connection.execute(
+            `
+                SELECT
+                    p.*,
+                    c.nomeCategoria AS categoriaNome,
+                    s.nomeSubcategoria AS subcategoriaNome,
+                    cr.nomeCor AS corNome,
+                    cr.codigoCor,
+                    cr.tom AS corTom,
+                    t.codigoTamanho AS tamanhoNome,
+                    m.nomeModelo AS modeloNome
+                FROM produtos p
+                LEFT JOIN categorias c
+                    ON p.idCategoria = c.idCategoria
+                LEFT JOIN subCategorias s
+                    ON p.idSubcategoria = s.idSubcategoria
+                LEFT JOIN cores cr
+                    ON p.idCor = cr.idCor
+                LEFT JOIN tamanhos t
+                    ON p.idTamanho = t.idTamanho
+                LEFT JOIN modelos m
+                    ON p.idModelo = m.idModelo
+                WHERE p.idProduto = ? AND p.ativo = 1
+                LIMIT 1
+            `,
+            [id]
+        );
 
-        const [rows] = await connection.execute(sql, [id]);
         return rows[0] || null;
     }
 
@@ -338,58 +562,65 @@ class ProdutoModel {
         }
     }
 
-    /**
-     * Considera como variações os registros com o mesmo nome,
-     * nomeCombinacao, categoria, subcategoria e modelo.
-     */
     static async buscarDetalhesPorId(id) {
         const connection = await getConnection();
 
         try {
-            const produto = await this.buscarRegistroDetalhado(connection, id);
+            const produto = await this.buscarRegistroDetalhado(
+                connection,
+                id
+            );
 
             if (!produto) {
                 return null;
             }
 
-            const sqlVariacoes = `
-                SELECT
-                    p.idProduto,
-                    p.sku,
-                    p.preco,
-                    p.estoque,
-                    p.idCor,
-                    p.idTamanho,
-                    p.idModelo,
-                    p.imagem1,
-                    p.imagem2,
-                    p.imagem3,
-                    p.imagem4,
-                    cr.nomeCor AS corNome,
-                    cr.codigoCor,
-                    cr.tom AS corTom,
-                    t.codigoTamanho AS tamanhoNome,
-                    m.nomeModelo AS modeloNome
-                FROM produtos p
-                LEFT JOIN cores cr ON p.idCor = cr.idCor
-                LEFT JOIN tamanhos t ON p.idTamanho = t.idTamanho
-                LEFT JOIN modelos m ON p.idModelo = m.idModelo
-                WHERE p.ativo = 1
-                  AND p.nome = ?
-                  AND p.nomeCombinacao = ?
-                  AND p.idCategoria <=> ?
-                  AND p.idSubcategoria <=> ?
-                  AND p.idModelo <=> ?
-                ORDER BY cr.nomeCor ASC, t.codigoTamanho ASC, p.idProduto ASC
-            `;
-
-            const [variacoes] = await connection.execute(sqlVariacoes, [
-                produto.nome,
-                produto.nomeCombinacao,
-                produto.idCategoria,
-                produto.idSubcategoria,
-                produto.idModelo
-            ]);
+            const [variacoes] = await connection.execute(
+                `
+                    SELECT
+                        p.idProduto,
+                        p.sku,
+                        p.nomeCombinacao,
+                        p.preco,
+                        p.estoque,
+                        p.idCor,
+                        p.idTamanho,
+                        p.idModelo,
+                        p.imagem1,
+                        p.imagem2,
+                        p.imagem3,
+                        p.imagem4,
+                        cr.nomeCor AS corNome,
+                        cr.codigoCor,
+                        cr.tom AS corTom,
+                        t.codigoTamanho AS tamanhoNome,
+                        m.nomeModelo AS modeloNome
+                    FROM produtos p
+                    LEFT JOIN cores cr
+                        ON p.idCor = cr.idCor
+                    LEFT JOIN tamanhos t
+                        ON p.idTamanho = t.idTamanho
+                    LEFT JOIN modelos m
+                        ON p.idModelo = m.idModelo
+                    WHERE p.ativo = 1
+                        AND p.nome = ?
+                        AND p.genero <=> ?
+                        AND p.idCategoria <=> ?
+                        AND p.idSubcategoria <=> ?
+                        AND p.idModelo <=> ?
+                    ORDER BY
+                        cr.nomeCor ASC,
+                        t.codigoTamanho ASC,
+                        p.idProduto ASC
+                `,
+                [
+                    produto.nome,
+                    produto.genero,
+                    produto.idCategoria,
+                    produto.idSubcategoria,
+                    produto.idModelo
+                ]
+            );
 
             return {
                 produto,
@@ -405,11 +636,23 @@ class ProdutoModel {
 
         try {
             const sql = `
-                INSERT INTO produtos
-                (
-                    sku, nome, nomeCombinacao, descricao, genero, preco,
-                    idCategoria, idSubcategoria, idCor, idTamanho, idModelo,
-                    imagem1, imagem2, imagem3, imagem4, estoque
+                INSERT INTO produtos (
+                    sku,
+                    nome,
+                    nomeCombinacao,
+                    descricao,
+                    genero,
+                    preco,
+                    idCategoria,
+                    idSubcategoria,
+                    idCor,
+                    idTamanho,
+                    idModelo,
+                    imagem1,
+                    imagem2,
+                    imagem3,
+                    imagem4,
+                    estoque
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
@@ -434,6 +677,7 @@ class ProdutoModel {
             ];
 
             const [result] = await connection.execute(sql, valores);
+
             return result.insertId;
         } finally {
             connection.release();
@@ -457,8 +701,15 @@ class ProdutoModel {
             }
 
             valores.push(id);
-            const sql = `UPDATE produtos SET ${campos.join(', ')} WHERE idProduto = ?`;
+
+            const sql = `
+                UPDATE produtos
+                SET ${campos.join(', ')}
+                WHERE idProduto = ?
+            `;
+
             const [result] = await connection.execute(sql, valores);
+
             return result;
         } finally {
             connection.release();
@@ -473,6 +724,7 @@ class ProdutoModel {
                 'UPDATE produtos SET ativo = 0 WHERE idProduto = ?',
                 [id]
             );
+
             return result.affectedRows;
         } finally {
             connection.release();

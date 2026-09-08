@@ -1,23 +1,38 @@
 import ProdutoModel from '../models/produtoModel.js';
 
-const GENEROS_VALIDOS = new Set(['Masculino', 'Feminino', 'Unissex', 'Infantil']);
+const GENEROS_VALIDOS = new Set([
+    'Masculino',
+    'Feminino',
+    'Unissex',
+    'Infantil'
+]);
+
 const ORDENACOES_VALIDAS = new Set([
-    'recente', 'preco_asc', 'preco_desc', 'nome_asc', 'antigo'
+    'recente',
+    'preco_asc',
+    'preco_desc',
+    'nome_asc',
+    'antigo'
 ]);
 
 class FiltroInvalidoError extends Error {}
 
 function normalizarFiltros(query) {
     const filtros = {};
+
     const pagina = Number(query.pagina ?? 1);
     const limite = Number(query.limite ?? 12);
 
     if (!Number.isInteger(pagina) || pagina < 1) {
-        throw new FiltroInvalidoError('A página deve ser um número inteiro maior que zero.');
+        throw new FiltroInvalidoError(
+            'A página deve ser um número inteiro maior que zero.'
+        );
     }
 
     if (!Number.isInteger(limite) || limite < 1 || limite > 100) {
-        throw new FiltroInvalidoError('O limite deve ser um número inteiro entre 1 e 100.');
+        throw new FiltroInvalidoError(
+            'O limite deve ser um número inteiro entre 1 e 100.'
+        );
     }
 
     filtros.pagina = pagina;
@@ -25,18 +40,26 @@ function normalizarFiltros(query) {
 
     if (query.busca !== undefined && String(query.busca).trim()) {
         const busca = String(query.busca).trim();
+
         if (busca.length > 100) {
-            throw new FiltroInvalidoError('A busca deve ter no máximo 100 caracteres.');
+            throw new FiltroInvalidoError(
+                'A busca deve ter no máximo 100 caracteres.'
+            );
         }
+
         filtros.busca = busca;
     }
 
     for (const campo of ['categoria', 'tipo']) {
         if (query[campo] !== undefined && String(query[campo]).trim()) {
             const valor = String(query[campo]).trim();
+
             if (valor.length > 100) {
-                throw new FiltroInvalidoError(`${campo} deve ter no máximo 100 caracteres.`);
+                throw new FiltroInvalidoError(
+                    `${campo} deve ter no máximo 100 caracteres.`
+                );
             }
+
             filtros[campo] = valor;
         }
     }
@@ -45,17 +68,26 @@ function normalizarFiltros(query) {
         if (!GENEROS_VALIDOS.has(query.genero)) {
             throw new FiltroInvalidoError('Gênero inválido.');
         }
+
         filtros.genero = query.genero;
     }
 
     for (const campo of [
-        'idCategoria', 'idSubcategoria', 'idCor', 'idTamanho', 'idModelo'
+        'idCategoria',
+        'idSubcategoria',
+        'idCor',
+        'idTamanho',
+        'idModelo'
     ]) {
         if (query[campo] !== undefined && query[campo] !== '') {
             const valor = Number(query[campo]);
+
             if (!Number.isInteger(valor) || valor < 1) {
-                throw new FiltroInvalidoError(`${campo} deve ser um número inteiro positivo.`);
+                throw new FiltroInvalidoError(
+                    `${campo} deve ser um número inteiro positivo.`
+                );
             }
+
             filtros[campo] = valor;
         }
     }
@@ -63,25 +95,34 @@ function normalizarFiltros(query) {
     for (const campo of ['precoMin', 'precoMax']) {
         if (query[campo] !== undefined && query[campo] !== '') {
             const valor = Number(query[campo]);
+
             if (!Number.isFinite(valor) || valor < 0) {
-                throw new FiltroInvalidoError(`${campo} deve ser um valor numérico positivo.`);
+                throw new FiltroInvalidoError(
+                    `${campo} deve ser um número maior ou igual a zero.`
+                );
             }
+
             filtros[campo] = valor;
         }
     }
 
     if (
-        filtros.precoMin !== undefined &&
-        filtros.precoMax !== undefined &&
-        filtros.precoMin > filtros.precoMax
+        filtros.precoMin !== undefined
+        && filtros.precoMax !== undefined
+        && filtros.precoMin > filtros.precoMax
     ) {
-        throw new FiltroInvalidoError('O preço mínimo não pode ser maior que o preço máximo.');
+        throw new FiltroInvalidoError(
+            'O preço mínimo não pode ser maior que o preço máximo.'
+        );
     }
 
     if (query.emEstoque !== undefined && query.emEstoque !== '') {
         if (!['true', 'false'].includes(String(query.emEstoque))) {
-            throw new FiltroInvalidoError('O filtro de estoque deve ser true ou false.');
+            throw new FiltroInvalidoError(
+                'O filtro de estoque deve ser true ou false.'
+            );
         }
+
         filtros.emEstoque = String(query.emEstoque);
     }
 
@@ -89,24 +130,22 @@ function normalizarFiltros(query) {
         if (!ORDENACOES_VALIDAS.has(query.ordenarPor)) {
             throw new FiltroInvalidoError('Ordenação inválida.');
         }
+
         filtros.ordenarPor = query.ordenarPor;
+    }
+
+    if (query.agrupar !== undefined && query.agrupar !== '') {
+        if (!['true', 'false'].includes(String(query.agrupar))) {
+            throw new FiltroInvalidoError(
+                'O parâmetro agrupar deve ser true ou false.'
+            );
+        }
+
+        filtros.agrupar = String(query.agrupar) === 'true';
     }
 
     return filtros;
 }
-
-const TAMANHOS_POR_TIPO = {
-    roupaSuperior: new Set(['PP', 'P', 'M', 'G', 'GG', 'XG', 'XGG', 'EG', 'EGG']),
-    calcado: new Set([
-        '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36',
-        '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48'
-    ]),
-    roupaNumerica: new Set([
-        '32', '34', '36', '38', '40', '42', '44', '46', '48', '50', '52',
-        '54', '56', '58', '60'
-    ]),
-    unico: new Set(['U', 'UNICO'])
-};
 
 function normalizarTexto(valor = '') {
     return String(valor)
@@ -129,47 +168,54 @@ function identificarTipoTamanho(produto) {
     ].filter(Boolean).join(' '));
 
     if (contemAlgum(classificacao, [
-        'TENIS', 'SAPATO', 'SANDALIA', 'CHINELO', 'BOTA', 'COTURNO',
-        'MOCASSIM', 'CALCADO'
+        'TENIS',
+        'SAPATO',
+        'SANDALIA',
+        'CHINELO',
+        'BOTA',
+        'COTURNO',
+        'MOCASSIM',
+        'CALCADO'
     ])) {
         return 'calcado';
     }
 
     if (contemAlgum(classificacao, [
-        'CALCA', 'BERMUDA', 'SHORT', 'SAIA'
+        'CALCA',
+        'BERMUDA',
+        'SHORT',
+        'SAIA'
     ])) {
         return 'roupaNumerica';
     }
 
     if (contemAlgum(classificacao, [
-        'CAMISETA', 'CAMISA', 'JAQUETA', 'CASACO', 'MOLETOM', 'BLUSA',
-        'REGATA', 'SUETER', 'VESTIDO', 'POLO'
+        'CAMISETA',
+        'CAMISA',
+        'JAQUETA',
+        'CASACO',
+        'MOLETOM',
+        'BLUSA',
+        'REGATA',
+        'SUETER',
+        'VESTIDO',
+        'POLO'
     ])) {
         return 'roupaSuperior';
     }
 
     if (contemAlgum(classificacao, [
-        'BONE', 'BOLSA', 'CARTEIRA', 'OCULOS', 'RELOGIO', 'ACESSORIO'
+        'BONE',
+        'BOLSA',
+        'CARTEIRA',
+        'OCULOS',
+        'RELOGIO',
+        'ACESSORIO'
     ])) {
         return 'unico';
     }
 
-    // Para categorias ainda não mapeadas, preserva os tamanhos cadastrados.
     return 'generico';
-}
-
-function tamanhoCompativel(codigoTamanho, tipo) {
-    const codigo = normalizarTexto(codigoTamanho);
-
-    if (!codigo) {
-        return false;
-    }
-
-    if (tipo === 'generico') {
-        return true;
-    }
-
-    return TAMANHOS_POR_TIPO[tipo]?.has(codigo) || false;
 }
 
 function montarOpcoes(variacoes) {
@@ -179,7 +225,7 @@ function montarOpcoes(variacoes) {
     for (const variacao of variacoes) {
         const disponivel = Number(variacao.estoque) > 0;
 
-        if (variacao.idCor !== null && variacao.idCor !== undefined) {
+        if (variacao.idCor != null) {
             const chaveCor = String(variacao.idCor);
             const corExistente = cores.get(chaveCor);
 
@@ -188,18 +234,22 @@ function montarOpcoes(variacoes) {
                 nomeCor: variacao.corNome,
                 codigoCor: variacao.codigoCor,
                 tom: variacao.corTom,
-                disponivel: Boolean(corExistente?.disponivel || disponivel)
+                disponivel: Boolean(
+                    corExistente?.disponivel || disponivel
+                )
             });
         }
 
-        if (variacao.idTamanho !== null && variacao.idTamanho !== undefined) {
+        if (variacao.idTamanho != null) {
             const chaveTamanho = String(variacao.idTamanho);
             const tamanhoExistente = tamanhos.get(chaveTamanho);
 
             tamanhos.set(chaveTamanho, {
                 idTamanho: variacao.idTamanho,
                 codigoTamanho: variacao.tamanhoNome,
-                disponivel: Boolean(tamanhoExistente?.disponivel || disponivel)
+                disponivel: Boolean(
+                    tamanhoExistente?.disponivel || disponivel
+                )
             });
         }
     }
@@ -210,14 +260,18 @@ function montarOpcoes(variacoes) {
     };
 }
 
+function idValido(id) {
+    const numero = Number(id);
+    return Number.isSafeInteger(numero) && numero > 0;
+}
+
 class ProdutoController {
-    // GET /produtos
     static async listarOuFiltrar(req, res) {
         try {
             const filtros = normalizarFiltros(req.query);
             const resultado = await ProdutoModel.buscarComFiltros(filtros);
 
-            res.status(200).json({
+            return res.status(200).json({
                 sucesso: true,
                 dados: resultado.produtos,
                 paginacao: {
@@ -236,6 +290,7 @@ class ProdutoController {
             }
 
             console.error('Erro ao buscar produtos:', error);
+
             return res.status(500).json({
                 sucesso: false,
                 erro: 'Erro interno ao processar a busca'
@@ -243,13 +298,17 @@ class ProdutoController {
         }
     }
 
-    // GET /produtos/filtros
     static async listarFiltros(req, res) {
         try {
             const filtros = await ProdutoModel.buscarOpcoesFiltros();
-            return res.status(200).json({ sucesso: true, dados: filtros });
+
+            return res.status(200).json({
+                sucesso: true,
+                dados: filtros
+            });
         } catch (error) {
             console.error('Erro ao buscar filtros de produtos:', error);
+
             return res.status(500).json({
                 sucesso: false,
                 erro: 'Erro interno ao carregar os filtros'
@@ -257,12 +316,11 @@ class ProdutoController {
         }
     }
 
-    // GET /produtos/:id/detalhes
     static async buscarDetalhes(req, res) {
         try {
             const { id } = req.params;
 
-            if (!id || Number.isNaN(Number(id))) {
+            if (!idValido(id)) {
                 return res.status(400).json({
                     sucesso: false,
                     erro: 'ID inválido'
@@ -279,14 +337,13 @@ class ProdutoController {
             }
 
             const tipoTamanho = identificarTipoTamanho(detalhes.produto);
-            const variacoes = detalhes.variacoes
-                .filter((variacao) => tamanhoCompativel(variacao.tamanhoNome, tipoTamanho))
-                .map((variacao) => ({
-                    ...variacao,
-                    preco: Number(variacao.preco),
-                    estoque: Number(variacao.estoque),
-                    disponivel: Number(variacao.estoque) > 0
-                }));
+
+            const variacoes = detalhes.variacoes.map((variacao) => ({
+                ...variacao,
+                preco: Number(variacao.preco),
+                estoque: Number(variacao.estoque),
+                disponivel: Number(variacao.estoque) > 0
+            }));
 
             const opcoes = montarOpcoes(variacoes);
 
@@ -305,6 +362,7 @@ class ProdutoController {
             });
         } catch (error) {
             console.error('Erro ao buscar detalhes do produto:', error);
+
             return res.status(500).json({
                 sucesso: false,
                 erro: 'Erro interno ao buscar os detalhes do produto'
@@ -312,13 +370,15 @@ class ProdutoController {
         }
     }
 
-    // GET /produtos/:id
     static async buscarPorId(req, res) {
         try {
             const { id } = req.params;
 
-            if (!id || Number.isNaN(Number(id))) {
-                return res.status(400).json({ sucesso: false, erro: 'ID inválido' });
+            if (!idValido(id)) {
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'ID inválido'
+                });
             }
 
             const produto = await ProdutoModel.buscarPorId(id);
@@ -330,9 +390,13 @@ class ProdutoController {
                 });
             }
 
-            return res.status(200).json({ sucesso: true, dados: produto });
+            return res.status(200).json({
+                sucesso: true,
+                dados: produto
+            });
         } catch (error) {
             console.error('Erro ao buscar produto:', error);
+
             return res.status(500).json({
                 sucesso: false,
                 erro: 'Erro interno ao buscar o produto'
@@ -340,7 +404,6 @@ class ProdutoController {
         }
     }
 
-    // POST /produtos (ADMIN)
     static async criar(req, res) {
         try {
             const {
@@ -363,10 +426,18 @@ class ProdutoController {
             } = req.body;
 
             if (
-                !sku || !nome || !nomeCombinacao || !descricao ||
-                preco === undefined || !idCategoria || !idSubcategoria ||
-                !idCor || !idTamanho || !idModelo || !imagem1 ||
-                estoque === undefined
+                !sku
+                || !nome
+                || !nomeCombinacao
+                || !descricao
+                || preco === undefined
+                || !idCategoria
+                || !idSubcategoria
+                || !idCor
+                || !idTamanho
+                || !idModelo
+                || !imagem1
+                || estoque === undefined
             ) {
                 return res.status(400).json({
                     sucesso: false,
@@ -398,7 +469,10 @@ class ProdutoController {
             return res.status(201).json({
                 sucesso: true,
                 mensagem: 'Produto cadastrado com sucesso',
-                dados: { idProduto, ...dadosProduto }
+                dados: {
+                    idProduto,
+                    ...dadosProduto
+                }
             });
         } catch (error) {
             console.error('Erro ao criar produto:', error);
@@ -417,13 +491,15 @@ class ProdutoController {
         }
     }
 
-    // PUT /produtos/:id (ADMIN)
     static async atualizar(req, res) {
         try {
             const { id } = req.params;
 
-            if (!id || Number.isNaN(Number(id))) {
-                return res.status(400).json({ sucesso: false, erro: 'ID inválido' });
+            if (!idValido(id)) {
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'ID inválido'
+                });
             }
 
             const produtoExistente = await ProdutoModel.buscarPorId(id);
@@ -436,17 +512,32 @@ class ProdutoController {
             }
 
             const camposPermitidos = [
-                'sku', 'nome', 'nomeCombinacao', 'descricao', 'genero', 'preco',
-                'idCategoria', 'idSubcategoria', 'idCor', 'idTamanho', 'idModelo',
-                'estoque', 'imagem1', 'imagem2', 'imagem3', 'imagem4'
+                'sku',
+                'nome',
+                'nomeCombinacao',
+                'descricao',
+                'genero',
+                'preco',
+                'idCategoria',
+                'idSubcategoria',
+                'idCor',
+                'idTamanho',
+                'idModelo',
+                'estoque',
+                'imagem1',
+                'imagem2',
+                'imagem3',
+                'imagem4'
             ];
+
             const dadosAtualizacao = {};
 
             camposPermitidos.forEach((campo) => {
                 if (req.body[campo] !== undefined) {
-                    dadosAtualizacao[campo] = typeof req.body[campo] === 'string'
-                        ? req.body[campo].trim()
-                        : req.body[campo];
+                    dadosAtualizacao[campo] =
+                        typeof req.body[campo] === 'string'
+                            ? req.body[campo].trim()
+                            : req.body[campo];
                 }
             });
 
@@ -480,13 +571,15 @@ class ProdutoController {
         }
     }
 
-    // DELETE /produtos/:id (ADMIN)
     static async excluir(req, res) {
         try {
             const { id } = req.params;
 
-            if (!id || Number.isNaN(Number(id))) {
-                return res.status(400).json({ sucesso: false, erro: 'ID inválido' });
+            if (!idValido(id)) {
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: 'ID inválido'
+                });
             }
 
             const produtoExistente = await ProdutoModel.buscarPorId(id);
@@ -506,6 +599,7 @@ class ProdutoController {
             });
         } catch (error) {
             console.error('Erro ao desativar produto:', error);
+
             return res.status(500).json({
                 sucesso: false,
                 erro: 'Erro interno ao desativar produto'
