@@ -1,0 +1,181 @@
+/* =========================================
+   PÁGINA
+========================================= */
+
+.sucessoPage {
+  min-height: 100vh;
+  background: #f8f7f9;
+  color: #29232d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sucessoContainer {
+  width: min(1420px, 100%);
+  padding: 40px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* =========================================
+   CARD
+========================================= */
+
+.sucessoCard {
+  width: min(600px, 100%);
+  padding: 52px 45px;
+  background: #ffffff;
+  border: 1px solid #ebe7ed;
+  border-radius: 20px;
+  box-shadow: 0 8px 28px rgba(36, 18, 43, 0.06);
+  text-align: center;
+}
+
+/* =========================================
+   ÍCONE DE SUCESSO
+========================================= */
+
+.sucessoIcon {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #ffffff;
+  background: #00a9d4;
+  border-radius: 50%;
+
+  font-size: 38px;
+
+  box-shadow: 0 8px 20px rgba(0, 169, 212, 0.18);
+}
+
+/* =========================================
+   TEXTOS
+========================================= */
+
+.sucessoEyebrow {
+  color: #00a9d4;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sucessoCard h1 {
+  margin: 8px 0 12px;
+
+  color: #241b28;
+  font-size: clamp(28px, 4vw, 38px);
+  font-weight: 750;
+  line-height: 1.12;
+}
+
+.sucessoMensagem {
+  max-width: 480px;
+  margin: 0 auto;
+
+  color: #777079;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.sucessoEmail {
+  max-width: 440px;
+  margin: 24px auto 30px;
+  padding: 15px 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  color: #605863;
+  background: rgba(0, 169, 212, 0.06);
+  border: 1px solid rgba(0, 169, 212, 0.14);
+  border-radius: 11px;
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.sucessoEmail i {
+  flex-shrink: 0;
+  color: #00a9d4;
+  font-size: 17px;
+}
+
+/* =========================================
+   BOTÃO
+========================================= */
+
+.voltarInicio {
+  min-height: 50px;
+  padding: 0 24px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  color: #ffffff;
+  background: #00a9d4;
+
+  border-radius: 10px;
+
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: none;
+
+  transition: 0.2s;
+}
+
+.voltarInicio:hover {
+  color: #ffffff;
+  background: #1c3166;
+  transform: translateY(-1px);
+}
+
+/* =========================================
+   RESPONSIVO
+========================================= */
+
+@media (max-width: 600px) {
+  .sucessoContainer {
+    padding: 25px 18px;
+  }
+
+  .sucessoCard {
+    padding: 40px 22px;
+    border-radius: 17px;
+  }
+
+  .sucessoIcon {
+    width: 68px;
+    height: 68px;
+    font-size: 32px;
+  }
+
+  .sucessoCard h1 {
+    font-size: 29px;
+  }
+
+  .sucessoMensagem {
+    font-size: 13px;
+  }
+
+  .sucessoEmail {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .voltarInicio {
+    width: 100%;
+  }
+}
+

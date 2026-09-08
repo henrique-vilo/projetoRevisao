@@ -366,40 +366,106 @@ export default function ProductPage() {
     });
   }
 
-  function handleBuy() {
-    if (!selectedColorId) {
-      mostrarAlerta(
-        'aviso',
-        'Escolha uma cor',
-        'Selecione uma das cores disponíveis antes de continuar.',
-      );
-      return;
-    }
+  async function handleBuy() {
+  if (!selectedColorId) {
+    mostrarAlerta(
+      'aviso',
+      'Escolha uma cor',
+      'Selecione uma das cores disponíveis antes de continuar.',
+    );
+    return;
+  }
 
-    if (!selectedSizeId) {
-      mostrarAlerta(
-        'aviso',
-        'Escolha um tamanho',
-        'Selecione o tamanho desejado para adicionar o produto.',
-      );
-      return;
-    }
+  if (!selectedSizeId) {
+    mostrarAlerta(
+      'aviso',
+      'Escolha um tamanho',
+      'Selecione o tamanho desejado para adicionar o produto.',
+    );
+    return;
+  }
 
-    if (!variacaoSelecionada) {
-      mostrarAlerta(
-        'erro',
-        'Combinação indisponível',
-        'Essa combinação de cor e tamanho está sem estoque.',
+  if (!variacaoSelecionada) {
+    mostrarAlerta(
+      'erro',
+      'Combinação indisponível',
+      'Essa combinação de cor e tamanho está sem estoque.',
+    );
+    return;
+  }
+
+  const token = localStorage.getItem('token');
+  const usuarioSalvo = localStorage.getItem('usuario');
+
+  if (!token || !usuarioSalvo) {
+    mostrarAlerta(
+      'aviso',
+      'Entre na sua conta',
+      'Você precisa estar logado para adicionar produtos ao carrinho.',
+    );
+    return;
+  }
+
+  let usuario;
+  try {
+    usuario = JSON.parse(usuarioSalvo);
+  } catch {
+    mostrarAlerta(
+      'erro',
+      'Sessão inválida',
+      'Faça login novamente para continuar.',
+    );
+    return;
+  }
+
+  const idUsuario = Number(usuario?.idUsuario ?? usuario?.id);
+
+  if (!Number.isInteger(idUsuario) || idUsuario <= 0) {
+    mostrarAlerta(
+      'erro',
+      'Sessão inválida',
+      'Faça login novamente para continuar.',
+    );
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/vendas/carrinho`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        idUsuario,
+        idProduto: variacaoSelecionada.idProduto,
+      }),
+    });
+
+    const resultado = await response.json().catch(() => ({}));
+
+    if (!response.ok || !resultado.sucesso) {
+      throw new Error(
+        resultado.mensagem || 'Não foi possível adicionar o produto ao carrinho.',
       );
-      return;
     }
 
     mostrarAlerta(
-      'aviso',
-      'Não foi possível adicionar',
-      'A opção está selecionada, mas a adição ao carrinho ainda não está disponível nesta página.',
+      'sucesso',
+      'Produto adicionado',
+      `${titulo} foi adicionado ao carrinho.`,
+    );
+
+    window.dispatchEvent(new Event('carrinho-atualizado'));
+  } catch (error) {
+    mostrarAlerta(
+      'erro',
+      'Erro ao adicionar',
+      error.message || 'Não foi possível adicionar o produto ao carrinho.',
     );
   }
+}
 
   if (carregando) {
     return (
@@ -523,6 +589,9 @@ export default function ProductPage() {
               </div>
             ) : null}
           </section>
+
+
+
 
           <section className="details-card" aria-labelledby="selection-title">
             <div className="product-meta">

@@ -74,6 +74,65 @@ const sincronizarProgressoVenda = async (venda) => {
 
 class VendaController {
 
+    static async buscarCarrinho(req, res) {
+    try {
+        const { idUsuario } = req.params;
+
+        const linhas = await VendaModel.buscarCarrinhoComProdutos(idUsuario);
+
+        // Agrupa por idProduto (várias linhas de venda = quantidade do mesmo produto)
+        const agrupado = new Map();
+        for (const item of linhas) {
+            const chave = item.idProduto;
+            if (!agrupado.has(chave)) {
+                agrupado.set(chave, {
+                    idProduto: item.idProduto,
+                    nome: item.nome,
+                    variacao: item.nomeCombinacao,
+                    preco: item.preco,
+                    imagem: item.imagem1,
+                    idsVendas: [],
+                    quantidade: 0,
+                });
+            }
+            const grupo = agrupado.get(chave);
+            grupo.idsVendas.push(item.idVendas);
+            grupo.quantidade += 1;
+        }
+
+        res.status(200).json({
+            sucesso: true,
+            dados: Array.from(agrupado.values()),
+        });
+    } catch (error) {
+        console.error('Erro ao buscar carrinho:', error);
+        res.status(500).json({ sucesso: false, erro: 'Erro interno' });
+    }
+}
+
+static async removerDoCarrinho(req, res) {
+    try {
+        const { idVenda } = req.params;
+
+        const venda = await VendaModel.buscarPorId(idVenda);
+        if (!venda) {
+            return res.status(404).json({ sucesso: false, mensagem: 'Item não encontrado no carrinho.' });
+        }
+
+        // req.usuario.id vem do authMiddleware (não é "idUsuario")
+        if (req.usuario && venda.idUsuario !== req.usuario.id) {
+            return res.status(403).json({ sucesso: false, mensagem: 'Você não pode remover este item.' });
+        }
+
+        await VendaModel.excluir(idVenda);
+
+        res.status(200).json({ sucesso: true, mensagem: 'Item removido do carrinho.' });
+    } catch (error) {
+        console.error('Erro ao remover do carrinho:', error);
+        res.status(500).json({ sucesso: false, erro: 'Erro interno' });
+    }
+}
+
     static async adicionarCarrinho(req, res) {
         try {
             const { idUsuario, idProduto } = req.body;

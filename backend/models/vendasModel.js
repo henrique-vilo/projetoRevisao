@@ -26,6 +26,30 @@ class VendaModel {
         }
     }
 
+    // Busca itens do carrinho já com dados do produto (nome, preço, imagem, variação)
+static async buscarCarrinhoComProdutos(idUsuario) {
+    try {
+        const connection = await getConnection();
+        try {
+            const sql = `
+                SELECT v.idVendas, v.idUsuario, v.idProduto, v.status,
+                       p.nome, p.nomeCombinacao, p.preco, p.imagem1
+                FROM vendas v
+                INNER JOIN produtos p ON p.idProduto = v.idProduto
+                WHERE v.idUsuario = ? AND v.status = 'carrinho'
+                ORDER BY v.idVendas ASC
+            `;
+            const [linhas] = await connection.query(sql, [idUsuario]);
+            return linhas;
+        } finally {
+            connection.release();
+        }
+    } catch (error) {
+        console.error('Erro ao buscar carrinho com produtos:', error);
+        throw error;
+    }
+}
+
     // Buscar venda por ID
     static async buscarPorId(id) {
         try {

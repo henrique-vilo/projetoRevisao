@@ -4,8 +4,10 @@ import { authMiddleware, adminMiddleware, selfMiddleware } from '../middlewares/
 
 const router = express.Router();
 
-//rotas de negócios
+//rotas de negócios (carrinho) — precisam vir ANTES das genéricas /:id
 router.post('/carrinho', authMiddleware, VendaController.adicionarCarrinho);
+router.get('/carrinho/:idUsuario', authMiddleware, VendaController.buscarCarrinho);
+router.delete('/carrinho/:idVenda', authMiddleware, VendaController.removerDoCarrinho);
 router.post('/:id/confirmar', authMiddleware, VendaController.confirmarCompra);
 
 //rotas de informação
