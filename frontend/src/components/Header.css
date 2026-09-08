@@ -360,6 +360,7 @@
   font-size: 19px;
   cursor: pointer;
   transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+  text-decoration: none;
 }
 
 .header-action-button:hover,

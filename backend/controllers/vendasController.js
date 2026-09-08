@@ -39,6 +39,7 @@ function formatarDataBR(value) {
 function serializar(venda) {
     return {
         ...venda,
+        ...(possui(venda, 'preco') ? { preco: Number(venda.preco) } : {}),
         status: venda.status == null ? null : String(venda.status).trim().toLowerCase(),
         dataPedidoBR: formatarDataBR(venda.dataPedido),
         dataEntregaBR: formatarDataBR(venda.dataEntrega),
@@ -93,6 +94,24 @@ function responderErro(res, error) {
 }
 
 class VendaController {
+    static async listarMeusPedidos(req, res) {
+        try {
+            const usuario = identidade(req);
+            const vendas = await VendaModel.buscarPedidosPorUsuario(usuario.id);
+            return res.status(200).json({ sucesso: true, dados: vendas.map(serializar) });
+        } catch (error) { return responderErro(res, error); }
+    }
+
+    static async buscarMeuPedido(req, res) {
+        try {
+            const usuario = identidade(req);
+            const id = idValido(req.params.id, 'ID do pedido');
+            const venda = await VendaModel.buscarPedidoDoUsuario(id, usuario.id);
+            if (!venda) falhar(404, 'Pedido não encontrado.');
+            return res.status(200).json({ sucesso: true, dados: serializar(venda) });
+        } catch (error) { return responderErro(res, error); }
+    }
+
     static async criar(req, res) {
         try {
             exigirAdmin(req);

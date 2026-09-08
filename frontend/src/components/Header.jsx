@@ -844,6 +844,14 @@ export default function Header() {
               </div>
             ) : null}
           </div>
+          <Link
+            href="/meus-pedidos"
+            className={`header-action-button ${pathname.startsWith("/meus-pedidos") ? "active" : ""}`}
+            aria-label="Acessar meus pedidos"
+            title="Meus pedidos"
+          >
+            <i className="bi bi-box-seam" aria-hidden="true" />
+          </Link>
           <div className="cart-menu" ref={carrinhoRef}>
             <button
               type="button"

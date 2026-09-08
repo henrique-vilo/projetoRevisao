@@ -19,13 +19,9 @@ export default function PagamentoSucesso() {
           Seu pagamento foi aprovado e seu pedido já está sendo preparado.
         </p>
 
-        <p className="pedido">
-          Pedido <strong>#10248</strong>
-        </p>
-
-        <Link href="/entrega" className="btn-entrega">
+        <Link href="/meus-pedidos" className="btn-entrega">
           <i className="bi bi-box-seam"></i>
-          Ver detalhes da entrega
+          Ver meus pedidos
         </Link>
 
         <Link href="/" className="voltar">

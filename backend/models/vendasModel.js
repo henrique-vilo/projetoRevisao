@@ -1,7 +1,8 @@
 import { getConnection } from '../config/database.js';
 
 const CAMPOS = new Set(['idUsuario', 'idProduto', 'dataPedido', 'dataEntrega', 'status']);
-const SELECT_VENDAS = `SELECT v.*, v.STATUS AS status, u.nome AS nomeUsuario, p.nome AS nomeProduto
+const SELECT_VENDAS = `SELECT v.*, v.STATUS AS status, u.nome AS nomeUsuario, u.cep,
+        p.nome AS nomeProduto, p.nomeCombinacao AS variacao, p.preco, p.imagem1 AS imagem
     FROM vendas v
     LEFT JOIN usuarios u ON u.idUsuario = v.idUsuario
     LEFT JOIN produtos p ON p.idProduto = v.idProduto`;
@@ -56,6 +57,21 @@ class VendaModel {
 
     static async buscarPorUsuario(idUsuario) {
         return consultar(`${SELECT_VENDAS} WHERE v.idUsuario = ? ORDER BY v.idVendas DESC`, [idUsuario]);
+    }
+
+    static async buscarPedidosPorUsuario(idUsuario) {
+        return consultar(
+            `${SELECT_VENDAS} WHERE v.idUsuario = ? AND v.STATUS <> 'carrinho' ORDER BY v.idVendas DESC`,
+            [idUsuario]
+        );
+    }
+
+    static async buscarPedidoDoUsuario(id, idUsuario) {
+        const rows = await consultar(
+            `${SELECT_VENDAS} WHERE v.idVendas = ? AND v.idUsuario = ? AND v.STATUS <> 'carrinho'`,
+            [id, idUsuario]
+        );
+        return rows[0] || null;
     }
 
     static async buscarCarrinho(idUsuario) {

@@ -17,6 +17,8 @@ router.get('/carrinho/:idUsuario', authMiddleware, VendaController.listarCarrinh
 router.post('/carrinho', authMiddleware, VendaController.adicionarCarrinho);
 router.post('/carrinho/confirmar', authMiddleware, VendaController.confirmarCarrinho);
 router.delete('/carrinho/:id', authMiddleware, VendaController.removerCarrinho);
+router.get('/meus-pedidos', authMiddleware, VendaController.listarMeusPedidos);
+router.get('/meus-pedidos/:id', authMiddleware, VendaController.buscarMeuPedido);
 router.post('/:id/confirmar', authMiddleware, VendaController.confirmarCompra);
 router.post('/', authMiddleware, adminMiddleware, VendaController.criar);
 router.get('/', authMiddleware, VendaController.listarTodos);
