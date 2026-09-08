@@ -3,21 +3,11 @@
 import '../tables.css';
 import './produtos.css';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 
-/* =====================================================
-   CONFIGURAÇÃO
-===================================================== */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/$/, '');
+const IMAGE_ORIGIN = (process.env.NEXT_PUBLIC_IMAGE_BASE_URL || API_URL.replace(/\/api$/, '')).replace(/\/$/, '');
 
-/* =====================================================
-   ESTADO INICIAL DO FORMULÁRIO
-   OBS: o backend (ProdutoController) espera imagem1..4
-   como STRINGS (URL ou nome de arquivo) dentro de um
-   corpo JSON — não existe rota/middleware de upload de
-   arquivo (multer) no backend. Por isso os campos de
-   imagem aqui são texto, não File.
-===================================================== */
 const emptyForm = {
   sku: '',
   nome: '',
@@ -37,9 +27,6 @@ const emptyForm = {
   imagem4: '',
 };
 
-/* =====================================================
-   HELPERS
-===================================================== */
 function getToken() {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('token') || localStorage.getItem('accessToken');
@@ -54,10 +41,13 @@ function formatPrice(value) {
 
 function getImageUrl(filename) {
   if (!filename) return null;
-  if (filename.startsWith('http://') || filename.startsWith('https://')) {
-    return filename;
-  }
-  return `${API_URL}/uploads/${filename}`;
+  const value = String(filename).trim().replace(/\\/g, '/');
+  if (/^https?:\/\//i.test(value)) return value;
+  const relative = value.replace(/^\/+/, '');
+  if (relative.startsWith('uploads/')) return `${IMAGE_ORIGIN}/${relative}`;
+  if (relative.startsWith('imagens/')) return `${IMAGE_ORIGIN}/uploads/${relative}`;
+  if (value.startsWith('/')) return value;
+  return `${IMAGE_ORIGIN}/uploads/imagens/${relative}`;
 }
 
 function getStatusClass(ativo) {
@@ -79,9 +69,6 @@ function getOptionId(item, possibleKeys = []) {
   return '';
 }
 
-/* =====================================================
-   PAGE
-===================================================== */
 export default function ProdutosPage() {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
@@ -119,8 +106,12 @@ export default function ProdutosPage() {
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  // Pré-visualização local (blob) de imagens escolhidas no computador.
-  // Existe só no navegador — nunca é enviada ao backend.
+
+  const [imageFiles, setImageFiles] = useState({});
+  const previewRefs = useRef({});
+  useEffect(() => () => {
+    Object.values(previewRefs.current).forEach((url) => url && URL.revokeObjectURL(url));
+  }, []);
   const [localPreviews, setLocalPreviews] = useState({
     imagem1: null,
     imagem2: null,
@@ -133,9 +124,6 @@ export default function ProdutosPage() {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, []);
 
-  /* ===================================================
-     CARREGAR PRODUTOS
-  =================================================== */
   const carregarProdutos = useCallback(async () => {
     try {
       setLoading(true);
@@ -179,9 +167,6 @@ export default function ProdutosPage() {
     }
   }, [currentPage, filters, debouncedSearch, getHeaders]);
 
-  /* ===================================================
-     CARREGAR OPÇÕES
-  =================================================== */
   const carregarOpcoes = useCallback(async () => {
     try {
       setLoadingOptions(true);
@@ -220,9 +205,6 @@ export default function ProdutosPage() {
     }
   }, [getHeaders]);
 
-  /* ===================================================
-     EFFECTS
-  =================================================== */
   useEffect(() => {
     carregarOpcoes();
   }, [carregarOpcoes]);
@@ -240,9 +222,6 @@ export default function ProdutosPage() {
     carregarProdutos();
   }, [carregarProdutos]);
 
-  /* ===================================================
-     HANDLERS
-  =================================================== */
   const handleFilterChange = (event) => {
     const { name, value } = event.target;
     setFilters((previous) => ({ ...previous, [name]: value }));
@@ -252,29 +231,35 @@ export default function ProdutosPage() {
     const { name, value } = event.target;
     setForm((previous) => ({ ...previous, [name]: value }));
 
-    // Se o usuário editar a URL manualmente, a pré-visualização passa
-    // a seguir o que foi digitado (não mais o arquivo local escolhido).
-    if (name.startsWith('imagem') && localPreviews[name]) {
-      URL.revokeObjectURL(localPreviews[name]);
+    if (name.startsWith('imagem')) {
+      setImageFiles((previous) => ({ ...previous, [name]: null }));
+      delete previewRefs.current[name];
+      if (localPreviews[name]) URL.revokeObjectURL(localPreviews[name]);
       setLocalPreviews((previous) => ({ ...previous, [name]: null }));
     }
   };
 
-  /**
-   * Usuário clicou na caixa da imagem e escolheu um arquivo do computador.
-   * Apenas o NOME do arquivo é enviado ao backend (texto leve, igual a
-   * digitar a URL manualmente) — os bytes da imagem nunca saem do
-   * navegador. A pré-visualização usa um blob local só para exibição.
-   */
   const handleImageFileChange = (event, name) => {
     const file = event.target.files?.[0];
+    event.target.value = '';
     if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+      setError('Selecione uma imagem JPEG, PNG, GIF ou WebP.');
+      return;
+    }
+    if (file.size > 5242880) {
+      setError('Cada imagem pode ter no máximo 5 MB.');
+      return;
+    }
+    setError('');
+    setImageFiles((previous) => ({ ...previous, [name]: file }));
 
     if (localPreviews[name]) {
-      URL.revokeObjectURL(localPreviews[name]);
+      if (localPreviews[name]) URL.revokeObjectURL(localPreviews[name]);
     }
 
     const previewUrl = URL.createObjectURL(file);
+    previewRefs.current[name] = previewUrl;
     setLocalPreviews((previous) => ({ ...previous, [name]: previewUrl }));
     setForm((previous) => ({ ...previous, [name]: file.name }));
 
@@ -282,15 +267,15 @@ export default function ProdutosPage() {
   };
 
   const revokeAllLocalPreviews = () => {
+    previewRefs.current = {};
+    setImageFiles({});
     Object.values(localPreviews).forEach((url) => {
       if (url) URL.revokeObjectURL(url);
     });
   };
 
-  /* ===================================================
-     MODAIS
-  =================================================== */
-  const closeModal = () => {
+  const closeModal = (force = false) => {
+    if (submitting && force !== true) return;
     revokeAllLocalPreviews();
     setLocalPreviews({ imagem1: null, imagem2: null, imagem3: null, imagem4: null });
     setModal(null);
@@ -338,14 +323,6 @@ export default function ProdutosPage() {
     setModal('delete');
   };
 
-  /* ===================================================
-     SUBMIT
-     O backend (ProdutoController.criar / .atualizar) lê
-     os campos direto de req.body como JSON (sku.trim(),
-     imagem1.trim(), etc). Não existe multer nas rotas,
-     então o corpo precisa ser JSON — nunca multipart/
-     FormData, ou req.body chegaria vazio no backend.
-  =================================================== */
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (submitting) return;
@@ -357,7 +334,7 @@ export default function ProdutosPage() {
     const isEdit = modal === 'edit';
 
     try {
-      if (!isEdit && !form.imagem1.trim()) {
+      if (!imageFiles.imagem1 && !form.imagem1.trim()) {
         throw new Error('A imagem principal (imagem1) é obrigatória.');
       }
 
@@ -380,6 +357,11 @@ export default function ProdutosPage() {
         imagem4: form.imagem4.trim() || null,
       };
 
+      const body = new FormData();
+      Object.entries(payload).forEach(([name, value]) => {
+        body.append(name, imageFiles[name] || (value ?? ''));
+      });
+
       const url = isEdit
         ? `${API_URL}/produtos/${selectedProduct.idProduto}`
         : `${API_URL}/produtos`;
@@ -387,10 +369,9 @@ export default function ProdutosPage() {
       const response = await fetch(url, {
         method: isEdit ? 'PUT' : 'POST',
         headers: {
-          'Content-Type': 'application/json',
           ...getHeaders(),
         },
-        body: JSON.stringify(payload),
+        body,
       });
 
       const data = await response.json();
@@ -400,7 +381,7 @@ export default function ProdutosPage() {
       }
 
       setSuccessMessage(isEdit ? 'Produto atualizado com sucesso.' : 'Produto cadastrado com sucesso.');
-      closeModal();
+      closeModal(true);
       await carregarProdutos();
 
       setTimeout(() => setSuccessMessage(''), 4000);
@@ -412,9 +393,6 @@ export default function ProdutosPage() {
     }
   };
 
-  /* ===================================================
-     DELETE
-  =================================================== */
   const handleDelete = async () => {
     if (!selectedProduct || submitting) return;
 
@@ -433,7 +411,7 @@ export default function ProdutosPage() {
         throw new Error(data.erro || data.mensagem || 'Não foi possível desativar o produto.');
       }
 
-      closeModal();
+      closeModal(true);
       await carregarProdutos();
 
       setSuccessMessage('Produto desativado com sucesso.');
@@ -462,9 +440,6 @@ export default function ProdutosPage() {
     });
   };
 
-  /* ===================================================
-     RENDER
-  =================================================== */
   return (
     <>
       <main className="users-page">
@@ -811,6 +786,7 @@ export default function ProdutosPage() {
 
             <form onSubmit={handleSubmit}>
               <div className="users-modal-body">
+                {error && <div className="products-alert error" role="alert">{error}</div>}
                 <div className="products-image-section">
                   <div className="products-image-header">
                     <div>
@@ -879,7 +855,8 @@ export default function ProdutosPage() {
                             <input
                               id={inputId}
                               type="file"
-                              accept="image/*"
+                              accept="image/jpeg,image/png,image/gif,image/webp"
+                              disabled={submitting}
                               onChange={(event) => handleImageFileChange(event, imageName)}
                               style={{
                                 position: 'absolute',
@@ -896,7 +873,8 @@ export default function ProdutosPage() {
                             value={form[imageName]}
                             onChange={handleFormChange}
                             placeholder={index === 0 ? 'URL da imagem principal' : 'URL da imagem (opcional)'}
-                            required={index === 0}
+                            required={index === 0 && !imageFiles.imagem1}
+                            disabled={submitting}
                             style={{
                               position: 'static',
                               opacity: 1,

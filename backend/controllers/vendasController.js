@@ -1,319 +1,199 @@
 import VendaModel from '../models/vendasModel.js';
 
-const STATUS_PERMITIDOS = ['carrinho', 'pendente', 'processando', 'enviado', 'entregue', 'cancelado'];
+const STATUS_PERMITIDOS = new Set(['carrinho', 'pendente', 'processando', 'enviado', 'entregue', 'cancelado']);
+const possui = (objeto, campo) => Object.prototype.hasOwnProperty.call(objeto, campo);
 
-const formatarDataBR = (dataSql) => {
-    if (!dataSql) return null;
-    const data = new Date(dataSql);
-    return data.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-};
+function falhar(status, mensagem) {
+    const error = new Error(mensagem);
+    error.status = status;
+    throw error;
+}
 
-const formatarDataSQL = (data) => {
-    return data.toISOString().split('T')[0];
-};
-
-const simularDiasEntregaCEP = (cep) => {
-    const digitoRegiao = parseInt(cep.charAt(0));
-    return digitoRegiao === 0 ? 2 : digitoRegiao + 2; 
-};
-
-const sincronizarProgressoVenda = async (venda) => {
-    // Normaliza a string do status removendo espaços
-    const statusLimpo = venda.status ? String(venda.status).trim().toLowerCase() : '';
-    venda.status = statusLimpo;
-
-    if (statusLimpo === 'carrinho' || statusLimpo === 'entregue' || statusLimpo === 'cancelado') {
-        venda.dataPedidoBR = formatarDataBR(venda.dataPedido);
-        venda.dataEntregaBR = formatarDataBR(venda.dataEntrega);
-        return venda;
+function idValido(value, campo = 'ID') {
+    if (!/^\d+$/.test(String(value ?? '')) || !Number.isSafeInteger(Number(value)) || Number(value) < 1) {
+        falhar(400, `${campo} deve ser um inteiro positivo.`);
     }
+    return Number(value);
+}
 
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    
-    let novoStatus = statusLimpo;
-    let atualizou = false;
-    let dadosAtualizacao = {};
+function statusValido(value) {
+    const status = String(value ?? '').trim().toLowerCase();
+    if (!STATUS_PERMITIDOS.has(status)) falhar(400, 'Status inválido informado.');
+    return status;
+}
 
-    const dataPedidoObj = venda.dataPedido ? new Date(venda.dataPedido) : null;
-    const dataEntregaObj = venda.dataEntrega ? new Date(venda.dataEntrega) : null;
+function dataSQL(value, campo) {
+    if (value === null || value === '') return null;
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) falhar(400, `${campo} deve estar no formato AAAA-MM-DD.`);
+    const date = new Date(`${value}T00:00:00.000Z`);
+    if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) falhar(400, `${campo} inválida.`);
+    return value;
+}
 
-    if (novoStatus === 'pendente' && venda.dataEntrega) {
-        novoStatus = 'processando';
-        atualizou = true;
-    }
+function formatarDataBR(value) {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+}
 
-    if (novoStatus === 'processando' && dataPedidoObj && dataEntregaObj) {
-        const diasTotais = (dataEntregaObj - dataPedidoObj) / (1000 * 60 * 60 * 24);
-        const diasPassados = (hoje - dataPedidoObj) / (1000 * 60 * 60 * 24);
+function serializar(venda) {
+    return {
+        ...venda,
+        status: venda.status == null ? null : String(venda.status).trim().toLowerCase(),
+        dataPedidoBR: formatarDataBR(venda.dataPedido),
+        dataEntregaBR: formatarDataBR(venda.dataEntrega),
+        ...(possui(venda, 'dataEnvio') ? { dataEnvioBR: formatarDataBR(venda.dataEnvio) } : {}),
+    };
+}
 
-        if (diasPassados >= (diasTotais / 2)) {
-            novoStatus = 'enviado';
-            atualizou = true;
-        }
-    }
+function identidade(req) {
+    if (!req.usuario) falhar(401, 'Autenticação necessária.');
+    return { id: idValido(req.usuario.id, 'ID da sessão'), admin: req.usuario.tipo === 'admin' };
+}
 
-    if ((novoStatus === 'processando' || novoStatus === 'enviado') && dataEntregaObj) {
-        if (hoje >= dataEntregaObj) {
-            novoStatus = 'entregue';
-            atualizou = true;
-        }
-    }
+function exigirAdmin(req) {
+    if (!identidade(req).admin) falhar(403, 'Operação permitida apenas para administradores.');
+}
 
-    if (atualizou) {
-        dadosAtualizacao.status = novoStatus;
-        await VendaModel.atualizar(venda.idVendas, dadosAtualizacao);
-        venda.status = novoStatus; 
-    }
+function exigirProprietario(req, idUsuario) {
+    const usuario = identidade(req);
+    if (!usuario.admin && usuario.id !== Number(idUsuario)) falhar(403, 'Você não tem acesso a este pedido.');
+}
 
-    venda.dataPedidoBR = formatarDataBR(venda.dataPedido);
-    venda.dataEntregaBR = formatarDataBR(venda.dataEntrega);
-
+async function obterVenda(id) {
+    const venda = await VendaModel.buscarPorId(id);
+    if (!venda) falhar(404, 'Pedido não encontrado.');
     return venda;
-};
+}
+
+async function validarReferencias(dados) {
+    if (possui(dados, 'idUsuario') && !await VendaModel.buscarUsuarioVenda(dados.idUsuario)) falhar(400, 'Usuário não encontrado.');
+    if (possui(dados, 'idProduto') && !await VendaModel.buscarProdutoVenda(dados.idProduto)) falhar(400, 'Produto não encontrado.');
+}
+
+function responderErro(res, error) {
+    console.error('Erro na operação de vendas:', error);
+    if (error.status) return res.status(error.status).json({ sucesso: false, mensagem: error.message });
+    if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.code === 'ER_ROW_IS_REFERENCED') {
+        return res.status(409).json({ sucesso: false, mensagem: 'Este pedido possui registros vinculados e não pode ser excluído.' });
+    }
+    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+        return res.status(400).json({ sucesso: false, mensagem: 'Usuário ou produto inexistente.' });
+    }
+    return res.status(500).json({ sucesso: false, mensagem: 'Erro interno ao acessar pedidos. Confira o log do backend.' });
+}
 
 class VendaController {
-
-    static async buscarCarrinho(req, res) {
-    try {
-        const { idUsuario } = req.params;
-
-        const linhas = await VendaModel.buscarCarrinhoComProdutos(idUsuario);
-
-        // Agrupa por idProduto (várias linhas de venda = quantidade do mesmo produto)
-        const agrupado = new Map();
-        for (const item of linhas) {
-            const chave = item.idProduto;
-            if (!agrupado.has(chave)) {
-                agrupado.set(chave, {
-                    idProduto: item.idProduto,
-                    nome: item.nome,
-                    variacao: item.nomeCombinacao,
-                    preco: item.preco,
-                    imagem: item.imagem1,
-                    idsVendas: [],
-                    quantidade: 0,
-                });
-            }
-            const grupo = agrupado.get(chave);
-            grupo.idsVendas.push(item.idVendas);
-            grupo.quantidade += 1;
-        }
-
-        res.status(200).json({
-            sucesso: true,
-            dados: Array.from(agrupado.values()),
-        });
-    } catch (error) {
-        console.error('Erro ao buscar carrinho:', error);
-        res.status(500).json({ sucesso: false, erro: 'Erro interno' });
+    static async criar(req, res) {
+        try {
+            exigirAdmin(req);
+            const body = req.body || {};
+            const status = statusValido(body.status ?? 'pendente');
+            const dados = {
+                idUsuario: idValido(body.idUsuario, 'ID do usuário'),
+                idProduto: idValido(body.idProduto, 'ID do produto'),
+                status,
+                dataPedido: possui(body, 'dataPedido') ? dataSQL(body.dataPedido, 'Data do pedido') : (status === 'carrinho' ? null : new Date().toISOString().slice(0, 10)),
+                dataEntrega: possui(body, 'dataEntrega') ? dataSQL(body.dataEntrega, 'Data de entrega') : null,
+            };
+            await validarReferencias(dados);
+            const id = await VendaModel.criar(dados);
+            return res.status(201).json({ sucesso: true, mensagem: 'Pedido criado com sucesso.', dados: serializar(await obterVenda(id)) });
+        } catch (error) { return responderErro(res, error); }
     }
-}
-
-static async removerDoCarrinho(req, res) {
-    try {
-        const { idVenda } = req.params;
-
-        const venda = await VendaModel.buscarPorId(idVenda);
-        if (!venda) {
-            return res.status(404).json({ sucesso: false, mensagem: 'Item não encontrado no carrinho.' });
-        }
-
-        // req.usuario.id vem do authMiddleware (não é "idUsuario")
-        if (req.usuario && venda.idUsuario !== req.usuario.id) {
-            return res.status(403).json({ sucesso: false, mensagem: 'Você não pode remover este item.' });
-        }
-
-        await VendaModel.excluir(idVenda);
-
-        res.status(200).json({ sucesso: true, mensagem: 'Item removido do carrinho.' });
-    } catch (error) {
-        console.error('Erro ao remover do carrinho:', error);
-        res.status(500).json({ sucesso: false, erro: 'Erro interno' });
-    }
-}
 
     static async adicionarCarrinho(req, res) {
         try {
-            const { idUsuario, idProduto } = req.body;
-
-            if (!idUsuario || !idProduto) {
-                return res.status(400).json({ sucesso: false, erro: 'Dados incompletos', mensagem: 'ID de Usuário e Produto são obrigatórios' });
-            }
-
-            const dadosVenda = {
-                idUsuario: parseInt(idUsuario),
-                idProduto: parseInt(idProduto),
-                dataPedido: null,
-                dataEntrega: null,
-                status: 'carrinho'
-            };
-
-            const vendaId = await VendaModel.criar(dadosVenda);
-            res.status(201).json({ sucesso: true, mensagem: 'Adicionado ao carrinho', dados: { idVendas: vendaId, ...dadosVenda } });
-        } catch (error) {
-            console.error('Erro ao adicionar ao carrinho:', error);
-            res.status(500).json({ sucesso: false, erro: 'Erro interno' });
-        }
+            const usuario = identidade(req);
+            const body = req.body || {};
+            const idUsuario = body.idUsuario == null ? usuario.id : idValido(body.idUsuario, 'ID do usuário');
+            exigirProprietario(req, idUsuario);
+            const dados = { idUsuario, idProduto: idValido(body.idProduto, 'ID do produto'), dataPedido: null, dataEntrega: null, status: 'carrinho' };
+            await validarReferencias(dados);
+            const id = await VendaModel.criar(dados);
+            return res.status(201).json({ sucesso: true, mensagem: 'Adicionado ao carrinho.', dados: serializar(await obterVenda(id)) });
+        } catch (error) { return responderErro(res, error); }
     }
 
     static async confirmarCompra(req, res) {
         try {
-            const { id } = req.params;
-            const venda = await VendaModel.buscarPorId(id);
-
-            if (!venda) return res.status(404).json({ sucesso: false, mensagem: 'Venda não encontrada' });
-            
-            const statusAtual = String(venda.status).trim().toLowerCase();
-            if (statusAtual !== 'carrinho') return res.status(400).json({ sucesso: false, mensagem: 'Esta venda já passou da fase de carrinho' });
-
+            const id = idValido(req.params.id);
+            const venda = await obterVenda(id);
+            exigirProprietario(req, venda.idUsuario);
+            if (statusValido(venda.status) !== 'carrinho') falhar(400, 'Esta venda já passou da fase de carrinho.');
             const usuario = await VendaModel.buscarUsuarioVenda(venda.idUsuario);
-            if (!usuario || !usuario.cep) return res.status(400).json({ sucesso: false, mensagem: 'Usuário sem CEP cadastrado' });
-
+            const cep = String(usuario?.cep ?? '').replace(/\D/g, '');
+            if (!/^\d{8}$/.test(cep)) falhar(400, 'Usuário sem CEP válido cadastrado.');
+            const previsaoEntregaDias = Number(cep[0]) === 0 ? 2 : Number(cep[0]) + 2;
             const hoje = new Date();
-            const diasParaEntrega = simularDiasEntregaCEP(usuario.cep);
-            
-            const dataEntrega = new Date(hoje);
-            dataEntrega.setDate(hoje.getDate() + diasParaEntrega);
-
-            const dadosAtualizacao = {
-                dataPedido: formatarDataSQL(hoje),
-                dataEntrega: formatarDataSQL(dataEntrega),
-                status: 'processando'
-            };
-
-            await VendaModel.atualizar(id, dadosAtualizacao);
-
-            res.status(200).json({
-                sucesso: true,
-                mensagem: 'Compra confirmada com sucesso! Pedido em processamento.',
-                dados: {
-                    idVendas: id,
-                    previsaoEntregaDias: diasParaEntrega,
-                    dataPedidoBR: formatarDataBR(dadosAtualizacao.dataPedido),
-                    dataEntregaBR: formatarDataBR(dadosAtualizacao.dataEntrega),
-                    status: dadosAtualizacao.status
-                }
-            });
-        } catch (error) {
-            console.error('Erro ao confirmar compra:', error);
-            res.status(500).json({ sucesso: false, erro: 'Erro interno' });
-        }
+            const entrega = new Date(hoje);
+            entrega.setUTCDate(entrega.getUTCDate() + previsaoEntregaDias);
+            await VendaModel.atualizar(id, { dataPedido: hoje.toISOString().slice(0, 10), dataEntrega: entrega.toISOString().slice(0, 10), status: 'processando' });
+            return res.status(200).json({ sucesso: true, mensagem: 'Compra confirmada com sucesso.', dados: { ...serializar(await obterVenda(id)), previsaoEntregaDias } });
+        } catch (error) { return responderErro(res, error); }
     }
 
     static async listarTodos(req, res) {
         try {
-            const pagina = parseInt(req.query.pagina) || 1;
-            const limite = parseInt(req.query.limite) || 10;
+            const usuario = identidade(req);
+            const pagina = idValido(req.query.pagina ?? 1, 'Página');
+            const limite = Math.min(idValido(req.query.limite ?? 10, 'Limite'), 100);
             const offset = (pagina - 1) * limite;
-
-            const resultado = await VendaModel.listarTodos(limite, offset);
-
-            const vendasAtualizadas = await Promise.all(
-                resultado.vendas.map(v => sincronizarProgressoVenda(v))
-            );
-
-            res.status(200).json({
-                sucesso: true,
-                dados: vendasAtualizadas,
-                paginacao: {
-                    pagina: resultado.pagina,
-                    limite: resultado.limite,
-                    total: resultado.total,
-                    totalPaginas: resultado.totalPaginas
-                }
-            });
-        } catch (error) {
-            console.error('Erro ao listar vendas:', error);
-            res.status(500).json({ sucesso: false, erro: 'Erro interno' });
-        }
+            if (!Number.isSafeInteger(offset)) falhar(400, 'Página fora do intervalo permitido.');
+            const busca = String(req.query.busca ?? '').trim().slice(0, 200);
+            const resultado = await VendaModel.listarTodos(limite, offset, busca, usuario.admin ? null : usuario.id);
+            const { vendas, ...paginacao } = resultado;
+            return res.status(200).json({ sucesso: true, dados: vendas.map(serializar), paginacao });
+        } catch (error) { return responderErro(res, error); }
     }
 
     static async buscarPorId(req, res) {
         try {
-            const { id } = req.params;
-            let venda = await VendaModel.buscarPorId(id);
-
-            if (!venda) return res.status(404).json({ sucesso: false, mensagem: `Venda ID ${id} não encontrada` });
-
-            venda = await sincronizarProgressoVenda(venda);
-
-            res.status(200).json({ sucesso: true, dados: venda });
-        } catch (error) {
-            res.status(500).json({ sucesso: false, erro: 'Erro interno' });
-        }
+            const venda = await obterVenda(idValido(req.params.id));
+            exigirProprietario(req, venda.idUsuario);
+            return res.status(200).json({ sucesso: true, dados: serializar(venda) });
+        } catch (error) { return responderErro(res, error); }
     }
 
     static async buscarPorUsuario(req, res) {
         try {
-            const { idUsuario } = req.params;
+            const idUsuario = idValido(req.params.idUsuario, 'ID do usuário');
+            exigirProprietario(req, idUsuario);
             const vendas = await VendaModel.buscarPorUsuario(idUsuario);
-
-            const vendasAtualizadas = await Promise.all(
-                vendas.map(v => sincronizarProgressoVenda(v))
-            );
-
-            res.status(200).json({ sucesso: true, dados: vendasAtualizadas });
-        } catch (error) {
-            res.status(500).json({ sucesso: false, erro: 'Erro interno' });
-        }
+            return res.status(200).json({ sucesso: true, dados: vendas.map(serializar) });
+        } catch (error) { return responderErro(res, error); }
     }
 
-    // ATUALIZAR PEDIDO (ADMIN)
     static async atualizar(req, res) {
         try {
-            const { id } = req.params;
-            const { idUsuario, idProduto, status } = req.body;
-
-            const vendaExistente = await VendaModel.buscarPorId(id);
-            if (!vendaExistente) {
-                return res.status(404).json({ sucesso: false, mensagem: 'Pedido não encontrado.' });
+            exigirAdmin(req);
+            const id = idValido(req.params.id);
+            await obterVenda(id);
+            const body = req.body || {};
+            const dados = {};
+            for (const campo of ['idUsuario', 'idProduto']) {
+                if (possui(body, campo)) dados[campo] = idValido(body[campo], campo);
             }
-
-            const statusFormatado = status ? String(status).trim().toLowerCase() : vendaExistente.status;
-
-            if (status && !STATUS_PERMITIDOS.includes(statusFormatado)) {
-                return res.status(400).json({ sucesso: false, mensagem: 'Status inválido informado.' });
+            if (possui(body, 'status')) dados.status = statusValido(body.status);
+            for (const campo of ['dataPedido', 'dataEntrega']) {
+                if (possui(body, campo)) dados[campo] = dataSQL(body[campo], campo);
             }
-
-            const dadosAtualizacao = {
-                idUsuario: parseInt(idUsuario),
-                idProduto: parseInt(idProduto),
-                status: statusFormatado
-            };
-
-            await VendaModel.atualizar(id, dadosAtualizacao);
-
-            res.status(200).json({
-                sucesso: true,
-                mensagem: 'Pedido atualizado com sucesso.'
-            });
-        } catch (error) {
-            console.error('Erro ao atualizar pedido:', error);
-            res.status(500).json({ sucesso: false, erro: 'Erro interno ao atualizar pedido.' });
-        }
+            if (!Object.keys(dados).length) falhar(400, 'Informe pelo menos um campo válido para atualizar.');
+            await validarReferencias(dados);
+            await VendaModel.atualizar(id, dados);
+            return res.status(200).json({ sucesso: true, mensagem: 'Pedido atualizado com sucesso.', dados: serializar(await obterVenda(id)) });
+        } catch (error) { return responderErro(res, error); }
     }
 
-    // EXCLUIR PEDIDO (ADMIN)
     static async excluir(req, res) {
         try {
-            const { id } = req.params;
-
-            const vendaExistente = await VendaModel.buscarPorId(id);
-            if (!vendaExistente) {
-                return res.status(404).json({ sucesso: false, mensagem: 'Pedido não encontrado.' });
-            }
-
-            await VendaModel.excluir(id);
-
-            res.status(200).json({
-                sucesso: true,
-                mensagem: 'Pedido excluído com sucesso.'
-            });
-        } catch (error) {
-            console.error('Erro ao excluir pedido:', error);
-            res.status(500).json({ sucesso: false, erro: 'Erro interno ao excluir pedido.' });
-        }
+            exigirAdmin(req);
+            const id = idValido(req.params.id);
+            await obterVenda(id);
+            const removidos = await VendaModel.excluir(id);
+            if (!removidos) falhar(404, 'Pedido não encontrado.');
+            return res.status(200).json({ sucesso: true, mensagem: 'Pedido excluído com sucesso.', dados: { idVendas: id } });
+        } catch (error) { return responderErro(res, error); }
     }
 }
 

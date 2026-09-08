@@ -1,115 +1,88 @@
-import { create, read, update, deleteRecord, getConnection } from '../config/database.js';
+import { getConnection } from '../config/database.js';
 
-class VendaModel {
-    // Listar todas as vendas (com paginação)
-    static async listarTodos(limite, offset) {
-        try {
-            const connection = await getConnection();
-            try {
-                const sql = 'SELECT * FROM vendas ORDER BY idVendas DESC LIMIT ? OFFSET ?';
-                const [vendas] = await connection.query(sql, [limite, offset]);
-                const [totalResult] = await connection.execute('SELECT COUNT(*) as total FROM vendas');
-                
-                return {
-                    vendas,
-                    total: totalResult[0].total,
-                    pagina: (offset / limite) + 1,
-                    limite,
-                    totalPaginas: Math.ceil(totalResult[0].total / limite)
-                };
-            } finally {
-                connection.release();
-            }
-        } catch (error) {
-            console.error('Erro ao listar vendas:', error);
-            throw error;
-        }
-    }
+const CAMPOS = new Set(['idUsuario', 'idProduto', 'dataPedido', 'dataEntrega', 'status']);
+const SELECT_VENDAS = `SELECT v.*, v.STATUS AS status, u.nome AS nomeUsuario, p.nome AS nomeProduto
+    FROM vendas v
+    LEFT JOIN usuarios u ON u.idUsuario = v.idUsuario
+    LEFT JOIN produtos p ON p.idProduto = v.idProduto`;
 
-    // Busca itens do carrinho já com dados do produto (nome, preço, imagem, variação)
-static async buscarCarrinhoComProdutos(idUsuario) {
+async function consultar(sql, params = []) {
+    const connection = await getConnection();
     try {
-        const connection = await getConnection();
-        try {
-            const sql = `
-                SELECT v.idVendas, v.idUsuario, v.idProduto, v.status,
-                       p.nome, p.nomeCombinacao, p.preco, p.imagem1
-                FROM vendas v
-                INNER JOIN produtos p ON p.idProduto = v.idProduto
-                WHERE v.idUsuario = ? AND v.status = 'carrinho'
-                ORDER BY v.idVendas ASC
-            `;
-            const [linhas] = await connection.query(sql, [idUsuario]);
-            return linhas;
-        } finally {
-            connection.release();
-        }
-    } catch (error) {
-        console.error('Erro ao buscar carrinho com produtos:', error);
-        throw error;
+        const [result] = await connection.query(sql, params);
+        return result;
+    } finally {
+        connection.release();
     }
 }
 
-    // Buscar venda por ID
+function camposValidos(dados) {
+    const entries = Object.entries(dados).filter(([key, value]) => CAMPOS.has(key) && value !== undefined);
+    if (!entries.length) throw new Error('Nenhum campo válido para salvar.');
+    return entries.map(([key, value]) => [key === 'status' ? 'STATUS' : key, value]);
+}
+
+class VendaModel {
+    static async listarTodos(limite, offset, busca = '', idUsuario = null) {
+        const conditions = [];
+        const params = [];
+        if (idUsuario !== null) {
+            conditions.push('v.idUsuario = ?');
+            params.push(idUsuario);
+        }
+        if (busca) {
+            conditions.push(`(CAST(v.idVendas AS CHAR) LIKE ? OR CAST(v.idUsuario AS CHAR) LIKE ?
+                OR CAST(v.idProduto AS CHAR) LIKE ? OR u.nome LIKE ? OR p.nome LIKE ? OR v.STATUS LIKE ?)`);
+            params.push(...Array(6).fill(`%${busca}%`));
+        }
+        const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
+        const connection = await getConnection();
+        try {
+            const [vendas] = await connection.query(`${SELECT_VENDAS}${where} ORDER BY v.idVendas DESC LIMIT ? OFFSET ?`, [...params, limite, offset]);
+            const [totais] = await connection.query(`SELECT COUNT(*) AS total FROM vendas v
+                LEFT JOIN usuarios u ON u.idUsuario = v.idUsuario
+                LEFT JOIN produtos p ON p.idProduto = v.idProduto${where}`, params);
+            const total = Number(totais[0].total);
+            return { vendas, total, pagina: offset / limite + 1, limite, totalPaginas: Math.ceil(total / limite) };
+        } finally {
+            connection.release();
+        }
+    }
+
     static async buscarPorId(id) {
-        try {
-            const rows = await read('vendas', `idVendas = ${id}`);
-            return rows[0] || null;
-        } catch (error) {
-            console.error('Erro ao buscar venda por ID:', error);
-            throw error;
-        }
+        const rows = await consultar(`${SELECT_VENDAS} WHERE v.idVendas = ?`, [id]);
+        return rows[0] || null;
     }
 
-    // Buscar vendas por ID do usuário
     static async buscarPorUsuario(idUsuario) {
-        try {
-            return await read('vendas', `idUsuario = ${idUsuario}`);
-        } catch (error) {
-            console.error('Erro ao buscar vendas por usuário:', error);
-            throw error;
-        }
+        return consultar(`${SELECT_VENDAS} WHERE v.idUsuario = ? ORDER BY v.idVendas DESC`, [idUsuario]);
     }
 
-    // Busca rápida de usuário para cálculo de CEP
     static async buscarUsuarioVenda(idUsuario) {
-        try {
-            const rows = await read('usuarios', `idUsuario = ${idUsuario}`);
-            return rows[0] || null;
-        } catch (error) {
-            console.error('Erro ao buscar usuário da venda:', error);
-            throw error;
-        }
+        const rows = await consultar('SELECT idUsuario, cep FROM usuarios WHERE idUsuario = ?', [idUsuario]);
+        return rows[0] || null;
     }
 
-    // Criar nova venda (Usado para o Carrinho)
+    static async buscarProdutoVenda(idProduto) {
+        const rows = await consultar('SELECT idProduto FROM produtos WHERE idProduto = ?', [idProduto]);
+        return rows[0] || null;
+    }
+
     static async criar(dadosVenda) {
-        try {
-            return await create('vendas', dadosVenda);
-        } catch (error) {
-            console.error('Erro ao criar venda:', error);
-            throw error;
-        }
+        const entries = camposValidos(dadosVenda);
+        const result = await consultar(`INSERT INTO vendas (${entries.map(([key]) => key).join(', ')}) VALUES (${entries.map(() => '?').join(', ')})`, entries.map(([, value]) => value));
+        return result.insertId;
     }
 
-    // Atualizar dados gerais da venda
     static async atualizar(id, dadosVenda) {
-        try {
-            return await update('vendas', dadosVenda, `idVendas = ${id}`);
-        } catch (error) {
-            console.error('Erro ao atualizar venda:', error);
-            throw error;
-        }
+        const entries = camposValidos(dadosVenda);
+        const result = await consultar(`UPDATE vendas SET ${entries.map(([key]) => `${key} = ?`).join(', ')} WHERE idVendas = ?`, [...entries.map(([, value]) => value), id]);
+        return result.affectedRows;
     }
 
-    // Excluir venda
     static async excluir(id) {
-        try {
-            return await deleteRecord('vendas', `idVendas = ${id}`);
-        } catch (error) {
-            console.error('Erro ao excluir venda:', error);
-            throw error;
-        }
+        const result = await consultar('DELETE FROM vendas WHERE idVendas = ?', [id]);
+        return result.affectedRows;
     }
 }
 

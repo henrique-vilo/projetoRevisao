@@ -2,11 +2,10 @@
 
 import '../tables.css';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getPaginationItems } from '../adminPagination';
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/+$/, '');
 
 const ITEMS_PER_PAGE = 10;
 
@@ -45,7 +44,7 @@ const STATUS_CONFIG = {
 const emptyForm = {
   idUsuario: '',
   idProduto: '',
-  status: 'carrinho',
+  status: 'pendente',
   dataEntrega: '',
 };
 
@@ -72,7 +71,7 @@ function getStatusConfig(status) {
   const normalizedStatus = status ? String(status).trim().toLowerCase() : '';
   return (
     STATUS_CONFIG[normalizedStatus] || {
-      label: status || 'Desconhecido',
+      label: normalizedStatus ? String(status) : 'Status não informado pela API',
       className: 'danger',
     }
   );
@@ -108,16 +107,39 @@ function toDateInputValue(date) {
   return Number.isNaN(parsedDate.getTime()) ? '' : parsedDate.toISOString().slice(0, 10);
 }
 
-// Utilitário rápido para pegar o ID correto (trata id, idVenda ou idVendas)
-function getOrderId(order) {
-  if (!order) return null;
-  return order.idVendas || order.idVenda || order.id;
+function firstValue(...values) {
+  return values.find((value) => value !== undefined && value !== null && String(value).trim() !== '');
 }
 
-// Utilitário rápido para pegar o Status correto vindo da API
+function getOrderId(order) {
+  const id = firstValue(order?.idVendas, order?.idVenda, order?.id);
+  return /^\d+$/.test(String(id)) && Number.isSafeInteger(Number(id)) && Number(id) > 0 ? String(id) : null;
+}
+
 function getOrderStatus(order) {
-  if (!order) return null;
-  return order.statusVenda || order.statusVendas || order.statusPedido || order.status;
+  return String(firstValue(order?.status, order?.STATUS, order?.statusVenda, order?.statusVendas, order?.statusPedido, order?.statusEnvio) ?? '').trim().toLowerCase();
+}
+
+function normalizeOrder(order) {
+  if (!order || typeof order !== 'object' || Array.isArray(order)) {
+    throw new Error('A API retornou um pedido em formato inválido.');
+  }
+  return {
+    ...order,
+    status: getOrderStatus(order),
+    idUsuario: firstValue(order.idUsuario, order.usuario?.idUsuario, order.usuario?.id),
+    idProduto: firstValue(order.idProduto, order.produto?.idProduto, order.produto?.id),
+    nomeUsuario: firstValue(order.nomeUsuario, order.usuario?.nome),
+    nomeProduto: firstValue(order.nomeProduto, order.produto?.nome),
+  };
+}
+
+function readOrders(response) {
+  const rows = Array.isArray(response) ? response : response?.dados;
+  if (!Array.isArray(rows)) {
+    throw new Error('A API deve retornar uma lista em dados e os totais em paginacao. Confira o controller de vendas.');
+  }
+  return rows.map(normalizeOrder);
 }
 
 export default function OrdersPage() {
@@ -134,6 +156,10 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const requestSequence = useRef(0);
+  const mutationLock = useRef(false);
+  const [modalError, setModalError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const apiRequest = useCallback(
     async (endpoint, options = {}) => {
@@ -148,6 +174,7 @@ export default function OrdersPage() {
       try {
         response = await fetch(`${API_URL}${endpoint}`, {
           ...options,
+          cache: 'no-store',
           headers,
         });
       } catch (networkError) {
@@ -181,6 +208,9 @@ export default function OrdersPage() {
         );
       }
 
+      if (rawText && data === null) {
+        throw new Error('A API retornou conteúdo inválido; era esperado JSON. Confira a URL e as rotas de vendas.');
+      }
       return data;
     },
     []
@@ -197,6 +227,7 @@ export default function OrdersPage() {
 
   const loadOrders = useCallback(
     async (page = 1, showRefresh = false) => {
+      const sequence = ++requestSequence.current;
       try {
         if (showRefresh) {
           setRefreshing(true);
@@ -218,31 +249,24 @@ export default function OrdersPage() {
           `/vendas?${params.toString()}`
         );
 
-        const vendas = Array.isArray(response?.dados)
-          ? response.dados
-          : [];
-
+        if (sequence !== requestSequence.current) return;
+        const vendas = readOrders(response);
+        const pagination = response?.paginacao;
+        const total = Number(pagination?.total ?? vendas.length);
+        const pages = Number(pagination?.totalPaginas ?? Math.ceil(total / ITEMS_PER_PAGE));
+        if (!Number.isSafeInteger(total) || total < 0 || !Number.isSafeInteger(pages) || pages < 0) {
+          throw new Error('A API retornou totais de paginação inválidos.');
+        }
+        const lastPage = Math.max(1, pages);
+        if (page > lastPage) {
+          setCurrentPage(lastPage);
+          return;
+        }
         setOrders(vendas);
-
-        setTotalOrders(
-          Number(response?.paginacao?.total) || 0
-        );
-
-        setTotalPages(
-          Math.max(
-            1,
-            Number(
-              response?.paginacao?.totalPaginas
-            ) || 1
-          )
-        );
-
-        setCurrentPage(
-          Number(
-            response?.paginacao?.pagina
-          ) || page
-        );
+        setTotalOrders(total);
+        setTotalPages(lastPage);
       } catch (requestError) {
+        if (sequence !== requestSequence.current) return;
         console.error(
           'Erro ao carregar pedidos:',
           requestError
@@ -255,8 +279,10 @@ export default function OrdersPage() {
             'Não foi possível carregar os pedidos.'
         );
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (sequence === requestSequence.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [apiRequest, debouncedSearch]
@@ -264,8 +290,8 @@ export default function OrdersPage() {
 
   useEffect(() => {
     loadOrders(currentPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, debouncedSearch]);
+    return () => { requestSequence.current += 1; };
+  }, [currentPage, loadOrders]);
 
   const goToPage = (page) => {
     if (
@@ -285,18 +311,38 @@ export default function OrdersPage() {
       return;
     }
 
+    setModalError('');
     setModal(null);
     setSelectedOrder(null);
     setForm(emptyForm);
   };
 
   const openCreateModal = () => {
+    setModalError('');
+    setSuccess('');
     setSelectedOrder(null);
     setForm({ ...emptyForm });
     setModal('create');
   };
 
-  const openEditModal = (order) => {
+  const openEditModal = async (order) => {
+    if (!getOrderId(order) || mutationLock.current) return;
+    mutationLock.current = true;
+    setSaving(true);
+    setModalError('');
+    setSuccess('');
+    try {
+      const response = await apiRequest(`/vendas/${getOrderId(order)}`);
+      const detail = normalizeOrder(response?.dados ?? response);
+      if (getOrderId(detail) !== getOrderId(order)) throw new Error('A API retornou um pedido com ID diferente do solicitado.');
+      order = detail;
+    } catch (requestError) {
+      setError(requestError.message);
+      return;
+    } finally {
+      mutationLock.current = false;
+      setSaving(false);
+    }
     setSelectedOrder(order);
     
     const rawStatus = getOrderStatus(order);
@@ -304,7 +350,7 @@ export default function OrdersPage() {
     setForm({
       idUsuario: order.idUsuario?.toString() || '',
       idProduto: order.idProduto?.toString() || '',
-      status: rawStatus ? String(rawStatus).trim().toLowerCase() : 'carrinho',
+      status: rawStatus,
       dataEntrega: toDateInputValue(order.dataEntrega),
     });
 
@@ -312,6 +358,9 @@ export default function OrdersPage() {
   };
 
   const openDeleteModal = (order) => {
+    if (!getOrderId(order)) return;
+    setModalError('');
+    setSuccess('');
     setSelectedOrder(order);
     setModal('delete');
   };
@@ -330,15 +379,19 @@ export default function OrdersPage() {
     const idProduto = Number(form.idProduto);
 
     if (!Number.isInteger(idUsuario) || idUsuario <= 0) {
-      setError('Informe um ID de usuário válido.');
+      setModalError('Informe um ID de usuário válido.');
       return null;
     }
 
     if (!Number.isInteger(idProduto) || idProduto <= 0) {
-      setError('Informe um ID de produto válido.');
+      setModalError('Informe um ID de produto válido.');
       return null;
     }
 
+    if (!Object.hasOwn(STATUS_CONFIG, form.status)) {
+      setModalError('Selecione um status válido antes de salvar.');
+      return null;
+    }
     return { idUsuario, idProduto };
   };
 
@@ -349,24 +402,28 @@ export default function OrdersPage() {
       return;
     }
 
+    if (mutationLock.current) return;
+    mutationLock.current = true;
     try {
       setSaving(true);
-      setError('');
+      setModalError('');
 
       await apiRequest('/vendas', {
         method: 'POST',
-        body: JSON.stringify({ ...values, status: 'carrinho' }),
+        body: JSON.stringify({ ...values, status: form.status, dataEntrega: form.dataEntrega || null }),
       });
 
       closeModal(true);
+      setSuccess('Operação realizada com sucesso.');
       await loadOrders(currentPage, true);
     } catch (requestError) {
       console.error('Erro ao criar pedido:', requestError);
-      setError(
+      setModalError(
         requestError.message ||
           'Não foi possível criar o pedido.'
       );
     } finally {
+      mutationLock.current = false;
       setSaving(false);
     }
   };
@@ -382,11 +439,14 @@ export default function OrdersPage() {
       return;
     }
 
+    if (mutationLock.current) return;
+    mutationLock.current = true;
     try {
       setSaving(true);
-      setError('');
+      setModalError('');
 
       const orderId = getOrderId(selectedOrder);
+      if (!orderId) throw new Error('Pedido sem ID válido. Confira o retorno da API.');
 
       await apiRequest(
         `/vendas/${orderId}`,
@@ -401,14 +461,16 @@ export default function OrdersPage() {
       );
 
       closeModal(true);
+      setSuccess('Operação realizada com sucesso.');
       await loadOrders(currentPage, true);
     } catch (requestError) {
       console.error('Erro ao atualizar pedido:', requestError);
-      setError(
+      setModalError(
         requestError.message ||
           'Não foi possível atualizar o pedido.'
       );
     } finally {
+      mutationLock.current = false;
       setSaving(false);
     }
   };
@@ -431,11 +493,14 @@ export default function OrdersPage() {
       return;
     }
 
+    if (mutationLock.current) return;
+    mutationLock.current = true;
     try {
       setSaving(true);
-      setError('');
+      setModalError('');
 
       const orderId = getOrderId(selectedOrder);
+      if (!orderId) throw new Error('Pedido sem ID válido. Confira o retorno da API.');
 
       await apiRequest(
         `/vendas/${orderId}`,
@@ -445,27 +510,28 @@ export default function OrdersPage() {
       );
 
       closeModal(true);
+      setSuccess('Operação realizada com sucesso.');
 
       const pageAfterDelete =
         orders.length === 1 && currentPage > 1
           ? currentPage - 1
           : currentPage;
 
-      await loadOrders(pageAfterDelete, true);
+      if (pageAfterDelete !== currentPage) setCurrentPage(pageAfterDelete);
+      else await loadOrders(currentPage, true);
     } catch (requestError) {
       console.error('Erro ao excluir pedido:', requestError);
-      setError(
+      setModalError(
         requestError.message ||
           'Não foi possível excluir o pedido.'
       );
     } finally {
+      mutationLock.current = false;
       setSaving(false);
     }
   };
 
   const handleRefresh = () => {
-    setSearch('');
-    setDebouncedSearch('');
     loadOrders(currentPage, true);
   };
 
@@ -506,6 +572,7 @@ export default function OrdersPage() {
             <button
               type="button"
               className="users-btn users-btn-primary"
+              disabled={saving}
               onClick={openCreateModal}
             >
               <i className="bi bi-plus-lg" />
@@ -514,6 +581,7 @@ export default function OrdersPage() {
           </div>
         </section>
 
+        {success && <div className="alert alert-success" role="status">{success}</div>}
         {error && (
           <div
             className="alert alert-danger d-flex align-items-center justify-content-between"
@@ -597,16 +665,16 @@ export default function OrdersPage() {
                     </td>
                   </tr>
                 ) : orders.length > 0 ? (
-                  orders.map((order) => {
+                  orders.map((order, index) => {
                     const rawStatus = getOrderStatus(order);
                     const status = getStatusConfig(rawStatus);
                     const orderId = getOrderId(order);
 
                     return (
-                      <tr key={orderId}>
+                      <tr key={orderId || `invalid-${index}`}>
                         <td data-label="Pedido">
                           <span className="order-table-id">
-                            #ORD-{orderId}
+                            {orderId ? `#ORD-${orderId}` : 'ID não informado'}
                           </span>
                         </td>
 
@@ -615,10 +683,10 @@ export default function OrdersPage() {
                             <div className="user-avatar">U</div>
                             <div className="user-information">
                               <span className="user-name">
-                                {order.nomeUsuario || `Usuário #${order.idUsuario}`}
+                                {order.nomeUsuario || (order.idUsuario ? `Usuário #${order.idUsuario}` : 'Usuário não informado')}
                               </span>
                               <span className="user-id">
-                                ID {order.idUsuario}
+                                ID {order.idUsuario ?? '—'}
                               </span>
                             </div>
                           </div>
@@ -626,7 +694,7 @@ export default function OrdersPage() {
 
                         <td data-label="Produto">
                           <span className="order-product">
-                            {order.nomeProduto || `Produto #${order.idProduto}`}
+                            {order.nomeProduto || (order.idProduto ? `Produto #${order.idProduto}` : 'Produto não informado')}
                           </span>
                         </td>
 
@@ -660,6 +728,7 @@ export default function OrdersPage() {
                             <button
                               type="button"
                               className="user-action edit"
+                              disabled={!orderId || saving}
                               onClick={() => openEditModal(order)}
                             >
                               <i className="bi bi-pencil" />
@@ -669,6 +738,7 @@ export default function OrdersPage() {
                             <button
                               type="button"
                               className="user-action delete"
+                              disabled={!orderId || saving}
                               onClick={() => openDeleteModal(order)}
                             >
                               <i className="bi bi-trash" />
@@ -794,6 +864,7 @@ export default function OrdersPage() {
 
             <form onSubmit={handleSubmit}>
               <div className="users-modal-body">
+                {modalError && <div className="alert alert-danger" role="alert">{modalError}</div>}
                 <div className="order-modal-icon">
                   <i className="bi bi-bag-check" />
                 </div>
@@ -811,6 +882,7 @@ export default function OrdersPage() {
                         value={form.idUsuario}
                         onChange={handleFormChange}
                         placeholder="Ex.: 15"
+                        disabled={saving}
                         required
                       />
                     </div>
@@ -828,18 +900,21 @@ export default function OrdersPage() {
                         value={form.idProduto}
                         onChange={handleFormChange}
                         placeholder="Ex.: 42"
+                        disabled={saving}
                         required
                       />
                     </div>
                   </div>
 
-                  {modal === 'edit' && (
+                  {(modal === 'create' || modal === 'edit') && (
                     <>
                       <div className="user-form-field">
                         <label htmlFor="order-status">Status do envio</label>
                         <div className="user-input-wrapper">
                           <i className="bi bi-truck" />
-                          <select id="order-status" name="status" value={form.status} onChange={handleFormChange}>
+                          <select id="order-status" name="status" value={form.status} disabled={saving} required onChange={handleFormChange}>
+                            <option value="" disabled>Selecione um status</option>
+                            {form.status && !Object.hasOwn(STATUS_CONFIG, form.status) && <option value={form.status} disabled>{form.status} (não suportado)</option>}
                             <option value="carrinho">Carrinho</option>
                             <option value="pendente">Pendente</option>
                             <option value="processando">Processando</option>
@@ -859,6 +934,7 @@ export default function OrdersPage() {
                             name="dataEntrega"
                             type="date"
                             value={form.dataEntrega}
+                            disabled={saving}
                             onChange={handleFormChange}
                           />
                         </div>
@@ -919,6 +995,7 @@ export default function OrdersPage() {
             aria-labelledby="delete-order-title"
           >
             <div className="users-delete-content">
+              {modalError && <div className="alert alert-danger" role="alert">{modalError}</div>}
               <div className="users-delete-icon">
                 <i className="bi bi-trash3" />
               </div>
