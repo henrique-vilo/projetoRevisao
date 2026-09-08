@@ -3,7 +3,7 @@
 import '../tables.css';
 import './produtos.css';
 
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 /* =====================================================
    CONFIGURAÇÃO
@@ -12,6 +12,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 /* =====================================================
    ESTADO INICIAL DO FORMULÁRIO
+   OBS: o backend (ProdutoController) espera imagem1..4
+   como STRINGS (URL ou nome de arquivo) dentro de um
+   corpo JSON — não existe rota/middleware de upload de
+   arquivo (multer) no backend. Por isso os campos de
+   imagem aqui são texto, não File.
 ===================================================== */
 const emptyForm = {
   sku: '',
@@ -26,10 +31,10 @@ const emptyForm = {
   idTamanho: '',
   idModelo: '',
   estoque: '',
-  imagem1: null,
-  imagem2: null,
-  imagem3: null,
-  imagem4: null,
+  imagem1: '',
+  imagem2: '',
+  imagem3: '',
+  imagem4: '',
 };
 
 /* =====================================================
@@ -111,15 +116,17 @@ export default function ProdutosPage() {
   const [modal, setModal] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [form, setForm] = useState(emptyForm);
-  const [imagePreviews, setImagePreviews] = useState({
+  const [submitting, setSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  // Pré-visualização local (blob) de imagens escolhidas no computador.
+  // Existe só no navegador — nunca é enviada ao backend.
+  const [localPreviews, setLocalPreviews] = useState({
     imagem1: null,
     imagem2: null,
     imagem3: null,
     imagem4: null,
   });
-  const [submitting, setSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
 
   const getHeaders = useCallback(() => {
     const token = getToken();
@@ -220,18 +227,15 @@ export default function ProdutosPage() {
     carregarOpcoes();
   }, [carregarOpcoes]);
 
-  // Debounce da Busca
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 400);
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Resetar página quando filtros ou busca mudarem
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearch, filters]);
 
-  // Carregar produtos quando página, filtros ou busca mudarem
   useEffect(() => {
     carregarProdutos();
   }, [carregarProdutos]);
@@ -247,41 +251,65 @@ export default function ProdutosPage() {
   const handleFormChange = (event) => {
     const { name, value } = event.target;
     setForm((previous) => ({ ...previous, [name]: value }));
+
+    // Se o usuário editar a URL manualmente, a pré-visualização passa
+    // a seguir o que foi digitado (não mais o arquivo local escolhido).
+    if (name.startsWith('imagem') && localPreviews[name]) {
+      URL.revokeObjectURL(localPreviews[name]);
+      setLocalPreviews((previous) => ({ ...previous, [name]: null }));
+    }
   };
 
-  const handleImageChange = (event) => {
-    const { name, files } = event.target;
-    const file = files?.[0];
+  /**
+   * Usuário clicou na caixa da imagem e escolheu um arquivo do computador.
+   * Apenas o NOME do arquivo é enviado ao backend (texto leve, igual a
+   * digitar a URL manualmente) — os bytes da imagem nunca saem do
+   * navegador. A pré-visualização usa um blob local só para exibição.
+   */
+  const handleImageFileChange = (event, name) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
-    setForm((previous) => ({ ...previous, [name]: file }));
-    const preview = URL.createObjectURL(file);
-    setImagePreviews((previous) => ({ ...previous, [name]: preview }));
+    if (localPreviews[name]) {
+      URL.revokeObjectURL(localPreviews[name]);
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setLocalPreviews((previous) => ({ ...previous, [name]: previewUrl }));
+    setForm((previous) => ({ ...previous, [name]: file.name }));
+
+    event.target.value = '';
+  };
+
+  const revokeAllLocalPreviews = () => {
+    Object.values(localPreviews).forEach((url) => {
+      if (url) URL.revokeObjectURL(url);
+    });
   };
 
   /* ===================================================
      MODAIS
   =================================================== */
   const closeModal = () => {
-    Object.values(imagePreviews).forEach((url) => {
-      if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
-    });
-
+    revokeAllLocalPreviews();
+    setLocalPreviews({ imagem1: null, imagem2: null, imagem3: null, imagem4: null });
     setModal(null);
     setSelectedProduct(null);
     setForm(emptyForm);
-    setImagePreviews({ imagem1: null, imagem2: null, imagem3: null, imagem4: null });
     setSubmitting(false);
   };
 
   const openCreateModal = () => {
+    revokeAllLocalPreviews();
+    setLocalPreviews({ imagem1: null, imagem2: null, imagem3: null, imagem4: null });
     setSelectedProduct(null);
     setForm(emptyForm);
-    setImagePreviews({ imagem1: null, imagem2: null, imagem3: null, imagem4: null });
     setModal('create');
   };
 
   const openEditModal = (product) => {
+    revokeAllLocalPreviews();
+    setLocalPreviews({ imagem1: null, imagem2: null, imagem3: null, imagem4: null });
     setSelectedProduct(product);
     setForm({
       sku: product.sku || '',
@@ -296,17 +324,10 @@ export default function ProdutosPage() {
       idTamanho: product.idTamanho ?? '',
       idModelo: product.idModelo ?? '',
       estoque: product.estoque ?? '',
-      imagem1: null,
-      imagem2: null,
-      imagem3: null,
-      imagem4: null,
-    });
-
-    setImagePreviews({
-      imagem1: getImageUrl(product.imagem1),
-      imagem2: getImageUrl(product.imagem2),
-      imagem3: getImageUrl(product.imagem3),
-      imagem4: getImageUrl(product.imagem4),
+      imagem1: product.imagem1 || '',
+      imagem2: product.imagem2 || '',
+      imagem3: product.imagem3 || '',
+      imagem4: product.imagem4 || '',
     });
 
     setModal('edit');
@@ -319,6 +340,11 @@ export default function ProdutosPage() {
 
   /* ===================================================
      SUBMIT
+     O backend (ProdutoController.criar / .atualizar) lê
+     os campos direto de req.body como JSON (sku.trim(),
+     imagem1.trim(), etc). Não existe multer nas rotas,
+     então o corpo precisa ser JSON — nunca multipart/
+     FormData, ou req.body chegaria vazio no backend.
   =================================================== */
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -328,35 +354,43 @@ export default function ProdutosPage() {
     setError('');
     setSuccessMessage('');
 
+    const isEdit = modal === 'edit';
+
     try {
-      const formData = new FormData();
-      formData.append('sku', form.sku.trim());
-      formData.append('nome', form.nome.trim());
-      formData.append('nomeCombinacao', form.nomeCombinacao.trim());
-      formData.append('descricao', form.descricao.trim());
-      formData.append('genero', form.genero);
-      formData.append('preco', String(Number(form.preco)));
-      formData.append('idCategoria', String(form.idCategoria));
-      formData.append('idSubcategoria', String(form.idSubcategoria));
-      formData.append('idCor', String(form.idCor));
-      formData.append('idTamanho', String(form.idTamanho));
-      formData.append('idModelo', String(form.idModelo));
-      formData.append('estoque', String(Number(form.estoque)));
+      if (!isEdit && !form.imagem1.trim()) {
+        throw new Error('A imagem principal (imagem1) é obrigatória.');
+      }
 
-      if (form.imagem1) formData.append('imagem1', form.imagem1);
-      if (form.imagem2) formData.append('imagem2', form.imagem2);
-      if (form.imagem3) formData.append('imagem3', form.imagem3);
-      if (form.imagem4) formData.append('imagem4', form.imagem4);
+      const payload = {
+        sku: form.sku.trim(),
+        nome: form.nome.trim(),
+        nomeCombinacao: form.nomeCombinacao.trim(),
+        descricao: form.descricao.trim(),
+        genero: form.genero,
+        preco: Number(form.preco),
+        idCategoria: Number(form.idCategoria),
+        idSubcategoria: Number(form.idSubcategoria),
+        idCor: Number(form.idCor),
+        idTamanho: Number(form.idTamanho),
+        idModelo: Number(form.idModelo),
+        estoque: Number(form.estoque),
+        imagem1: form.imagem1.trim(),
+        imagem2: form.imagem2.trim() || null,
+        imagem3: form.imagem3.trim() || null,
+        imagem4: form.imagem4.trim() || null,
+      };
 
-      const isEdit = modal === 'edit';
       const url = isEdit
         ? `${API_URL}/produtos/${selectedProduct.idProduto}`
         : `${API_URL}/produtos`;
 
       const response = await fetch(url, {
         method: isEdit ? 'PUT' : 'POST',
-        headers: { ...getHeaders() },
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+          ...getHeaders(),
+        },
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -427,14 +461,6 @@ export default function ProdutosPage() {
       ordenarPor: 'recente',
     });
   };
-
-  const availableSubcategories = useMemo(() => {
-    if (!filters.idCategoria) return subcategorias;
-    return subcategorias.filter((item) => {
-      const categoryId = getOptionId(item, ['idCategoria', 'categoriaId']);
-      return String(categoryId) === String(filters.idCategoria);
-    });
-  }, [subcategorias, filters.idCategoria]);
 
   /* ===================================================
      RENDER
@@ -547,7 +573,7 @@ export default function ProdutosPage() {
                   <label>Subcategoria</label>
                   <select name="idSubcategoria" value={filters.idSubcategoria} onChange={handleFilterChange}>
                     <option value="">Todas</option>
-                    {availableSubcategories.map((sub) => (
+                    {subcategorias.map((sub) => (
                       <option key={getOptionId(sub, ['idSubcategoria'])} value={getOptionId(sub, ['idSubcategoria'])}>
                         {sub.nomeSubcategoria}
                       </option>
@@ -791,25 +817,100 @@ export default function ProdutosPage() {
                       <span>Galeria</span>
                       <strong>Imagens do produto</strong>
                     </div>
-                    <small>Até 4 imagens</small>
+                    <small>Clique na imagem para escolher um arquivo do computador (até 4 imagens)</small>
                   </div>
                   <div className="products-image-grid">
-                    {['imagem1', 'imagem2', 'imagem3', 'imagem4'].map((imageName, index) => (
-                      <label key={imageName} className={`product-image-upload ${index === 0 ? 'main' : ''}`}>
-                        {imagePreviews[imageName] ? (
-                          <img src={imagePreviews[imageName]} alt={`Imagem ${index + 1}`} />
-                        ) : (
-                          <>
-                            <i className="bi bi-image" />
-                            <span>{index === 0 ? 'Principal' : `Imagem ${index + 1}`}</span>
-                          </>
-                        )}
-                        <input type="file" name={imageName} accept="image/*" onChange={handleImageChange} />
-                        <div className="product-image-overlay">
-                          <i className="bi bi-camera" />
+                    {['imagem1', 'imagem2', 'imagem3', 'imagem4'].map((imageName, index) => {
+                      const preview = localPreviews[imageName] || getImageUrl(form[imageName]);
+                      const inputId = `product-image-file-${imageName}`;
+                      return (
+                        <div
+                          key={imageName}
+                          className={`product-image-upload ${index === 0 ? 'main' : ''}`}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '6px',
+                            position: 'static',
+                          }}
+                        >
+                          <label
+                            htmlFor={inputId}
+                            style={{
+                              position: 'relative',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              minHeight: '96px',
+                              border: '1px dashed var(--border-color, #d0d5dd)',
+                              borderRadius: '8px',
+                              overflow: 'hidden',
+                              background: 'var(--surface-muted, #f7f7f8)',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {preview ? (
+                              <img
+                                src={preview}
+                                alt={`Imagem ${index + 1}`}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px' }}>
+                                <i className="bi bi-image" />
+                                <span>{index === 0 ? 'Principal' : `Imagem ${index + 1}`}</span>
+                              </div>
+                            )}
+                            <div
+                              style={{
+                                position: 'absolute',
+                                bottom: 0,
+                                right: 0,
+                                background: 'rgba(0,0,0,0.55)',
+                                color: '#fff',
+                                borderRadius: '6px 0 0 0',
+                                padding: '3px 6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <i className="bi bi-camera" />
+                            </div>
+                            <input
+                              id={inputId}
+                              type="file"
+                              accept="image/*"
+                              onChange={(event) => handleImageFileChange(event, imageName)}
+                              style={{
+                                position: 'absolute',
+                                width: 0,
+                                height: 0,
+                                opacity: 0,
+                                overflow: 'hidden',
+                              }}
+                            />
+                          </label>
+                          <input
+                            type="text"
+                            name={imageName}
+                            value={form[imageName]}
+                            onChange={handleFormChange}
+                            placeholder={index === 0 ? 'URL da imagem principal' : 'URL da imagem (opcional)'}
+                            required={index === 0}
+                            style={{
+                              position: 'static',
+                              opacity: 1,
+                              width: '100%',
+                              boxSizing: 'border-box',
+                              padding: '6px 8px',
+                              fontSize: '0.85rem',
+                              border: '1px solid var(--border-color, #d0d5dd)',
+                              borderRadius: '6px',
+                            }}
+                          />
                         </div>
-                      </label>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -871,7 +972,7 @@ export default function ProdutosPage() {
                       <i className="bi bi-diagram-3" />
                       <select id="product-subcategory" name="idSubcategoria" value={form.idSubcategoria} onChange={handleFormChange} required>
                         <option value="">Selecionar subcategoria</option>
-                        {availableSubcategories.map((sub) => (
+                        {subcategorias.map((sub) => (
                           <option key={getOptionId(sub, ['idSubcategoria'])} value={getOptionId(sub, ['idSubcategoria'])}>
                             {sub.nomeSubcategoria}
                           </option>
