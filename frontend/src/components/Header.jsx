@@ -1,16 +1,20 @@
 "use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import "./Header.css";
+
 const API_ORIGIN = (
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
 )
   .replace(/\/api\/?$/, "")
   .replace(/\/$/, "");
+
 const TOKEN_KEY = "token";
 const USER_KEY = "usuario";
+
 function lerUsuarioSalvo() {
   if (typeof window === "undefined") return { token: null, usuario: null };
   const token = localStorage.getItem(TOKEN_KEY);
@@ -25,16 +29,19 @@ function lerUsuarioSalvo() {
     return { token, usuario: null };
   }
 }
+
 function formatarPreco(valor) {
   return Number(valor || 0).toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
   });
 }
+
 function obterIdUsuario(usuario) {
   const id = Number(usuario?.idUsuario ?? usuario?.id);
   return Number.isInteger(id) && id > 0 ? id : null;
 }
+
 function normalizarUsuarioResposta(resultado) {
   return (
     resultado?.dados?.usuario ||
@@ -44,12 +51,14 @@ function normalizarUsuarioResposta(resultado) {
     null
   );
 }
+
 function resolverImagemProduto(caminho) {
   if (!caminho) return null;
   if (/^https?:\/\//i.test(caminho)) return caminho;
   if (caminho.startsWith("/uploads/")) return `${API_ORIGIN}${caminho}`;
   return caminho.startsWith("/") ? caminho : `/${caminho}`;
 }
+
 function normalizarItemCarrinho(item) {
   const idProduto = Number(item.idProduto ?? item.id);
   const idsVendas = Array.isArray(item.idsVendas)
@@ -66,6 +75,7 @@ function normalizarItemCarrinho(item) {
     imagem: resolverImagemProduto(item.imagem || item.imagem1),
   };
 }
+
 export default function Header() {
   const pathname = usePathname();
   const [categorias, setCategorias] = useState([]);
@@ -83,6 +93,7 @@ export default function Header() {
   const [carrinhoAberto, setCarrinhoAberto] = useState(false);
   const perfilRef = useRef(null);
   const carrinhoRef = useRef(null);
+
   const totalItensCarrinho = itensCarrinho.reduce(
     (total, item) => total + item.quantidade,
     0,
@@ -91,7 +102,7 @@ export default function Header() {
     (total, item) => total + item.preco * item.quantidade,
     0,
   );
-  // Aplica as classes e o atributo de tema do Bootstrap no elemento <html>
+
   function aplicarTema(isDark) {
     if (typeof document === "undefined") return;
     if (isDark) {
@@ -104,7 +115,7 @@ export default function Header() {
       localStorage.setItem("tema", "light");
     }
   }
-  // Carrega a preferência de tema ao montar o componente
+
   useEffect(() => {
     const temaSalvo = localStorage.getItem("tema");
     const prefereEscuro = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -112,12 +123,22 @@ export default function Header() {
     setModoEscuro(deveSerEscuro);
     aplicarTema(deveSerEscuro);
   }, []);
-  // Alterna o modo claro / escuro ao clicar no botão
+
   function alternarTema() {
     const novoModo = !modoEscuro;
     setModoEscuro(novoModo);
     aplicarTema(novoModo);
   }
+
+  function fazerLogout() {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    setUsuario(null);
+    setItensCarrinho([]);
+    setPerfilAberto(false);
+    window.dispatchEvent(new Event("auth-changed"));
+  }
+
   useEffect(() => {
     const abortController = new AbortController();
     async function carregarMenu() {
@@ -146,6 +167,7 @@ export default function Header() {
     carregarMenu();
     return () => abortController.abort();
   }, []);
+
   const carregarCarrinho = useCallback(
     async ({ signal, exibirCarregamento = true } = {}) => {
       const sessao = lerUsuarioSalvo();
@@ -199,6 +221,7 @@ export default function Header() {
     },
     [usuario],
   );
+
   useEffect(() => {
     const abortController = new AbortController();
     carregarCarrinho({ signal: abortController.signal });
@@ -211,6 +234,7 @@ export default function Header() {
       window.removeEventListener("carrinho-atualizado", atualizarCarrinho);
     };
   }, [carregarCarrinho]);
+
   useEffect(() => {
     let ativo = true;
     let abortController = null;
@@ -278,6 +302,7 @@ export default function Header() {
       window.removeEventListener("focus", atualizarSessao);
     };
   }, [pathname]);
+
   useEffect(() => {
     function fecharAoClicarFora(event) {
       if (perfilRef.current && !perfilRef.current.contains(event.target)) {
@@ -290,11 +315,13 @@ export default function Header() {
     document.addEventListener("pointerdown", fecharAoClicarFora);
     return () => document.removeEventListener("pointerdown", fecharAoClicarFora);
   }, []);
+
   function fecharMenuAoSair(event) {
     if (!event.currentTarget.contains(event.relatedTarget)) {
       setCategoriaAtiva(null);
     }
   }
+
   async function requisitarCarrinho(caminho, opcoes = {}) {
     const sessao = lerUsuarioSalvo();
     if (!sessao.token) {
@@ -317,6 +344,7 @@ export default function Header() {
     }
     return resultado;
   }
+
   async function alterarQuantidade(idItem, delta) {
     const item = itensCarrinho.find((itemAtual) => itemAtual.id === idItem);
     const idUsuario = obterIdUsuario(usuario);
@@ -344,6 +372,7 @@ export default function Header() {
       setItemCarrinhoPendente(null);
     }
   }
+
   async function removerItemCarrinho(idItem) {
     const item = itensCarrinho.find((itemAtual) => itemAtual.id === idItem);
     if (!item || itemCarrinhoPendente === idItem) return;
@@ -365,14 +394,17 @@ export default function Header() {
       setItemCarrinhoPendente(null);
     }
   }
+
   function tentarCarregarCarrinhoNovamente() {
     carregarCarrinho();
   }
+
   function alternarCarrinhoMenu() {
     const vaiAbrir = !carrinhoAberto;
     setCarrinhoAberto(vaiAbrir);
     if (vaiAbrir && usuario) carregarCarrinho();
   }
+
   return (
     <header
       className="header-container"
@@ -388,8 +420,8 @@ export default function Header() {
       <nav className="navbar-main" aria-label="Categorias de produtos">
         <Link href="/" className="header-logo-link" aria-label="Everett - Página inicial">
           <Image
-            src="/everettlogo.png"
-            alt="Everett"
+            src="/everettlogo2.jpg"
+            alt="everettlogo2"
             width={294}
             height={238}
             priority
@@ -418,32 +450,15 @@ export default function Header() {
                 className={`category-item ${estaAberta ? "active" : ""}`}
                 onBlur={fecharMenuAoSair}
               >
-                <div className="category-trigger-row">
-                  <Link
-                    href={categoriaUrl}
-                    className="category-link"
-                    onMouseEnter={() => setCategoriaAtiva(categoria.idCategoria)}
-                    onFocus={() => setCategoriaAtiva(categoria.idCategoria)}
-                    onClick={() => setCategoriaAtiva(null)}
-                  >
-                    {categoria.nomeCategoria}
-                  </Link>
-                  <button
-                    type="button"
-                    className="category-dropdown-toggle"
-                    aria-expanded={estaAberta}
-                    aria-label={`${estaAberta ? "Fechar" : "Abrir"} subcategorias de ${categoria.nomeCategoria}`}
-                    onClick={() =>
-                      setCategoriaAtiva((atual) =>
-                        atual === categoria.idCategoria
-                          ? null
-                          : categoria.idCategoria,
-                      )
-                    }
-                  >
-                    <i className="bi bi-chevron-down" aria-hidden="true" />
-                  </button>
-                </div>
+                <Link
+                  href={categoriaUrl}
+                  className="category-link"
+                  onMouseEnter={() => setCategoriaAtiva(categoria.idCategoria)}
+                  onFocus={() => setCategoriaAtiva(categoria.idCategoria)}
+                  onClick={() => setCategoriaAtiva(null)}
+                >
+                  {categoria.nomeCategoria}
+                </Link>
                 {estaAberta ? (
                   <div className="category-dropdown-menu">
                     <div className="category-dropdown-header">
@@ -456,7 +471,7 @@ export default function Header() {
                         {categoria.totalProdutos === 1 ? "" : "s"}
                       </span>
                     </div>
-                    {categoria.subcategorias.length > 0 ? (
+                    {categoria.subcategorias?.length > 0 ? (
                       <ul className="subcategory-list">
                         {categoria.subcategorias.map((subcategoria) => (
                           <li key={subcategoria.idSubcategoria}>
@@ -511,7 +526,6 @@ export default function Header() {
           />
         </form>
         <div className="header-actions" aria-label="Ações do usuário">
-          {/* Botão de Alternância de Modo Escuro / Claro */}
           <button
             type="button"
             className="header-action-button"
@@ -756,6 +770,28 @@ export default function Header() {
                           {usuario.tipo === "admin" ? "Administrador" : "Cliente Everett"}
                         </span>
                       </p>
+                    </div>
+                    <div className="profile-auth-actions mt-2">
+                      <button
+                        type="button"
+                        className="profile-logout-button"
+                        onClick={fazerLogout}
+                        style={{
+                          width: "100%",
+                          padding: "0.5rem 1rem",
+                          border: "1px solid currentColor",
+                          borderRadius: "0.375rem",
+                          background: "transparent",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "0.5rem",
+                        }}
+                      >
+                        <i className="bi bi-box-arrow-right" aria-hidden="true" />
+                        <span>Sair da conta</span>
+                      </button>
                     </div>
                   </>
                 ) : (

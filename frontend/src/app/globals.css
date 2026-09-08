@@ -220,7 +220,7 @@ header [class*="icons"] {
 }
 
 /* ==========================================================================
-   5. DROPDOWN NO MODO ESCURO (CORREÇÃO TOTAL DE VISIBILIDADE)
+   5. DROPDOWN NO MODO ESCURO
    ========================================================================== */
 html.dark .dropdown-menu,
 html.dark [class*="dropdown"],
@@ -283,35 +283,51 @@ html.dark main,
 html.dark section,
 html.dark article,
 html.dark header,
-html.dark nav {
+html.dark nav,
+html[data-bs-theme="dark"] main,
+html[data-bs-theme="dark"] section,
+html[data-bs-theme="dark"] article,
+html[data-bs-theme="dark"] header,
+html[data-bs-theme="dark"] nav {
   background-color: var(--background) !important;
   color: var(--foreground) !important;
 }
 
 html.dark .bg-white,
 html.dark .bg-light,
-html.dark .bg-body {
+html.dark .bg-body,
+html[data-bs-theme="dark"] .bg-white,
+html[data-bs-theme="dark"] .bg-light,
+html[data-bs-theme="dark"] .bg-body {
   background-color: var(--background) !important;
   color: var(--foreground) !important;
 }
 
+/* Aplicação de cor de texto padrão em elementos de texto */
 html.dark h1, html.dark h2, html.dark h3, 
 html.dark h4, html.dark h5, html.dark h6, 
-html.dark p, html.dark span, html.dark label, 
-html.dark li, html.dark strong, html.dark b,
-html.dark a, html.dark small, html.dark div,
-html.dark .text-dark, html.dark .text-black, html.dark .text-body {
+html.dark p, html.dark label, html.dark li, 
+html.dark strong, html.dark b, html.dark small,
+html[data-bs-theme="dark"] h1, html[data-bs-theme="dark"] h2, html[data-bs-theme="dark"] h3, 
+html[data-bs-theme="dark"] h4, html[data-bs-theme="dark"] h5, html[data-bs-theme="dark"] h6, 
+html[data-bs-theme="dark"] p, html[data-bs-theme="dark"] label, html[data-bs-theme="dark"] li, 
+html[data-bs-theme="dark"] strong, html[data-bs-theme="dark"] b, html[data-bs-theme="dark"] small {
   color: var(--foreground) !important;
 }
 
 html.dark .text-muted,
-html.dark .text-secondary {
+html.dark .text-secondary,
+html[data-bs-theme="dark"] .text-muted,
+html[data-bs-theme="dark"] .text-secondary {
   color: var(--text-secondary) !important;
 }
 
 html.dark .card,
 html.dark [class*="product-card"],
-html.dark [class*="product-item"] {
+html.dark [class*="product-item"],
+html[data-bs-theme="dark"] .card,
+html[data-bs-theme="dark"] [class*="product-card"],
+html[data-bs-theme="dark"] [class*="product-item"] {
   background-color: var(--card-bg) !important;
   color: var(--foreground) !important;
   border-color: var(--card-border) !important;
@@ -320,7 +336,11 @@ html.dark [class*="product-item"] {
 html.dark input,
 html.dark select,
 html.dark textarea,
-html.dark .form-control {
+html.dark .form-control,
+html[data-bs-theme="dark"] input,
+html[data-bs-theme="dark"] select,
+html[data-bs-theme="dark"] textarea,
+html[data-bs-theme="dark"] .form-control {
   background-color: var(--input-bg) !important;
   color: var(--foreground) !important;
   border-color: var(--border-color) !important;
@@ -355,3 +375,188 @@ html.dark .footer-link, html[data-bs-theme="dark"] .footer-link { color: #cbd5e1
 html.dark .footer-link:hover, html[data-bs-theme="dark"] .footer-link:hover { color: #ffffff !important; }
 html.dark .contact-info, html.dark .mission-text, html[data-bs-theme="dark"] .contact-info, html[data-bs-theme="dark"] .mission-text { color: #cbd5e1 !important; }
 html.dark .copyright-text, html[data-bs-theme="dark"] .copyright-text { color: #64748b !important; }
+
+/* ==========================================================================
+   8. CORREÇÃO DOS BOTÕES E CTA EM BANNERS (MANTÉM TEXTO ESCURO APENAS EM BOTÕES BRANCOS)
+   ========================================================================== */
+#heroCarousel .carousel-item a,
+.hero-section a,
+[class*="banner"] a,
+[class*="banner"] button,
+.btn-white,
+.btn-light,
+html.dark #heroCarousel .carousel-item a,
+html.dark .hero-section a,
+html.dark [class*="banner"] a,
+html.dark [class*="banner"] button,
+html.dark .btn-white,
+html.dark .btn-light,
+html[data-bs-theme="dark"] #heroCarousel .carousel-item a,
+html[data-bs-theme="dark"] .hero-section a,
+html[data-bs-theme="dark"] [class*="banner"] a,
+html[data-bs-theme="dark"] [class*="banner"] button,
+html[data-bs-theme="dark"] .btn-white,
+html[data-bs-theme="dark"] .btn-light {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #ffffff !important;
+}
+
+#heroCarousel .carousel-item a *,
+.hero-section a *,
+[class*="banner"] a *,
+[class*="banner"] button *,
+html.dark #heroCarousel .carousel-item a *,
+html.dark .hero-section a *,
+html.dark [class*="banner"] a *,
+html.dark [class*="banner"] button *,
+html[data-bs-theme="dark"] #heroCarousel .carousel-item a *,
+html[data-bs-theme="dark"] .hero-section a *,
+html[data-bs-theme="dark"] [class*="banner"] a *,
+html[data-bs-theme="dark"] [class*="banner"] button * {
+  color: #0f172a !important;
+}
+
+/* ==========================================================================
+   9. CORREÇÃO DA BARRA LATERAL DE FILTROS & PRODUTOS (MODO ESCURO)
+   ========================================================================== */
+html.dark [class*="filter"],
+html.dark [class*="sidebar"],
+html.dark [class*="filtros"],
+html.dark [class*="aside"],
+html[data-bs-theme="dark"] [class*="filter"],
+html[data-bs-theme="dark"] [class*="sidebar"],
+html[data-bs-theme="dark"] [class*="filtros"],
+html[data-bs-theme="dark"] [class*="aside"] {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  color: var(--foreground) !important;
+}
+
+html.dark [class*="filter"] label,
+html.dark [class*="filter"] span,
+html.dark [class*="filter"] h1,
+html.dark [class*="filter"] h2,
+html.dark [class*="filter"] h3,
+html.dark [class*="filter"] h4,
+html.dark [class*="filter"] h5,
+html.dark [class*="filter"] h6,
+html.dark [class*="filtros"] label,
+html.dark [class*="filtros"] span,
+html.dark [class*="filtros"] h1,
+html.dark [class*="filtros"] h2,
+html.dark [class*="filtros"] h3,
+html.dark [class*="sidebar"] label,
+html.dark [class*="sidebar"] span,
+html[data-bs-theme="dark"] [class*="filter"] label,
+html[data-bs-theme="dark"] [class*="filter"] span,
+html[data-bs-theme="dark"] [class*="filtros"] label,
+html[data-bs-theme="dark"] [class*="filtros"] span {
+  color: var(--text-primary) !important;
+}
+
+html.dark [class*="filter"] input,
+html.dark [class*="filter"] select,
+html.dark [class*="filtros"] input,
+html.dark [class*="filtros"] select,
+html.dark [class*="sidebar"] input,
+html.dark [class*="sidebar"] select,
+html[data-bs-theme="dark"] [class*="filter"] input,
+html[data-bs-theme="dark"] [class*="filter"] select,
+html[data-bs-theme="dark"] [class*="filtros"] input,
+html[data-bs-theme="dark"] [class*="filtros"] select {
+  background-color: var(--input-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--foreground) !important;
+}
+
+html.dark [class*="filter"] button[type="submit"],
+html.dark [class*="filtros"] button[type="submit"],
+html.dark [class*="filter"] .btn-primary,
+html.dark [class*="filtros"] .btn-primary,
+html[data-bs-theme="dark"] [class*="filter"] button[type="submit"],
+html[data-bs-theme="dark"] [class*="filtros"] button[type="submit"] {
+  background-color: var(--accent-color) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+html.dark [class*="filter"] button[type="submit"] *,
+html.dark [class*="filtros"] button[type="submit"] *,
+html[data-bs-theme="dark"] [class*="filter"] button[type="submit"] *,
+html[data-bs-theme="dark"] [class*="filtros"] button[type="submit"] * {
+  color: #ffffff !important;
+}
+
+html.dark [class*="filter"] button[type="reset"],
+html.dark [class*="filtros"] button[type="reset"],
+html.dark [class*="filter"] a[class*="limpar"],
+html.dark [class*="filtros"] a[class*="limpar"],
+html[data-bs-theme="dark"] [class*="filter"] button[type="reset"],
+html[data-bs-theme="dark"] [class*="filtros"] button[type="reset"] {
+  background-color: transparent !important;
+  color: var(--accent-color) !important;
+}
+
+/* ==========================================================================
+   10. CORREÇÃO DOS PREÇOS E TÍTULOS NOS CARDS (AZUL DESTAQUE & TEXTO CLARO)
+   ========================================================================== */
+/* Garante o tom azul brilhante da marca em todos os preços dos produtos */
+[class*="price"],
+[class*="preco"],
+[class*="valor"],
+.product-price,
+.card-price,
+html.dark [class*="price"],
+html.dark [class*="preco"],
+html.dark [class*="valor"],
+html.dark [class*="card"] [class*="price"],
+html.dark [class*="card"] [class*="preco"],
+html.dark [class*="product"] [class*="price"],
+html.dark [class*="product"] [class*="preco"],
+html[data-bs-theme="dark"] [class*="price"],
+html[data-bs-theme="dark"] [class*="preco"],
+html[data-bs-theme="dark"] [class*="valor"] {
+  color: var(--accent-color) !important; /* Azul #38bdf8 no escuro / #0284c7 no claro */
+  font-weight: 700 !important;
+}
+
+/* Garante que os títulos/links dos produtos dentro dos cards fiquem brancos/claros no escuro */
+html.dark [class*="card"] a,
+html.dark [class*="card"] p,
+html.dark [class*="card"] span,
+html.dark [class*="card"] h1,
+html.dark [class*="card"] h2,
+html.dark [class*="card"] h3,
+html.dark [class*="card"] h4,
+html.dark [class*="card"] h5,
+html.dark [class*="card"] h6,
+html.dark [class*="product"] a,
+html.dark [class*="product"] p,
+html.dark [class*="product"] span,
+html[data-bs-theme="dark"] [class*="card"] a,
+html[data-bs-theme="dark"] [class*="card"] p,
+html[data-bs-theme="dark"] [class*="card"] span {
+  color: var(--foreground) !important;
+}
+
+/* Re-aplica a cor azul sobre os elementos do preço para evitar sobresscrever com o seletor acima */
+html.dark [class*="card"] [class*="price"] *,
+html.dark [class*="card"] [class*="preco"] *,
+html.dark [class*="product"] [class*="price"] *,
+html.dark [class*="product"] [class*="preco"] *,
+html[data-bs-theme="dark"] [class*="card"] [class*="price"] *,
+html[data-bs-theme="dark"] [class*="card"] [class*="preco"] * {
+  color: var(--accent-color) !important;
+}
+
+/* Preço antigo / cortado (ex: R$ 349,90) em tom cinza secundário */
+html.dark [class*="old-price"],
+html.dark [class*="original-price"],
+html.dark [class*="price-old"],
+html.dark s, html.dark del,
+html[data-bs-theme="dark"] [class*="old-price"],
+html[data-bs-theme="dark"] s, html[data-bs-theme="dark"] del {
+  color: var(--text-secondary) !important;
+  opacity: 0.75;
+}
