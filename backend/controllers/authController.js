@@ -685,7 +685,11 @@ class AuthController {
                 
                 // Verificar se o email já está em uso por outro usuário
                 const usuarioComEmail = await UsuarioModel.buscarPorEmail(email);
-                if (usuarioComEmail && usuarioComEmail.id !== parseInt(id)) {
+
+                if (
+                    usuarioComEmail &&
+                    String(usuarioComEmail.idUsuario) !== String(id)
+                ) {
                     return res.status(409).json({
                         sucesso: false,
                         erro: 'Email já cadastrado',

@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import AuthController from '../controllers/AuthController.js';
+import AuthController from '../controllers/authController.js';
 import { JWT_CONFIG } from '../config/jwt.js';
 
 // Middleware de autenticação JWT
@@ -71,14 +71,18 @@ const adminMiddleware = (req, res, next) => {
 };
 
 const selfMiddleware = (req, res, next) => {
-    if (req.usuario.id !== AuthController.obterPerfil(id)){
+    const id = req.params.id;
+
+    if (String(req.usuario.id) !== String(id)) {
         return res.status(403).json({
+            sucesso: false,
             erro: 'Acesso negado',
-            mensagem: 'Perfil difere do usuário'
-        })
+            mensagem: 'Você só pode alterar o seu próprio perfil'
+        });
     }
+
     next();
-}
+};
 
 export { authMiddleware, adminMiddleware, selfMiddleware };
 
