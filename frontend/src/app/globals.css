@@ -303,15 +303,24 @@ html[data-bs-theme="dark"] .bg-body {
   color: var(--foreground) !important;
 }
 
-/* Aplicação de cor de texto padrão em elementos de texto */
-html.dark h1, html.dark h2, html.dark h3, 
-html.dark h4, html.dark h5, html.dark h6, 
-html.dark p, html.dark label, html.dark li, 
-html.dark strong, html.dark b, html.dark small,
-html[data-bs-theme="dark"] h1, html[data-bs-theme="dark"] h2, html[data-bs-theme="dark"] h3, 
-html[data-bs-theme="dark"] h4, html[data-bs-theme="dark"] h5, html[data-bs-theme="dark"] h6, 
-html[data-bs-theme="dark"] p, html[data-bs-theme="dark"] label, html[data-bs-theme="dark"] li, 
-html[data-bs-theme="dark"] strong, html[data-bs-theme="dark"] b, html[data-bs-theme="dark"] small {
+/* Texto geral do modo escuro (Exclui botões e badges para não forçar texto branco em fundo claro) */
+html.dark h1:not([class*="btn"]):not([class*="badge"]),
+html.dark h2:not([class*="btn"]):not([class*="badge"]),
+html.dark h3:not([class*="btn"]):not([class*="badge"]), 
+html.dark h4:not([class*="btn"]):not([class*="badge"]),
+html.dark h5:not([class*="btn"]):not([class*="badge"]),
+html.dark h6:not([class*="btn"]):not([class*="badge"]), 
+html.dark p:not([class*="btn"]), html.dark label, html.dark li, 
+html.dark strong:not([class*="btn"]), html.dark b, html.dark small,
+html[data-bs-theme="dark"] h1:not([class*="btn"]):not([class*="badge"]),
+html[data-bs-theme="dark"] h2:not([class*="btn"]):not([class*="badge"]),
+html[data-bs-theme="dark"] h3:not([class*="btn"]):not([class*="badge"]), 
+html[data-bs-theme="dark"] h4:not([class*="btn"]):not([class*="badge"]),
+html[data-bs-theme="dark"] h5:not([class*="btn"]):not([class*="badge"]),
+html[data-bs-theme="dark"] h6:not([class*="btn"]):not([class*="badge"]), 
+html[data-bs-theme="dark"] p:not([class*="btn"]),
+html[data-bs-theme="dark"] label, html[data-bs-theme="dark"] li, 
+html[data-bs-theme="dark"] strong:not([class*="btn"]), html[data-bs-theme="dark"] b, html[data-bs-theme="dark"] small {
   color: var(--foreground) !important;
 }
 
@@ -377,43 +386,65 @@ html.dark .contact-info, html.dark .mission-text, html[data-bs-theme="dark"] .co
 html.dark .copyright-text, html[data-bs-theme="dark"] .copyright-text { color: #64748b !important; }
 
 /* ==========================================================================
-   8. CORREÇÃO DOS BOTÕES E CTA EM BANNERS (MANTÉM TEXTO ESCURO APENAS EM BOTÕES BRANCOS)
+   8. CORREÇÃO DOS BOTÕES E CTA EM BANNERS (MANTÉM O TEXTO ESCURO E VISÍVEL)
    ========================================================================== */
 #heroCarousel .carousel-item a,
 .hero-section a,
 [class*="banner"] a,
 [class*="banner"] button,
+[class*="banner"] [class*="btn"],
+[class*="banner"] [class*="cta"],
 .btn-white,
 .btn-light,
 html.dark #heroCarousel .carousel-item a,
 html.dark .hero-section a,
 html.dark [class*="banner"] a,
 html.dark [class*="banner"] button,
+html.dark [class*="banner"] [class*="btn"],
+html.dark [class*="banner"] [class*="cta"],
 html.dark .btn-white,
 html.dark .btn-light,
 html[data-bs-theme="dark"] #heroCarousel .carousel-item a,
 html[data-bs-theme="dark"] .hero-section a,
 html[data-bs-theme="dark"] [class*="banner"] a,
 html[data-bs-theme="dark"] [class*="banner"] button,
+html[data-bs-theme="dark"] [class*="banner"] [class*="btn"],
+html[data-bs-theme="dark"] [class*="banner"] [class*="cta"],
 html[data-bs-theme="dark"] .btn-white,
 html[data-bs-theme="dark"] .btn-light {
   background-color: #ffffff !important;
   color: #0f172a !important;
   border: 1px solid #ffffff !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 #heroCarousel .carousel-item a *,
 .hero-section a *,
 [class*="banner"] a *,
 [class*="banner"] button *,
+[class*="banner"] [class*="btn"] *,
+[class*="banner"] [class*="cta"] *,
+.btn-white *,
+.btn-light *,
 html.dark #heroCarousel .carousel-item a *,
 html.dark .hero-section a *,
 html.dark [class*="banner"] a *,
 html.dark [class*="banner"] button *,
+html.dark [class*="banner"] [class*="btn"] *,
+html.dark [class*="banner"] [class*="cta"] *,
+html.dark .btn-white *,
+html.dark .btn-light *,
 html[data-bs-theme="dark"] #heroCarousel .carousel-item a *,
 html[data-bs-theme="dark"] .hero-section a *,
 html[data-bs-theme="dark"] [class*="banner"] a *,
-html[data-bs-theme="dark"] [class*="banner"] button * {
+html[data-bs-theme="dark"] [class*="banner"] button *,
+html[data-bs-theme="dark"] [class*="banner"] [class*="btn"] *,
+html[data-bs-theme="dark"] [class*="banner"] [class*="cta"] * {
   color: #0f172a !important;
 }
 
@@ -501,7 +532,6 @@ html[data-bs-theme="dark"] [class*="filtros"] button[type="reset"] {
 /* ==========================================================================
    10. CORREÇÃO DOS PREÇOS E TÍTULOS NOS CARDS (AZUL DESTAQUE & TEXTO CLARO)
    ========================================================================== */
-/* Garante o tom azul brilhante da marca em todos os preços dos produtos */
 [class*="price"],
 [class*="preco"],
 [class*="valor"],
@@ -517,11 +547,10 @@ html.dark [class*="product"] [class*="preco"],
 html[data-bs-theme="dark"] [class*="price"],
 html[data-bs-theme="dark"] [class*="preco"],
 html[data-bs-theme="dark"] [class*="valor"] {
-  color: var(--accent-color) !important; /* Azul #38bdf8 no escuro / #0284c7 no claro */
+  color: var(--accent-color) !important;
   font-weight: 700 !important;
 }
 
-/* Garante que os títulos/links dos produtos dentro dos cards fiquem brancos/claros no escuro */
 html.dark [class*="card"] a,
 html.dark [class*="card"] p,
 html.dark [class*="card"] span,
@@ -540,7 +569,6 @@ html[data-bs-theme="dark"] [class*="card"] span {
   color: var(--foreground) !important;
 }
 
-/* Re-aplica a cor azul sobre os elementos do preço para evitar sobresscrever com o seletor acima */
 html.dark [class*="card"] [class*="price"] *,
 html.dark [class*="card"] [class*="preco"] *,
 html.dark [class*="product"] [class*="price"] *,
@@ -550,7 +578,6 @@ html[data-bs-theme="dark"] [class*="card"] [class*="preco"] * {
   color: var(--accent-color) !important;
 }
 
-/* Preço antigo / cortado (ex: R$ 349,90) em tom cinza secundário */
 html.dark [class*="old-price"],
 html.dark [class*="original-price"],
 html.dark [class*="price-old"],
@@ -559,4 +586,65 @@ html[data-bs-theme="dark"] [class*="old-price"],
 html[data-bs-theme="dark"] s, html[data-bs-theme="dark"] del {
   color: var(--text-secondary) !important;
   opacity: 0.75;
+}
+
+/* ==========================================================================
+   11. CORREÇÃO DOS SELOS, BADGES E TAGS NOS CARDS DE PRODUTO
+   ========================================================================== */
+/* Garante que qualquer badge/tag sobre as fotos dos produtos tenha texto totalmente visível */
+[class*="badge"],
+[class*="tag"],
+[class*="selo"],
+[class*="flag"],
+[class*="discount"],
+[class*="desconto"],
+[class*="stamp"],
+[class*="promo"],
+.product-badge,
+.card-badge {
+  background-color: #323c523d !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(196, 196, 196, 0.075) !important;
+  font-weight: 700 !important;
+  z-index: 10 !important;
+}
+
+[class*="badge"] *,
+[class*="tag"] *,
+[class*="selo"] *,
+[class*="flag"] *,
+[class*="discount"] *,
+[class*="desconto"] *,
+[class*="promo"] * {
+  color: #ffffff !important;
+}
+
+/* Se a badge for um botão/pill com fundo branco, força o texto a ser escuro */
+.bg-white[class*="badge"],
+.bg-white[class*="tag"],
+.bg-white[class*="selo"],
+.bg-light[class*="badge"],
+.bg-light[class*="tag"],
+.bg-light[class*="selo"],
+html.dark .bg-white[class*="badge"],
+html.dark .bg-white[class*="tag"],
+html.dark .bg-white[class*="selo"],
+html.dark [class*="badge"][style*="background: white"],
+html.dark [class*="badge"][style*="background-color: white"],
+html.dark [class*="badge"][style*="background: #fff"],
+html.dark [class*="badge"][style*="background-color: #fff"],
+html[data-bs-theme="dark"] .bg-white[class*="badge"],
+html[data-bs-theme="dark"] .bg-white[class*="tag"],
+html[data-bs-theme="dark"] .bg-white[class*="selo"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+html.dark .bg-white[class*="badge"] *,
+html.dark .bg-white[class*="tag"] *,
+html.dark .bg-white[class*="selo"] *,
+html[data-bs-theme="dark"] .bg-white[class*="badge"] *,
+html[data-bs-theme="dark"] .bg-white[class*="tag"] *,
+html[data-bs-theme="dark"] .bg-white[class*="selo"] * {
+  color: #0f172a !important;
 }
