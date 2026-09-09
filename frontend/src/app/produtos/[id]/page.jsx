@@ -944,6 +944,7 @@ const pageStyles = `
   .product-page .product-heading h1 {
     max-width: 800px;
     margin: 0;
+    color: #191919;
     font-size: clamp(1.65rem, 3vw, 2.5rem);
     font-weight: 650;
     line-height: 1.08;
@@ -965,11 +966,15 @@ const pageStyles = `
     font-size: 0.82rem;
     font-weight: 700;
     text-decoration: none;
-    transition: border-color 0.2s ease, background 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease,
+      color 0.2s ease;
   }
 
   .product-page .back-link:hover {
     border-color: #aaa99f;
+    color: #171717;
     background: #fff;
   }
 
@@ -1023,11 +1028,13 @@ const pageStyles = `
     gap: 0.7rem;
     width: 100%;
     height: 100%;
-    color: #8a8a83;
+    color: #777871;
     font-size: 0.85rem;
+    text-align: center;
   }
 
   .product-page .image-fallback i {
+    color: #777871;
     font-size: 2rem;
   }
 
@@ -1063,7 +1070,10 @@ const pageStyles = `
     border: 1px solid #deded8;
     border-radius: 9px;
     background: #f3f3f0;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background 0.2s ease;
   }
 
   .product-page .thumbnails button.active {
@@ -1103,6 +1113,7 @@ const pageStyles = `
 
   .product-page .details-card > h2 {
     margin: 0 0 0.5rem;
+    color: #191919;
     font-size: clamp(1.35rem, 2.4vw, 1.8rem);
     font-weight: 600;
     line-height: 1.14;
@@ -1125,6 +1136,7 @@ const pageStyles = `
 
   .product-page .price-block strong {
     display: block;
+    color: #0787c9;
     font-size: clamp(1.8rem, 3vw, 2.3rem);
     line-height: 1;
     letter-spacing: -0.035em;
@@ -1166,6 +1178,7 @@ const pageStyles = `
   }
 
   .product-page .option-heading span {
+    color: #191919;
     font-size: 0.74rem;
     font-weight: 800;
     text-transform: uppercase;
@@ -1192,7 +1205,10 @@ const pageStyles = `
     border: 1px solid #d7d7d1;
     border-radius: 50%;
     background: #fff;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background 0.2s ease;
   }
 
   .product-page .color-list button.active {
@@ -1211,7 +1227,7 @@ const pageStyles = `
   .product-page .color-list button:disabled,
   .product-page .size-list button:disabled {
     cursor: not-allowed;
-    opacity: 0.32;
+    opacity: 0.45;
     text-decoration: line-through;
   }
 
@@ -1224,6 +1240,10 @@ const pageStyles = `
     text-decoration: underline;
     text-underline-offset: 3px;
     flex-shrink: 0;
+  }
+
+  .product-page .size-guide:hover {
+    color: #171717;
   }
 
   .product-page .size-list button {
@@ -1305,7 +1325,9 @@ const pageStyles = `
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    transition: transform 0.2s ease, background 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      background 0.2s ease;
   }
 
   .product-page .buy-button:hover:not(:disabled) {
@@ -1415,8 +1437,13 @@ const pageStyles = `
     margin-bottom: 0.65rem;
   }
 
+  .product-page .description-card > div i {
+    color: currentColor;
+  }
+
   .product-page .description-card h3 {
     margin: 0;
+    color: #191919;
     font-size: 0.76rem;
     font-weight: 800;
     text-transform: uppercase;
@@ -1490,6 +1517,7 @@ const pageStyles = `
 
   .product-page .loading-card strong {
     display: block;
+    color: #191919;
     font-size: 0.9rem;
   }
 
@@ -1519,6 +1547,7 @@ const pageStyles = `
 
   .product-page .feedback-card h1 {
     margin: 0 0 0.7rem;
+    color: #191919;
     font-size: 1.55rem;
   }
 
@@ -1542,11 +1571,352 @@ const pageStyles = `
     text-decoration: none;
   }
 
+  /*
+   * ==========================================================
+   * MODO ESCURO — REGRAS EXCLUSIVAS DESTA PÁGINA
+   * ==========================================================
+   *
+   * Todas as regras abaixo começam em html.dark ou
+   * html[data-bs-theme="dark"] e permanecem limitadas a
+   * .product-page.
+   */
+
+  html.dark .product-page,
+  html[data-bs-theme="dark"] .product-page {
+    color: #f8fafc;
+    background:
+      radial-gradient(
+        circle at 8% 4%,
+        rgba(210, 178, 112, 0.09),
+        transparent 24rem
+      ),
+      #0b1120;
+  }
+
+  html.dark .product-page .product-breadcrumb,
+  html[data-bs-theme="dark"] .product-page .product-breadcrumb {
+    color: #aeb8c7;
+  }
+
+  html.dark .product-page .product-breadcrumb a,
+  html[data-bs-theme="dark"] .product-page .product-breadcrumb a {
+    color: #d5dce6;
+  }
+
+  html.dark .product-page .product-breadcrumb a:hover,
+  html[data-bs-theme="dark"] .product-page .product-breadcrumb a:hover {
+    color: #ffffff;
+  }
+
+  html.dark .product-page .product-breadcrumb strong,
+  html[data-bs-theme="dark"] .product-page .product-breadcrumb strong {
+    color: #f8fafc;
+  }
+
+  html.dark .product-page .eyebrow,
+  html[data-bs-theme="dark"] .product-page .eyebrow {
+    color: #d2a85f;
+  }
+
+  html.dark .product-page .product-heading h1,
+  html[data-bs-theme="dark"] .product-page .product-heading h1 {
+    color: #f8fafc;
+  }
+
+  html.dark .product-page .back-link,
+  html[data-bs-theme="dark"] .product-page .back-link {
+    border-color: #475569;
+    color: #f1f5f9;
+    background: #1e293b;
+  }
+
+  html.dark .product-page .back-link:hover,
+  html[data-bs-theme="dark"] .product-page .back-link:hover {
+    border-color: #64748b;
+    color: #ffffff;
+    background: #273449;
+  }
+
+  html.dark .product-page .gallery-card,
+  html.dark .product-page .details-card,
+  html[data-bs-theme="dark"] .product-page .gallery-card,
+  html[data-bs-theme="dark"] .product-page .details-card {
+    border-color: #334155;
+    background: #0f172a;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+  }
+
+  html.dark .product-page .main-image,
+  html[data-bs-theme="dark"] .product-page .main-image {
+    background: #f0f0ed;
+  }
+
+  /*
+   * A área da imagem continua clara porque é uma área de
+   * conteúdo visual. O fallback recebe texto escuro para
+   * permanecer legível.
+   */
+  html.dark .product-page .image-fallback,
+  html[data-bs-theme="dark"] .product-page .image-fallback {
+    color: #73756f !important;
+  }
+
+  html.dark .product-page .image-fallback i,
+  html[data-bs-theme="dark"] .product-page .image-fallback i {
+    color: #73756f !important;
+  }
+
+  html.dark .product-page .thumbnails button,
+  html[data-bs-theme="dark"] .product-page .thumbnails button {
+    border-color: #475569;
+    background: #1e293b;
+  }
+
+  html.dark .product-page .thumbnails button.active,
+  html[data-bs-theme="dark"] .product-page .thumbnails button.active {
+    border-color: #f8fafc;
+    box-shadow: 0 0 0 1px #f8fafc;
+  }
+
+  html.dark .product-page .product-meta span,
+  html[data-bs-theme="dark"] .product-page .product-meta span {
+    color: #dbe4ee !important;
+    background: #263244 !important;
+    border: 1px solid #3b4a5f;
+  }
+
+  html.dark .product-page .details-card > h2,
+  html[data-bs-theme="dark"] .product-page .details-card > h2 {
+    color: #f8fafc !important;
+  }
+
+  html.dark .product-page .selection-summary,
+  html[data-bs-theme="dark"] .product-page .selection-summary {
+    color: #aeb8c7 !important;
+  }
+
+  html.dark .product-page .price-prefix,
+  html[data-bs-theme="dark"] .product-page .price-prefix {
+    color: #aeb8c7 !important;
+  }
+
+  html.dark .product-page .price-block strong,
+  html[data-bs-theme="dark"] .product-page .price-block strong {
+    color: #38bdf8 !important;
+  }
+
+  html.dark .product-page .price-block p,
+  html[data-bs-theme="dark"] .product-page .price-block p {
+    color: #aeb8c7 !important;
+  }
+
+  html.dark .product-page .price-block b,
+  html[data-bs-theme="dark"] .product-page .price-block b {
+    color: #f1f5f9 !important;
+  }
+
+  html.dark .product-page .divider,
+  html[data-bs-theme="dark"] .product-page .divider {
+    background: #334155;
+  }
+
+  html.dark .product-page .option-heading span,
+  html[data-bs-theme="dark"] .product-page .option-heading span {
+    color: #f8fafc !important;
+  }
+
+  html.dark .product-page .option-heading strong,
+  html[data-bs-theme="dark"] .product-page .option-heading strong {
+    color: #aeb8c7 !important;
+  }
+
+  html.dark .product-page .size-guide,
+  html[data-bs-theme="dark"] .product-page .size-guide {
+    color: #aeb8c7 !important;
+  }
+
+  html.dark .product-page .size-guide:hover,
+  html[data-bs-theme="dark"] .product-page .size-guide:hover {
+    color: #ffffff !important;
+  }
+
+  html.dark .product-page .color-list button,
+  html[data-bs-theme="dark"] .product-page .color-list button {
+    border-color: #64748b;
+    background: #1e293b;
+  }
+
+  html.dark .product-page .color-list button.active,
+  html[data-bs-theme="dark"] .product-page .color-list button.active {
+    border-color: #f8fafc;
+    box-shadow: 0 0 0 1px #f8fafc;
+  }
+
+  html.dark .product-page .color-list button > span,
+  html[data-bs-theme="dark"] .product-page .color-list button > span {
+    border-color: rgba(255, 255, 255, 0.22);
+  }
+
+  html.dark .product-page .size-list button,
+  html[data-bs-theme="dark"] .product-page .size-list button {
+    border-color: #64748b;
+    color: #f1f5f9 !important;
+    background: #1e293b !important;
+  }
+
+  html.dark .product-page .size-list button:hover:not(:disabled),
+  html.dark .product-page .size-list button.active,
+  html[data-bs-theme="dark"] .product-page .size-list button:hover:not(:disabled),
+  html[data-bs-theme="dark"] .product-page .size-list button.active {
+    border-color: #f8fafc;
+    color: #0f172a !important;
+    background: #f8fafc !important;
+  }
+
+  html.dark .product-page .option-help,
+  html.dark .product-page .measure-guide,
+  html[data-bs-theme="dark"] .product-page .option-help,
+  html[data-bs-theme="dark"] .product-page .measure-guide {
+    border-color: #475569;
+    color: #aeb8c7 !important;
+    background: #151f30 !important;
+  }
+
+  html.dark .product-page .measure-guide strong,
+  html[data-bs-theme="dark"] .product-page .measure-guide strong {
+    color: #f1f5f9 !important;
+  }
+
+  html.dark .product-page .buy-button,
+  html[data-bs-theme="dark"] .product-page .buy-button {
+    color: #ffffff !important;
+    background: #1c1c1c !important;
+  }
+
+  html.dark .product-page .buy-button:hover:not(:disabled),
+  html[data-bs-theme="dark"] .product-page .buy-button:hover:not(:disabled) {
+    color: #ffffff !important;
+    background: #343434 !important;
+  }
+
+  html.dark .product-page .buy-button:disabled,
+  html[data-bs-theme="dark"] .product-page .buy-button:disabled {
+    color: #d1d5db !important;
+    background: #4b5563 !important;
+  }
+
+  html.dark .product-page .available-stock,
+  html[data-bs-theme="dark"] .product-page .available-stock {
+    color: #6ee7a0 !important;
+  }
+
+  html.dark .product-page .selection-help,
+  html[data-bs-theme="dark"] .product-page .selection-help {
+    color: #aeb8c7 !important;
+  }
+
+  /*
+   * O card de descrição agora acompanha o restante do card
+   * no modo escuro. Isso evita texto branco sobre branco.
+   */
+  html.dark .product-page .description-card,
+  html[data-bs-theme="dark"] .product-page .description-card {
+    border-color: #334155 !important;
+    background: #151f30 !important;
+  }
+
+  html.dark .product-page .description-card h3,
+  html[data-bs-theme="dark"] .product-page .description-card h3 {
+    color: #f8fafc !important;
+  }
+
+  html.dark .product-page .description-card > p,
+  html[data-bs-theme="dark"] .product-page .description-card > p {
+    color: #c1cad6 !important;
+  }
+
+  html.dark .product-page .product-specifications dt,
+  html[data-bs-theme="dark"] .product-page .product-specifications dt {
+    color: #f1f5f9 !important;
+  }
+
+  html.dark .product-page .product-specifications dd,
+  html[data-bs-theme="dark"] .product-page .product-specifications dd {
+    color: #b5bfcc !important;
+  }
+
+  html.dark .product-page .loading-card,
+  html.dark .product-page .feedback-card,
+  html[data-bs-theme="dark"] .product-page .loading-card,
+  html[data-bs-theme="dark"] .product-page .feedback-card {
+    border-color: #334155;
+    background: #0f172a;
+  }
+
+  html.dark .product-page .loading-card strong,
+  html[data-bs-theme="dark"] .product-page .loading-card strong {
+    color: #f8fafc !important;
+  }
+
+  html.dark .product-page .loading-card p,
+  html[data-bs-theme="dark"] .product-page .loading-card p {
+    color: #aeb8c7 !important;
+  }
+
+  html.dark .product-page .feedback-card h1,
+  html[data-bs-theme="dark"] .product-page .feedback-card h1 {
+    color: #f8fafc !important;
+  }
+
+  html.dark .product-page .feedback-card p,
+  html[data-bs-theme="dark"] .product-page .feedback-card p {
+    color: #aeb8c7 !important;
+  }
+
+  html.dark .product-page .feedback-back,
+  html[data-bs-theme="dark"] .product-page .feedback-back {
+    color: #ffffff !important;
+    background: #1c1c1c !important;
+  }
+
+  /*
+   * Alertas mantêm suas próprias cores mesmo quando o CSS
+   * global do modo escuro possui regras para textos.
+   */
+  html.dark .product-page .purchase-alert.aviso,
+  html[data-bs-theme="dark"] .product-page .purchase-alert.aviso {
+    border-color: #92752d !important;
+    color: #f7d98a !important;
+    background: #302811 !important;
+  }
+
+  html.dark .product-page .purchase-alert.erro,
+  html[data-bs-theme="dark"] .product-page .purchase-alert.erro {
+    border-color: #9b4b45 !important;
+    color: #ffb4ae !important;
+    background: #351817 !important;
+  }
+
+  html.dark .product-page .purchase-alert.sucesso,
+  html[data-bs-theme="dark"] .product-page .purchase-alert.sucesso {
+    border-color: #3d8a5a !important;
+    color: #8ee6aa !important;
+    background: #14291c !important;
+  }
+
+  html.dark .product-page .purchase-alert strong,
+  html[data-bs-theme="dark"] .product-page .purchase-alert strong,
+  html.dark .product-page .purchase-alert p,
+  html[data-bs-theme="dark"] .product-page .purchase-alert p {
+    color: inherit !important;
+  }
+
   @keyframes product-alert-in {
     from {
       opacity: 0;
       transform: translateX(-8px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);

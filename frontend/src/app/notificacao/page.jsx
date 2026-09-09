@@ -139,6 +139,7 @@ export default function Notificacoes() {
             : item
         )
       );
+
       window.dispatchEvent(new Event("notificacoes-atualizadas"));
     } catch (error) {
       console.error("Erro ao marcar notificação:", error);
@@ -191,6 +192,7 @@ export default function Notificacoes() {
           lida: 1,
         }))
       );
+
       window.dispatchEvent(new Event("notificacoes-atualizadas"));
     } catch (error) {
       console.error("Erro ao marcar todas:", error);
@@ -366,6 +368,22 @@ export default function Notificacoes() {
                   notificacao.lida === false ||
                   notificacao.lida === null;
 
+
+                const ehRespostaDoSuporte =
+                  String(notificacao.titulo || "")
+                    .trim()
+                    .toLowerCase() ===
+                  "resposta do suporte recebida";
+
+                const mensagemExibida =
+                  ehRespostaDoSuporte &&
+                  notificacao.resposta_admin
+                    ? notificacao.resposta_admin
+                    : notificacao.mensagem ||
+                      notificacao.texto ||
+                      notificacao.descricao ||
+                      "Você recebeu uma nova notificação.";
+
                 return (
                   <div
                     key={notificacao.idNotificacao}
@@ -397,10 +415,7 @@ export default function Notificacoes() {
                       </div>
 
                       <p>
-                        {notificacao.mensagem ||
-                          notificacao.texto ||
-                          notificacao.descricao ||
-                          "Você recebeu uma nova notificação."}
+                        {mensagemExibida}
                       </p>
 
                       {notificacao.suporte_titulo && (
@@ -412,6 +427,18 @@ export default function Notificacoes() {
                           </span>
                         </div>
                       )}
+
+                      {ehRespostaDoSuporte &&
+                        notificacao.nome_admin_resposta && (
+                          <div className="notificacao-suporte">
+                            <i className="bi bi-person-check"></i>
+
+                            <span>
+                              Respondido por{" "}
+                              {notificacao.nome_admin_resposta}
+                            </span>
+                          </div>
+                        )}
 
                       <span className="notificacao-data">
                         <i className="bi bi-clock"></i>

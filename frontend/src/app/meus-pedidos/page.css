@@ -1,25 +1,309 @@
-.orders-page { min-height: 100vh; padding: 64px 20px 90px; color: #302934; background: linear-gradient(180deg, #f4fbfd 0, #f8f9fa 260px); }
-.orders-shell { width: min(1050px, 100%); margin: 0 auto; }
-.orders-heading { display: flex; align-items: end; justify-content: space-between; gap: 28px; margin-bottom: 30px; }
-.orders-heading span { color: #00a9d4; font-size: 12px; font-weight: 800; letter-spacing: 1.6px; }
-.orders-heading h1 { margin: 6px 0 8px; font-size: clamp(32px, 5vw, 48px); font-weight: 800; }
-.orders-heading p { margin: 0; color: #6b6570; }
-.orders-shop-link, .orders-message a, .orders-message button { padding: 12px 18px; color: #fff; background: #00a9d4; border: 0; border-radius: 10px; font-weight: 750; text-decoration: none; cursor: pointer; }
-.orders-list { display: grid; gap: 14px; }
-.order-card { display: grid; grid-template-columns: 112px minmax(0, 1fr) auto; align-items: center; gap: 20px; padding: 20px; background: #fff; border: 1px solid #e4e8ea; border-radius: 18px; box-shadow: 0 12px 32px rgba(24, 45, 54, .08); }
-.order-image { width: 112px; height: 112px; display: grid; place-items: center; overflow: hidden; color: #8e9ba0; background: #f2f6f7; border-radius: 13px; font-size: 28px; }
-.order-image img { width: 100%; height: 100%; object-fit: cover; }
-.order-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; color: #77717b; font-size: 13px; }
-.order-main h2 { margin: 8px 0 2px; font-size: 19px; }
-.order-main p { margin: 0 0 7px; color: #77717b; }
-.order-status { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; color: #087d9c; background: #e7f8fc; border-radius: 999px; font-size: 13px; font-weight: 750; }
-.order-status.status-cancelado { color: #b4233b; background: #fff0f2; }
-.order-status.status-entregue { color: #287443; background: #eaf8ef; }
-.order-details { grid-column: 3; color: #00a9d4; font-weight: 750; text-decoration: none; }
-.orders-message { min-height: 330px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 35px; text-align: center; background: #fff; border: 1px solid #e4e8ea; border-radius: 18px; }
-.orders-message > i { color: #00a9d4; font-size: 42px; }
-.orders-message h2, .orders-message p { margin: 0; }
-.orders-message p { color: #6b6570; }
-@media (max-width: 700px) { .orders-heading { align-items: start; flex-direction: column; } .order-card { grid-template-columns: 82px 1fr; } .order-image { width: 82px; height: 82px; } .order-status { grid-column: 1 / -1; justify-self: start; } .order-details { grid-column: 1 / -1; } }
-html:is(.dark, [data-bs-theme="dark"]) .orders-page { color: var(--text-primary); background: var(--surface-0); }
-html:is(.dark, [data-bs-theme="dark"]) .order-card, html:is(.dark, [data-bs-theme="dark"]) .orders-message { background: var(--surface-1); border-color: var(--border-subtle); }
+.orders-page {
+  min-height: 100vh;
+  padding: 64px 20px 90px;
+  color: #302934;
+  background: linear-gradient(180deg, #f4fbfd 0, #f8f9fa 260px);
+}
+
+.orders-shell {
+  width: min(1050px, 100%);
+  margin: 0 auto;
+}
+
+.orders-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 30px;
+}
+
+.orders-heading span {
+  color: #00a9d4;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+}
+
+.orders-heading h1 {
+  margin: 6px 0 8px;
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 800;
+}
+
+.orders-heading p {
+  margin: 0;
+  color: #6b6570;
+}
+
+.orders-shop-link,
+.orders-message a,
+.orders-message button {
+  padding: 12px 18px;
+  color: #fff;
+  background: #00a9d4;
+  border: 0;
+  border-radius: 10px;
+  font-weight: 750;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.orders-list {
+  display: grid;
+  gap: 14px;
+}
+
+.order-card {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e4e8ea;
+  border-radius: 18px;
+  box-shadow: 0 12px 32px rgba(24, 45, 54, 0.08);
+}
+
+.order-image {
+  width: 112px;
+  height: 112px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #8e9ba0;
+  background: #f2f6f7;
+  border-radius: 13px;
+  font-size: 28px;
+}
+
+.order-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.order-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  color: #77717b;
+  font-size: 13px;
+}
+
+.order-main h2 {
+  margin: 8px 0 2px;
+  font-size: 19px;
+}
+
+.order-main p {
+  margin: 0 0 7px;
+  color: #77717b;
+}
+
+.order-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  color: #087d9c;
+  background: #e7f8fc;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.order-status.status-cancelado {
+  color: #b4233b;
+  background: #fff0f2;
+}
+
+.order-status.status-entregue {
+  color: #287443;
+  background: #eaf8ef;
+}
+
+.order-details {
+  grid-column: 3;
+  color: #00a9d4;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.orders-message {
+  min-height: 330px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 35px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #e4e8ea;
+  border-radius: 18px;
+}
+
+.orders-message > i {
+  color: #00a9d4;
+  font-size: 42px;
+}
+
+.orders-message h2,
+.orders-message p {
+  margin: 0;
+}
+
+.orders-message p {
+  color: #6b6570;
+}
+
+@media (max-width: 700px) {
+  .orders-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .order-card {
+    grid-template-columns: 82px 1fr;
+  }
+
+  .order-image {
+    width: 82px;
+    height: 82px;
+  }
+
+  .order-status {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .order-details {
+    grid-column: 1 / -1;
+  }
+}
+
+
+/* =========================================================
+   MODO ESCURO — SOMENTE ESTA PÁGINA
+   ========================================================= */
+
+html:is(.dark, [data-bs-theme="dark"]) .orders-page {
+  color: #f8fafc;
+  background: #0b1120;
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .orders-heading h1 {
+  color: #f8fafc;
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .orders-heading p {
+  color: #cbd5e1;
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .orders-heading span {
+  color: #38bdf8;
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .orders-shop-link {
+  color: #ffffff;
+  background: #00a9d4;
+}
+
+
+/* Card do pedido */
+
+html:is(.dark, [data-bs-theme="dark"]) .order-card {
+  background: #111827;
+  border-color: #334155;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .order-image {
+  color: #94a3b8;
+  background: #e8eef2;
+}
+
+
+/* Informações do pedido */
+
+html:is(.dark, [data-bs-theme="dark"]) .order-meta {
+  color: #cbd5e1;
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .order-main h2 {
+  color: #f8fafc;
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .order-main p {
+  color: #cbd5e1;
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .order-main strong {
+  color: #f8fafc;
+}
+
+
+/* Status — preparação */
+
+html:is(.dark, [data-bs-theme="dark"]) .order-status {
+  color: #67e8f9;
+  background: #123846;
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .order-status.status-cancelado {
+  color: #fda4af;
+  background: #451c27;
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .order-status.status-entregue {
+  color: #86efac;
+  background: #173b29;
+}
+
+
+/* Link de detalhes */
+
+html:is(.dark, [data-bs-theme="dark"]) .order-details {
+  color: #38bdf8;
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .order-details:hover {
+  color: #67e8f9;
+}
+
+
+/* Mensagens / estados vazios */
+
+html:is(.dark, [data-bs-theme="dark"]) .orders-message {
+  background: #111827;
+  border-color: #334155;
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .orders-message h2 {
+  color: #f8fafc;
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .orders-message p {
+  color: #cbd5e1;
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .orders-message > i {
+  color: #38bdf8;
+}
+
+
+/* Links e botões dentro dos estados */
+
+html:is(.dark, [data-bs-theme="dark"]) .orders-message a,
+html:is(.dark, [data-bs-theme="dark"]) .orders-message button {
+  color: #ffffff;
+  background: #00a9d4;
+}
+
+html:is(.dark, [data-bs-theme="dark"]) .orders-message a:hover,
+html:is(.dark, [data-bs-theme="dark"]) .orders-message button:hover,
+html:is(.dark, [data-bs-theme="dark"]) .orders-shop-link:hover {
+  background: #079bc1;
+}

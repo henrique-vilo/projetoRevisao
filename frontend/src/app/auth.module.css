@@ -248,3 +248,12 @@
 :global(html[data-bs-theme="dark"]) .authCard {
   background-color: var(--everett-surface) !important;
 }
+
+.no-validation-icon {
+  background-image: none !important;
+}
+
+.no-validation-icon:valid,
+.no-validation-icon:invalid {
+  background-image: none !important;
+}

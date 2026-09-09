@@ -1,47 +1,64 @@
 /* ==========================================================================
-   1. VARIÁVEIS DE TEMA (CLARO / ESCURO)
-   ========================================================================== */
+  1. VARIÁVEIS DE TEMA (CLARO / ESCURO)
+  ========================================================================== */
+
 :root {
   color-scheme: light;
+
   --background: #ffffff;
   --foreground: #0f172a;
+
   --card-bg: #ffffff;
   --card-border: #e2e8f0;
+
   --text-primary: #0f172a;
   --text-secondary: #64748b;
+
   --input-bg: #f8fafc;
   --border-color: #e2e8f0;
+
   --accent-color: #0284c7;
 }
 
 html.dark,
 html[data-bs-theme="dark"] {
   color-scheme: dark;
+
   --background: #0b1120;
   --foreground: #f8fafc;
+
   --card-bg: #1e293b;
   --card-border: #334155;
+
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
+
   --input-bg: #0f172a;
   --border-color: #334155;
+
   --accent-color: #38bdf8;
 }
 
+
 /* ==========================================================================
-   2. ESTILOS BASE
-   ========================================================================== */
-html, body {
+  2. ESTILOS BASE
+  ========================================================================== */
+
+html,
+body {
   max-width: 100vw;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
 body {
+  margin: 0;
   color: var(--foreground);
   background-color: var(--background);
   font-family: Arial, Helvetica, sans-serif;
-  transition: background-color 200ms ease, color 200ms ease;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
 }
 
 a {
@@ -49,23 +66,31 @@ a {
   text-decoration: none;
 }
 
+
 /* O layout do header pertence a components/Header.css. */
 
+
 /* ==========================================================================
-   4. DROPDOWN DO HEADER (MODO CLARO)
-   ========================================================================== */
+  4. DROPDOWN DO HEADER
+  ========================================================================== */
+
 .dropdown-menu {
   position: absolute;
   top: 100%;
   left: 0;
   margin-top: 0.5rem;
+
   background-color: var(--card-bg) !important;
   border: 1px solid var(--card-border) !important;
+
   border-radius: 12px;
-  box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+
   padding: 1rem;
   width: 240px;
+
   z-index: 1000;
+
   animation: dropdownFade 0.15s ease-out;
 }
 
@@ -74,6 +99,7 @@ a {
     opacity: 0;
     transform: translateY(4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -81,26 +107,32 @@ a {
 }
 
 .dropdown-header-title {
+  display: block;
+
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.8px;
+
   color: var(--text-secondary);
+
   margin-bottom: 0.25rem;
-  display: block;
 }
 
 .dropdown-category-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--card-border);
   margin-bottom: 0.5rem;
+
+  border-bottom: 1px solid var(--card-border);
 }
 
 .dropdown-category-name {
   font-size: 0.95rem;
   font-weight: 700;
+
   color: var(--foreground);
 }
 
@@ -123,11 +155,16 @@ a {
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   font-size: 0.85rem;
   color: var(--foreground) !important;
+
   padding: 0.35rem 0.5rem;
   border-radius: 6px;
-  transition: background-color 0.15s ease;
+
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .dropdown-menu li a:hover {
@@ -138,42 +175,55 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
+
   margin-top: 0.5rem;
   padding-top: 0.5rem;
+
   border-top: 1px solid var(--card-border);
+
   font-size: 0.8rem;
   font-weight: 600;
+
   color: var(--accent-color) !important;
 }
 
+
 /* ==========================================================================
-   5. DROPDOWN NO MODO ESCURO
-   ========================================================================== */
+  5. DROPDOWN NO MODO ESCURO
+  ========================================================================== */
+
 html.dark .dropdown-menu,
 html.dark .nav-item-container > div,
 html[data-bs-theme="dark"] .dropdown-menu,
 html[data-bs-theme="dark"] .nav-item-container > div {
   background-color: #1e293b !important;
-  background: #1e293b !important;
   border: 1px solid #334155 !important;
+
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
 }
 
-html.dark .dropdown-menu *,
-html.dark .nav-item-container > div *,
-html[data-bs-theme="dark"] .dropdown-menu *,
-html[data-bs-theme="dark"] .nav-item-container > div * {
+/*
+* Não aplicar background transparente indiscriminadamente aos filhos.
+* Isso evita que componentes internos percam seu próprio fundo.
+*/
+html.dark .dropdown-menu,
+html.dark .nav-item-container > div,
+html[data-bs-theme="dark"] .dropdown-menu,
+html[data-bs-theme="dark"] .nav-item-container > div {
   color: #f8fafc !important;
-  background-color: transparent !important;
+}
+
+html.dark .dropdown-menu > *,
+html.dark .nav-item-container > div > *,
+html[data-bs-theme="dark"] .dropdown-menu > *,
+html[data-bs-theme="dark"] .nav-item-container > div > * {
+  color: inherit;
 }
 
 html.dark .dropdown-header-title,
 html.dark .dropdown-count,
-html.dark [class*="count"],
-html.dark [class*="title"],
 html[data-bs-theme="dark"] .dropdown-header-title,
-html[data-bs-theme="dark"] .dropdown-count,
-html[data-bs-theme="dark"] [class*="count"] {
+html[data-bs-theme="dark"] .dropdown-count {
   color: #94a3b8 !important;
 }
 
@@ -189,19 +239,23 @@ html.dark .dropdown-category-row,
 html.dark .dropdown-menu hr,
 html.dark .dropdown-footer-link,
 html[data-bs-theme="dark"] .dropdown-category-row,
+html[data-bs-theme="dark"] .dropdown-menu hr,
 html[data-bs-theme="dark"] .dropdown-footer-link {
   border-color: #334155 !important;
 }
 
 html.dark .dropdown-footer-link,
 html.dark .dropdown-menu a[href*="categoria"],
-html[data-bs-theme="dark"] .dropdown-footer-link {
+html[data-bs-theme="dark"] .dropdown-footer-link,
+html[data-bs-theme="dark"] .dropdown-menu a[href*="categoria"] {
   color: #38bdf8 !important;
 }
 
+
 /* ==========================================================================
-   6. MODO ESCURO GERAL DA APLICAÇÃO
-   ========================================================================== */
+  6. MODO ESCURO GERAL DA APLICAÇÃO
+  ========================================================================== */
+
 html.dark main,
 html.dark section,
 html.dark article,
@@ -222,8 +276,35 @@ html[data-bs-theme="dark"] .bg-body {
   color: var(--foreground) !important;
 }
 
-/* Texto geral do modo escuro (Exclui botões e badges para não forçar texto branco em fundo claro) */
-:where(html.dark, html[data-bs-theme="dark"]) :where(h1, h2, h3, h4, h5, h6, p, label, li, strong, b, small) {
+/*
+* Texto geral.
+* Evita usar seletores excessivamente genéricos como [class*="title"],
+* que poderiam alterar componentes que não pertencem ao conteúdo principal.
+*/
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6,
+html.dark p,
+html.dark label,
+html.dark li,
+html.dark strong,
+html.dark b,
+html.dark small,
+html[data-bs-theme="dark"] h1,
+html[data-bs-theme="dark"] h2,
+html[data-bs-theme="dark"] h3,
+html[data-bs-theme="dark"] h4,
+html[data-bs-theme="dark"] h5,
+html[data-bs-theme="dark"] h6,
+html[data-bs-theme="dark"] p,
+html[data-bs-theme="dark"] label,
+html[data-bs-theme="dark"] li,
+html[data-bs-theme="dark"] strong,
+html[data-bs-theme="dark"] b,
+html[data-bs-theme="dark"] small {
   color: var(--foreground);
 }
 
@@ -233,6 +314,11 @@ html[data-bs-theme="dark"] .text-muted,
 html[data-bs-theme="dark"] .text-secondary {
   color: var(--text-secondary) !important;
 }
+
+
+/* ==========================================================================
+  6.1 CARDS
+  ========================================================================== */
 
 html.dark .card,
 html.dark [class*="product-card"],
@@ -244,6 +330,11 @@ html[data-bs-theme="dark"] [class*="product-item"] {
   color: var(--foreground) !important;
   border-color: var(--card-border) !important;
 }
+
+
+/* ==========================================================================
+  6.2 INPUTS
+  ========================================================================== */
 
 html.dark input,
 html.dark select,
@@ -258,39 +349,116 @@ html[data-bs-theme="dark"] .form-control {
   border-color: var(--border-color) !important;
 }
 
+html.dark input::placeholder,
+html.dark textarea::placeholder,
+html.dark .form-control::placeholder,
+html[data-bs-theme="dark"] input::placeholder,
+html[data-bs-theme="dark"] textarea::placeholder,
+html[data-bs-theme="dark"] .form-control::placeholder {
+  color: var(--text-secondary) !important;
+  opacity: 1;
+}
+
+html.dark option,
+html[data-bs-theme="dark"] option {
+  background-color: var(--input-bg);
+  color: var(--foreground);
+}
+
+
 /* ==========================================================================
-   7. CARROSSEL & FOOTER
-   ========================================================================== */
-.carousel-inner, .carousel-item, .swiper-wrapper, .swiper-slide {
+  7. CARROSSEL & FOOTER
+  ========================================================================== */
+
+.carousel-inner,
+.carousel-item,
+.swiper-wrapper,
+.swiper-slide {
   background-color: transparent !important;
 }
 
-.carousel-control-prev, .carousel-control-next, .swiper-button-prev, .swiper-button-next {
+.carousel-control-prev,
+.carousel-control-next,
+.swiper-button-prev,
+.swiper-button-next {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
 }
 
-html.dark .footer, html[data-bs-theme="dark"] .footer {
-  background: linear-gradient(180deg, #0f172a 0%, #030712 100%) !important;
+html.dark .footer,
+html[data-bs-theme="dark"] .footer {
+  background: linear-gradient(
+    180deg,
+    #0f172a 0%,
+    #030712 100%
+  ) !important;
+
   color: #f8fafc !important;
 }
 
-html.dark .brand-text-top, html[data-bs-theme="dark"] .brand-text-top { color: #cbd5e1 !important; }
-html.dark .brand-name, html[data-bs-theme="dark"] .brand-name { color: #ffffff !important; }
-html.dark .brand-description, html[data-bs-theme="dark"] .brand-description { color: #94a3b8 !important; }
-html.dark .social-link, html[data-bs-theme="dark"] .social-link { color: #f8fafc !important; }
-html.dark .social-link:hover, html[data-bs-theme="dark"] .social-link:hover { color: #38bdf8 !important; }
-html.dark .footer hr, html[data-bs-theme="dark"] .footer hr { border-color: rgba(255, 255, 255, 0.15) !important; }
-html.dark .column-header, html[data-bs-theme="dark"] .column-header { color: #ffffff !important; }
-html.dark .footer-link, html[data-bs-theme="dark"] .footer-link { color: #cbd5e1 !important; }
-html.dark .footer-link:hover, html[data-bs-theme="dark"] .footer-link:hover { color: #ffffff !important; }
-html.dark .contact-info, html.dark .mission-text, html[data-bs-theme="dark"] .contact-info, html[data-bs-theme="dark"] .mission-text { color: #cbd5e1 !important; }
-html.dark .copyright-text, html[data-bs-theme="dark"] .copyright-text { color: #64748b !important; }
+html.dark .brand-text-top,
+html[data-bs-theme="dark"] .brand-text-top {
+  color: #cbd5e1 !important;
+}
+
+html.dark .brand-name,
+html[data-bs-theme="dark"] .brand-name {
+  color: #ffffff !important;
+}
+
+html.dark .brand-description,
+html[data-bs-theme="dark"] .brand-description {
+  color: #94a3b8 !important;
+}
+
+html.dark .social-link,
+html[data-bs-theme="dark"] .social-link {
+  color: #f8fafc !important;
+}
+
+html.dark .social-link:hover,
+html[data-bs-theme="dark"] .social-link:hover {
+  color: #38bdf8 !important;
+}
+
+html.dark .footer hr,
+html[data-bs-theme="dark"] .footer hr {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+html.dark .column-header,
+html[data-bs-theme="dark"] .column-header {
+  color: #ffffff !important;
+}
+
+html.dark .footer-link,
+html[data-bs-theme="dark"] .footer-link {
+  color: #cbd5e1 !important;
+}
+
+html.dark .footer-link:hover,
+html[data-bs-theme="dark"] .footer-link:hover {
+  color: #ffffff !important;
+}
+
+html.dark .contact-info,
+html.dark .mission-text,
+html[data-bs-theme="dark"] .contact-info,
+html[data-bs-theme="dark"] .mission-text {
+  color: #cbd5e1 !important;
+}
+
+html.dark .copyright-text,
+html[data-bs-theme="dark"] .copyright-text {
+  color: #64748b !important;
+}
+
 
 /* ==========================================================================
-   8. CORREÇÃO DOS BOTÕES E CTA EM BANNERS (MANTÉM O TEXTO ESCURO E VISÍVEL)
-   ========================================================================== */
+  8. BOTÕES E CTA EM BANNERS
+  ========================================================================== */
+
 #heroCarousel .carousel-item a,
 .hero-section a,
 [class*="banner"] a,
@@ -298,63 +466,48 @@ html.dark .copyright-text, html[data-bs-theme="dark"] .copyright-text { color: #
 [class*="banner"] [class*="btn"],
 [class*="banner"] [class*="cta"],
 .btn-white,
+.btn-light {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  font-weight: 700 !important;
+
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/*
+* Somente os botões explicitamente claros recebem fundo branco.
+* Isso evita transformar todos os links de banners em botões brancos.
+*/
+.btn-white,
 .btn-light,
-html.dark #heroCarousel .carousel-item a,
-html.dark .hero-section a,
-html.dark [class*="banner"] a,
-html.dark [class*="banner"] button,
-html.dark [class*="banner"] [class*="btn"],
-html.dark [class*="banner"] [class*="cta"],
 html.dark .btn-white,
 html.dark .btn-light,
-html[data-bs-theme="dark"] #heroCarousel .carousel-item a,
-html[data-bs-theme="dark"] .hero-section a,
-html[data-bs-theme="dark"] [class*="banner"] a,
-html[data-bs-theme="dark"] [class*="banner"] button,
-html[data-bs-theme="dark"] [class*="banner"] [class*="btn"],
-html[data-bs-theme="dark"] [class*="banner"] [class*="cta"],
 html[data-bs-theme="dark"] .btn-white,
 html[data-bs-theme="dark"] .btn-light {
   background-color: #ffffff !important;
   color: #0f172a !important;
   border: 1px solid #ffffff !important;
-  font-weight: 700 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  opacity: 1 !important;
-  visibility: visible !important;
 }
 
-#heroCarousel .carousel-item a *,
-.hero-section a *,
-[class*="banner"] a *,
-[class*="banner"] button *,
-[class*="banner"] [class*="btn"] *,
-[class*="banner"] [class*="cta"] *,
 .btn-white *,
 .btn-light *,
-html.dark #heroCarousel .carousel-item a *,
-html.dark .hero-section a *,
-html.dark [class*="banner"] a *,
-html.dark [class*="banner"] button *,
-html.dark [class*="banner"] [class*="btn"] *,
-html.dark [class*="banner"] [class*="cta"] *,
 html.dark .btn-white *,
 html.dark .btn-light *,
-html[data-bs-theme="dark"] #heroCarousel .carousel-item a *,
-html[data-bs-theme="dark"] .hero-section a *,
-html[data-bs-theme="dark"] [class*="banner"] a *,
-html[data-bs-theme="dark"] [class*="banner"] button *,
-html[data-bs-theme="dark"] [class*="banner"] [class*="btn"] *,
-html[data-bs-theme="dark"] [class*="banner"] [class*="cta"] * {
+html[data-bs-theme="dark"] .btn-white *,
+html[data-bs-theme="dark"] .btn-light * {
   color: #0f172a !important;
 }
 
+
 /* ==========================================================================
-   9. CORREÇÃO DA BARRA LATERAL DE FILTROS & PRODUTOS (MODO ESCURO)
-   ========================================================================== */
-html:is(.dark, [data-bs-theme="dark"]) aside {
+  9. BARRA LATERAL DE FILTROS & PRODUTOS
+  ========================================================================== */
+
+html.dark aside,
+html[data-bs-theme="dark"] aside {
   background-color: var(--card-bg) !important;
   border: 1px solid var(--card-border) !important;
   color: var(--foreground) !important;
@@ -377,6 +530,12 @@ html.dark [class*="sidebar"] label,
 html.dark [class*="sidebar"] span,
 html[data-bs-theme="dark"] [class*="filter"] label,
 html[data-bs-theme="dark"] [class*="filter"] span,
+html[data-bs-theme="dark"] [class*="filter"] h1,
+html[data-bs-theme="dark"] [class*="filter"] h2,
+html[data-bs-theme="dark"] [class*="filter"] h3,
+html[data-bs-theme="dark"] [class*="filter"] h4,
+html[data-bs-theme="dark"] [class*="filter"] h5,
+html[data-bs-theme="dark"] [class*="filter"] h6,
 html[data-bs-theme="dark"] [class*="filtros"] label,
 html[data-bs-theme="dark"] [class*="filtros"] span {
   color: var(--text-primary) !important;
@@ -402,7 +561,9 @@ html.dark [class*="filtros"] button[type="submit"],
 html.dark [class*="filter"] .btn-primary,
 html.dark [class*="filtros"] .btn-primary,
 html[data-bs-theme="dark"] [class*="filter"] button[type="submit"],
-html[data-bs-theme="dark"] [class*="filtros"] button[type="submit"] {
+html[data-bs-theme="dark"] [class*="filtros"] button[type="submit"],
+html[data-bs-theme="dark"] [class*="filter"] .btn-primary,
+html[data-bs-theme="dark"] [class*="filtros"] .btn-primary {
   background-color: var(--accent-color) !important;
   color: #ffffff !important;
   border: none !important;
@@ -410,8 +571,12 @@ html[data-bs-theme="dark"] [class*="filtros"] button[type="submit"] {
 
 html.dark [class*="filter"] button[type="submit"] *,
 html.dark [class*="filtros"] button[type="submit"] *,
+html.dark [class*="filter"] .btn-primary *,
+html.dark [class*="filtros"] .btn-primary *,
 html[data-bs-theme="dark"] [class*="filter"] button[type="submit"] *,
-html[data-bs-theme="dark"] [class*="filtros"] button[type="submit"] * {
+html[data-bs-theme="dark"] [class*="filtros"] button[type="submit"] *,
+html[data-bs-theme="dark"] [class*="filter"] .btn-primary *,
+html[data-bs-theme="dark"] [class*="filtros"] .btn-primary * {
   color: #ffffff !important;
 }
 
@@ -420,74 +585,96 @@ html.dark [class*="filtros"] button[type="reset"],
 html.dark [class*="filter"] a[class*="limpar"],
 html.dark [class*="filtros"] a[class*="limpar"],
 html[data-bs-theme="dark"] [class*="filter"] button[type="reset"],
-html[data-bs-theme="dark"] [class*="filtros"] button[type="reset"] {
+html[data-bs-theme="dark"] [class*="filtros"] button[type="reset"],
+html[data-bs-theme="dark"] [class*="filter"] a[class*="limpar"],
+html[data-bs-theme="dark"] [class*="filtros"] a[class*="limpar"] {
   background-color: transparent !important;
   color: var(--accent-color) !important;
 }
 
+
 /* ==========================================================================
-   10. CORREÇÃO DOS PREÇOS E TÍTULOS NOS CARDS (AZUL DESTAQUE & TEXTO CLARO)
-   ========================================================================== */
+  10. PREÇOS E TÍTULOS NOS CARDS
+  ========================================================================== */
+
+/*
+* Os seletores de preço ficam separados dos textos gerais para evitar
+* que uma regra posterior sobrescreva o azul de destaque.
+*/
+
 [class*="price"],
 [class*="preco"],
 [class*="valor"],
 .product-price,
-.card-price,
-html.dark [class*="price"],
-html.dark [class*="preco"],
-html.dark [class*="valor"],
-html.dark [class*="card"] [class*="price"],
-html.dark [class*="card"] [class*="preco"],
-html.dark [class*="product"] [class*="price"],
-html.dark [class*="product"] [class*="preco"],
-html[data-bs-theme="dark"] [class*="price"],
-html[data-bs-theme="dark"] [class*="preco"],
-html[data-bs-theme="dark"] [class*="valor"] {
+.card-price {
   color: var(--accent-color) !important;
   font-weight: 700 !important;
 }
 
-html.dark [class*="card"] a,
+html.dark [class*="price"],
+html.dark [class*="preco"],
+html.dark [class*="valor"],
+html.dark .product-price,
+html.dark .card-price,
+html[data-bs-theme="dark"] [class*="price"],
+html[data-bs-theme="dark"] [class*="preco"],
+html[data-bs-theme="dark"] [class*="valor"],
+html[data-bs-theme="dark"] .product-price,
+html[data-bs-theme="dark"] .card-price {
+  color: var(--accent-color) !important;
+}
+
+/*
+* Texto normal dos cards.
+* A regra não inclui elementos de preço para evitar sobrescrevê-los.
+*/
+
+html.dark [class*="card"] a:not([class*="price"]):not([class*="preco"]),
 html.dark [class*="card"] p,
-html.dark [class*="card"] span,
+html.dark [class*="card"] span:not([class*="price"]):not([class*="preco"]),
 html.dark [class*="card"] h1,
 html.dark [class*="card"] h2,
 html.dark [class*="card"] h3,
 html.dark [class*="card"] h4,
 html.dark [class*="card"] h5,
 html.dark [class*="card"] h6,
-html.dark [class*="product"] a,
+html.dark [class*="product"] a:not([class*="price"]):not([class*="preco"]),
 html.dark [class*="product"] p,
-html.dark [class*="product"] span,
-html[data-bs-theme="dark"] [class*="card"] a,
+html.dark [class*="product"] span:not([class*="price"]):not([class*="preco"]),
+html[data-bs-theme="dark"] [class*="card"] a:not([class*="price"]):not([class*="preco"]),
 html[data-bs-theme="dark"] [class*="card"] p,
-html[data-bs-theme="dark"] [class*="card"] span {
+html[data-bs-theme="dark"] [class*="card"] span:not([class*="price"]):not([class*="preco"]),
+html[data-bs-theme="dark"] [class*="card"] h1,
+html[data-bs-theme="dark"] [class*="card"] h2,
+html[data-bs-theme="dark"] [class*="card"] h3,
+html[data-bs-theme="dark"] [class*="card"] h4,
+html[data-bs-theme="dark"] [class*="card"] h5,
+html[data-bs-theme="dark"] [class*="card"] h6 {
   color: var(--foreground) !important;
 }
 
-html.dark [class*="card"] [class*="price"] *,
-html.dark [class*="card"] [class*="preco"] *,
-html.dark [class*="product"] [class*="price"] *,
-html.dark [class*="product"] [class*="preco"] *,
-html[data-bs-theme="dark"] [class*="card"] [class*="price"] *,
-html[data-bs-theme="dark"] [class*="card"] [class*="preco"] * {
-  color: var(--accent-color) !important;
-}
+
+/* Preço promocional */
 
 html.dark [class*="old-price"],
 html.dark [class*="original-price"],
 html.dark [class*="price-old"],
-html.dark s, html.dark del,
+html.dark s,
+html.dark del,
 html[data-bs-theme="dark"] [class*="old-price"],
-html[data-bs-theme="dark"] s, html[data-bs-theme="dark"] del {
+html[data-bs-theme="dark"] [class*="original-price"],
+html[data-bs-theme="dark"] [class*="price-old"],
+html[data-bs-theme="dark"] s,
+html[data-bs-theme="dark"] del {
   color: var(--text-secondary) !important;
   opacity: 0.75;
 }
 
+
 /* ==========================================================================
-   11. CORREÇÃO DOS SELOS, BADGES E TAGS NOS CARDS DE PRODUTO
-   ========================================================================== */
-/* Garante que qualquer badge/tag sobre as fotos dos produtos tenha texto totalmente visível */
+  11. SELOS, BADGES E TAGS
+  ========================================================================== */
+
 [class*="badge"],
 [class*="tag"],
 [class*="selo"],
@@ -500,7 +687,9 @@ html[data-bs-theme="dark"] s, html[data-bs-theme="dark"] del {
 .card-badge {
   background-color: #323c523d !important;
   color: #ffffff !important;
+
   border: 1px solid rgba(196, 196, 196, 0.075) !important;
+
   font-weight: 700 !important;
   z-index: 10 !important;
 }
@@ -515,7 +704,11 @@ html[data-bs-theme="dark"] s, html[data-bs-theme="dark"] del {
   color: #ffffff !important;
 }
 
-/* Se a badge for um botão/pill com fundo branco, força o texto a ser escuro */
+
+/*
+* Badges explicitamente brancas continuam com texto escuro.
+*/
+
 .bg-white[class*="badge"],
 .bg-white[class*="tag"],
 .bg-white[class*="selo"],
@@ -525,13 +718,15 @@ html[data-bs-theme="dark"] s, html[data-bs-theme="dark"] del {
 html.dark .bg-white[class*="badge"],
 html.dark .bg-white[class*="tag"],
 html.dark .bg-white[class*="selo"],
-html.dark [class*="badge"][style*="background: white"],
-html.dark [class*="badge"][style*="background-color: white"],
-html.dark [class*="badge"][style*="background: #fff"],
-html.dark [class*="badge"][style*="background-color: #fff"],
+html.dark .bg-light[class*="badge"],
+html.dark .bg-light[class*="tag"],
+html.dark .bg-light[class*="selo"],
 html[data-bs-theme="dark"] .bg-white[class*="badge"],
 html[data-bs-theme="dark"] .bg-white[class*="tag"],
-html[data-bs-theme="dark"] .bg-white[class*="selo"] {
+html[data-bs-theme="dark"] .bg-white[class*="selo"],
+html[data-bs-theme="dark"] .bg-light[class*="badge"],
+html[data-bs-theme="dark"] .bg-light[class*="tag"],
+html[data-bs-theme="dark"] .bg-light[class*="selo"] {
   background-color: #ffffff !important;
   color: #0f172a !important;
 }
@@ -539,22 +734,30 @@ html[data-bs-theme="dark"] .bg-white[class*="selo"] {
 html.dark .bg-white[class*="badge"] *,
 html.dark .bg-white[class*="tag"] *,
 html.dark .bg-white[class*="selo"] *,
+html.dark .bg-light[class*="badge"] *,
+html.dark .bg-light[class*="tag"] *,
+html.dark .bg-light[class*="selo"] *,
 html[data-bs-theme="dark"] .bg-white[class*="badge"] *,
 html[data-bs-theme="dark"] .bg-white[class*="tag"] *,
-html[data-bs-theme="dark"] .bg-white[class*="selo"] * {
+html[data-bs-theme="dark"] .bg-white[class*="selo"] *,
+html[data-bs-theme="dark"] .bg-light[class*="badge"] *,
+html[data-bs-theme="dark"] .bg-light[class*="tag"] *,
+html[data-bs-theme="dark"] .bg-light[class*="selo"] * {
   color: #0f172a !important;
 }
 
-/* ==========================================================================
-   12. CORREÇÃO DA FAIXA DE BENEFÍCIOS, BARRA INFERIOR E PONTOS DO CARROSSEL
-   ========================================================================== */
 
-/* Indicadores de navegação (bolinhas/barras do carrossel) */
+/* ==========================================================================
+  12. CARROSSEL
+  ========================================================================== */
+
+/* Indicadores */
+
 .carousel-indicators [data-bs-target],
 .carousel-indicators button,
 .swiper-pagination-bullet,
 .slick-dots li button {
-  background-color: #ffffff !important;
+  background-color: #64748b !important;
   opacity: 0.5 !important;
 }
 
@@ -565,7 +768,11 @@ html[data-bs-theme="dark"] .bg-white[class*="selo"] * {
   opacity: 1 !important;
 }
 
-/* Faixa de benefícios / Informações / Diferenciais abaixo do banner */
+
+/* ==========================================================================
+  13. FAIXA DE BENEFÍCIOS / INFORMAÇÕES
+  ========================================================================== */
+
 [class*="benefit"],
 [class*="vantag"],
 [class*="feature"],
@@ -575,7 +782,13 @@ html[data-bs-theme="dark"] .bg-white[class*="selo"] * {
 [class*="sub-header"],
 [class*="bar-info"],
 [class*="hero-bottom"],
-[class*="hero-footer"],
+[class*="hero-footer"] {
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
+}
+
 html.dark [class*="benefit"],
 html.dark [class*="vantag"],
 html.dark [class*="feature"],
@@ -601,7 +814,9 @@ html[data-bs-theme="dark"] [class*="hero-footer"] {
   color: #f8fafc !important;
 }
 
-/* Visibilidade total dos textos dentro dessa faixa */
+
+/* Textos da faixa */
+
 html.dark [class*="benefit"] *,
 html.dark [class*="vantag"] *,
 html.dark [class*="feature"] *,
@@ -625,7 +840,9 @@ html[data-bs-theme="dark"] [class*="hero-footer"] * {
   color: #f8fafc !important;
 }
 
-/* Visibilidade total de Ícones (SVG, FontAwesome, Bootstrap Icons) */
+
+/* Ícones SVG / FontAwesome / Bootstrap Icons */
+
 html.dark [class*="benefit"] svg,
 html.dark [class*="vantag"] svg,
 html.dark [class*="feature"] svg,
@@ -655,24 +872,33 @@ html[data-bs-theme="dark"] [class*="top-bar"] svg,
 html[data-bs-theme="dark"] [class*="sub-header"] svg,
 html[data-bs-theme="dark"] [class*="bar-info"] svg,
 html[data-bs-theme="dark"] [class*="hero-bottom"] svg,
-html[data-bs-theme="dark"] [class*="hero-footer"] svg {
+html[data-bs-theme="dark"] [class*="hero-footer"] svg,
+html[data-bs-theme="dark"] [class*="benefit"] i,
+html[data-bs-theme="dark"] [class*="vantag"] i,
+html[data-bs-theme="dark"] [class*="feature"] i,
+html[data-bs-theme="dark"] [class*="diferenc"] i,
+html[data-bs-theme="dark"] [class*="info-bar"] i,
+html[data-bs-theme="dark"] [class*="top-bar"] i,
+html[data-bs-theme="dark"] [class*="sub-header"] i,
+html[data-bs-theme="dark"] [class*="bar-info"] i,
+html[data-bs-theme="dark"] [class*="hero-bottom"] i,
+html[data-bs-theme="dark"] [class*="hero-footer"] i {
   color: #38bdf8 !important;
   fill: currentColor !important;
   stroke: currentColor !important;
 }
 
-/* Para ícones de imagem (tag <img>) que sejam pretos/escuros por padrão */
-html.dark [class*="benefit"] img,
-html.dark [class*="vantag"] img,
-html.dark [class*="feature"] img,
-html.dark [class*="diferenc"] img,
-html.dark [class*="info-bar"] img,
-html.dark [class*="top-bar"] img,
-html[data-bs-theme="dark"] [class*="benefit"] img,
-html[data-bs-theme="dark"] [class*="vantag"] img,
-html[data-bs-theme="dark"] [class*="feature"] img,
-html[data-bs-theme="dark"] [class*="diferenc"] img,
-html[data-bs-theme="dark"] [class*="info-bar"] img,
-html[data-bs-theme="dark"] [class*="top-bar"] img {
-  filter: brightness(0) invert(1) !important;
+
+/*
+* IMPORTANTE:
+* Não aplicar filter: brightness(0) invert(1) em todas as imagens.
+*
+* Imagens coloridas, logos e ilustrações podem ficar visualmente incorretas.
+* Caso exista um ícone especificamente escuro que precise ser invertido,
+* aplique a classe .dark-icon nele individualmente.
+*/
+
+html.dark .dark-icon,
+html[data-bs-theme="dark"] .dark-icon {
+  filter: brightness(0) invert(1);
 }

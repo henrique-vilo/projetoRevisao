@@ -101,34 +101,26 @@
 .cardIcon {
   width: 44px;
   height: 44px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   color: #ffffff;
   background: #00a9d4;
   border-radius: 12px;
-
   font-size: 19px;
 }
 
 .cardHeader span {
   display: block;
-
   color: #00a9d4;
-
   font-size: 10px;
   font-weight: 800;
-
   letter-spacing: 0.1em;
 }
 
 .cardHeader h2 {
   margin: 3px 0 0;
-
   color: #2d2531;
-
   font-size: 19px;
   font-weight: 750;
 }
@@ -139,9 +131,7 @@
 
 .formGrid {
   display: grid;
-
   grid-template-columns: repeat(2, minmax(0, 1fr));
-
   gap: 17px;
 }
 
@@ -157,10 +147,8 @@
 
 .formField label {
   color: #605863;
-
   font-size: 11px;
   font-weight: 750;
-
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -168,30 +156,25 @@
 .formField input {
   width: 100%;
   height: 44px;
-
   padding: 0 13px;
-
   color: #302a33;
   background: #fbfafc;
-
   border: 1px solid #dfd9e2;
   border-radius: 9px;
-
   outline: none;
-
   font-size: 13px;
-
   transition: 0.2s;
+}
+
+.formField input::placeholder {
+  color: #817985;
+  opacity: 1;
 }
 
 .formField input:focus {
   background: #ffffff;
-
   border-color: #00a9d4;
-
-  box-shadow:
-    0 0 0 3px
-    rgba(0, 169, 212, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 169, 212, 0.1);
 }
 
 /* =========================================
@@ -208,12 +191,9 @@
 
 .cepLoading {
   position: absolute;
-
   right: 14px;
   top: 11px;
-
   color: #00a9d4;
-
   font-weight: 800;
 }
 
@@ -223,29 +203,20 @@
 
 .paymentOptions {
   display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
 .paymentOption {
   min-height: 105px;
-
   padding: 16px;
-
   display: flex;
   align-items: center;
   gap: 11px;
-
   background: #fbfafc;
-
   border: 1px solid #dfd9e2;
   border-radius: 12px;
-
   cursor: pointer;
-
   transition: 0.2s;
 }
 
@@ -255,12 +226,8 @@
 
 .paymentOption.selected {
   background: rgba(0, 169, 212, 0.06);
-
   border-color: #00a9d4;
-
-  box-shadow:
-    0 0 0 3px
-    rgba(0, 169, 212, 0.08);
+  box-shadow: 0 0 0 3px rgba(0, 169, 212, 0.08);
 }
 
 .paymentOption input {
@@ -279,29 +246,21 @@
 
 .paymentOption strong {
   color: #302a33;
-
   font-size: 12px;
 }
 
 .paymentOption span {
   margin-top: 3px;
-
   color: #89818c;
-
   font-size: 10px;
 }
 
 .cardFields {
   margin-top: 22px;
   padding-top: 22px;
-
   border-top: 1px solid #eeeaf0;
-
   display: grid;
-
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
-
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 17px;
 }
 
@@ -316,38 +275,40 @@
 
 .summaryCard {
   padding: 24px;
+
+  /*
+    Mantém o resumo claro mesmo quando o tema global
+    estiver no modo escuro.
+  */
+  background: #ffffff !important;
+  color: #302a33 !important;
+  border-color: #ebe7ed !important;
 }
 
 .summaryHeader {
   padding-bottom: 20px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   border-bottom: 1px solid #eeeaf0;
 }
 
 .summaryHeader span {
-  color: #00a9d4;
-
+  color: #00a9d4 !important;
   font-size: 10px;
   font-weight: 800;
-
   letter-spacing: 0.1em;
 }
 
 .summaryHeader h2 {
   margin: 4px 0 0;
-
-  color: #2d2531;
-
+  color: #2d2531 !important;
   font-size: 20px;
   font-weight: 750;
 }
 
 .summaryHeader > i {
-  color: #00a9d4;
+  color: #00a9d4 !important;
   font-size: 25px;
 }
 
@@ -357,63 +318,57 @@
 
 .summaryProducts {
   max-height: 350px;
-
   padding: 8px 0;
-
   overflow-y: auto;
 }
 
 .summaryProduct {
   padding: 15px 0;
-
   display: flex;
   gap: 13px;
-
   border-bottom: 1px solid #f0edf1;
 }
 
 .summaryImage {
   position: relative;
-
   width: 70px;
   height: 88px;
-
   flex-shrink: 0;
-
   overflow: hidden;
-
   background: #f0edf2;
-
   border-radius: 10px;
 }
 
 .summaryImage img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
 .summaryImageFallback {
   width: 100%;
   height: 100%;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
-  color: #aaa3ac;
+  color: #aaa3ac !important;
 }
 
 .summaryProductInfo {
   min-width: 0;
-
   display: flex;
   flex-direction: column;
+
+  /*
+    Impede regras globais do dark mode de deixar
+    os textos do produto brancos sobre o card branco.
+  */
+  color: #302a33 !important;
 }
 
 .summaryProductInfo h3 {
   margin: 0 0 5px;
-
-  color: #302a33;
-
+  color: #302a33 !important;
   font-size: 12px;
   font-weight: 700;
   line-height: 1.4;
@@ -421,7 +376,7 @@
 
 .summaryProductInfo span,
 .summaryProductInfo small {
-  color: #89818c;
+  color: #6f6872 !important;
   font-size: 10px;
 }
 
@@ -431,9 +386,7 @@
 
 .summaryProductInfo strong {
   margin-top: auto;
-
-  color: #241b28;
-
+  color: #241b28 !important;
   font-size: 13px;
 }
 
@@ -448,34 +401,36 @@
 
 .summaryValues > div {
   margin-bottom: 11px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
-  color: #777079;
-
+  color: #6f6872 !important;
   font-size: 13px;
 }
 
-.summaryValues strong {
-  color: #302a33;
+.summaryValues > div > span {
+  color: #6f6872 !important;
+}
+
+.summaryValues > div > strong {
+  color: #302a33 !important;
 }
 
 .summaryValues .summaryTotal {
   margin-top: 16px;
   padding-top: 18px;
-
   border-top: 1px solid #e8e3e9;
-
-  color: #241b28;
-
+  color: #241b28 !important;
   font-size: 16px;
   font-weight: 700;
 }
 
-.summaryTotal strong {
-  color: #00a9d4;
+.summaryTotal > span {
+  color: #241b28 !important;
+}
+
+.summaryTotal > strong {
+  color: #00a9d4 !important;
   font-size: 21px;
 }
 
@@ -486,25 +441,18 @@
 .finishButton {
   width: 100%;
   height: 52px;
-
   margin-top: 16px;
-
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
-
-  color: #ffffff;
-  background: #00a9d4;
-
+  color: #ffffff !important;
+  background: #00a9d4 !important;
   border: 0;
   border-radius: 11px;
-
   font-size: 14px;
   font-weight: 750;
-
   cursor: pointer;
-
   transition: 0.2s;
 }
 
@@ -524,22 +472,22 @@
 
 .securityText {
   margin-top: 16px;
-
   display: flex;
   align-items: flex-start;
   justify-content: center;
   gap: 7px;
-
-  color: #89818c;
-
+  color: #777079 !important;
   font-size: 10px;
   line-height: 1.5;
-
   text-align: center;
 }
 
+.securityText span {
+  color: #777079 !important;
+}
+
 .securityText i {
-  color: #00a9d4;
+  color: #00a9d4 !important;
 }
 
 /* =========================================
@@ -549,14 +497,9 @@
 .spinner {
   width: 17px;
   height: 17px;
-
-  border: 2px solid
-    rgba(255, 255, 255, 0.35);
-
+  border: 2px solid rgba(255, 255, 255, 0.35);
   border-top-color: #ffffff;
-
   border-radius: 50%;
-
   animation: spin 0.7s linear infinite;
 }
 
@@ -572,59 +515,218 @@
 
 .carrinhoVazio {
   min-height: 400px;
-
   padding: 50px 20px;
-
   display: flex;
   flex-direction: column;
-
   align-items: center;
   justify-content: center;
-
   text-align: center;
-
   background: #ffffff;
-
   border: 1px solid #ebe7ed;
   border-radius: 18px;
 }
 
 .carrinhoVazio > i {
   margin-bottom: 15px;
-
   color: #00a9d4;
-
   font-size: 52px;
 }
 
 .carrinhoVazio h2 {
   margin: 0 0 8px;
-
   color: #241b28;
-
   font-size: 23px;
 }
 
 .carrinhoVazio p {
   margin: 0 0 22px;
-
   color: #777079;
-
   font-size: 13px;
 }
 
 .continuarComprando {
   padding: 12px 19px;
-
   color: #ffffff;
   background: #00a9d4;
-
   border-radius: 9px;
-
   font-size: 13px;
   font-weight: 700;
-
   text-decoration: none;
+}
+
+/* =========================================
+   CORREÇÕES DE CONTRASTE — TEMA ESCURO
+   SOMENTE NESTA PÁGINA
+========================================= */
+
+html.dark .checkoutPage,
+html[data-bs-theme="dark"] .checkoutPage {
+  background: #0b1120;
+  color: #f8fafc;
+}
+
+html.dark .checkoutPage .checkoutHeading h1,
+html[data-bs-theme="dark"] .checkoutPage .checkoutHeading h1 {
+  color: #f8fafc !important;
+}
+
+html.dark .checkoutPage .checkoutHeading p,
+html[data-bs-theme="dark"] .checkoutPage .checkoutHeading p {
+  color: #d1d5db !important;
+}
+
+html.dark .checkoutPage .checkoutCard,
+html[data-bs-theme="dark"] .checkoutPage .checkoutCard {
+  background: #0b1120 !important;
+  border-color: #64748b !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .checkoutPage .cardHeader h2,
+html[data-bs-theme="dark"] .checkoutPage .cardHeader h2 {
+  color: #f8fafc !important;
+}
+
+html.dark .checkoutPage .formField label,
+html[data-bs-theme="dark"] .checkoutPage .formField label {
+  color: #f1f5f9 !important;
+}
+
+html.dark .checkoutPage .formField input,
+html[data-bs-theme="dark"] .checkoutPage .formField input {
+  color: #f8fafc !important;
+  background: #111827 !important;
+  border-color: #334155 !important;
+}
+
+html.dark .checkoutPage .formField input::placeholder,
+html[data-bs-theme="dark"] .checkoutPage .formField input::placeholder {
+  color: #94a3b8 !important;
+}
+
+html.dark .checkoutPage .formField input:focus,
+html[data-bs-theme="dark"] .checkoutPage .formField input:focus {
+  background: #111827 !important;
+  border-color: #00a9d4 !important;
+}
+
+html.dark .checkoutPage .paymentOption,
+html[data-bs-theme="dark"] .checkoutPage .paymentOption {
+  background: #111827 !important;
+  border-color: #334155 !important;
+}
+
+html.dark .checkoutPage .paymentOption strong,
+html[data-bs-theme="dark"] .checkoutPage .paymentOption strong {
+  color: #f8fafc !important;
+}
+
+html.dark .checkoutPage .paymentOption span,
+html[data-bs-theme="dark"] .checkoutPage .paymentOption span {
+  color: #cbd5e1 !important;
+}
+
+html.dark .checkoutPage .paymentOption.selected,
+html[data-bs-theme="dark"] .checkoutPage .paymentOption.selected {
+  background: rgba(0, 169, 212, 0.12) !important;
+  border-color: #00a9d4 !important;
+}
+
+html.dark .checkoutPage .cardFields,
+html[data-bs-theme="dark"] .checkoutPage .cardFields {
+  border-top-color: #334155 !important;
+}
+
+/*
+   IMPORTANTE:
+   O resumo continua branco no modo escuro.
+   Todas as cores abaixo ficam explicitamente
+   escuras para impedir a perda de contraste.
+*/
+
+html.dark .checkoutPage .summaryCard,
+html[data-bs-theme="dark"] .checkoutPage .summaryCard {
+  background: #ffffff !important;
+  color: #302a33 !important;
+  border-color: #d9d4dc !important;
+}
+
+html.dark .checkoutPage .summaryHeader,
+html[data-bs-theme="dark"] .checkoutPage .summaryHeader {
+  border-bottom-color: #eeeaf0 !important;
+}
+
+html.dark .checkoutPage .summaryHeader h2,
+html[data-bs-theme="dark"] .checkoutPage .summaryHeader h2 {
+  color: #2d2531 !important;
+}
+
+html.dark .checkoutPage .summaryProduct,
+html[data-bs-theme="dark"] .checkoutPage .summaryProduct {
+  border-bottom-color: #f0edf1 !important;
+}
+
+html.dark .checkoutPage .summaryProductInfo,
+html[data-bs-theme="dark"] .checkoutPage .summaryProductInfo {
+  color: #302a33 !important;
+}
+
+html.dark .checkoutPage .summaryProductInfo h3,
+html[data-bs-theme="dark"] .checkoutPage .summaryProductInfo h3 {
+  color: #302a33 !important;
+}
+
+html.dark .checkoutPage .summaryProductInfo span,
+html.dark .checkoutPage .summaryProductInfo small,
+html[data-bs-theme="dark"] .checkoutPage .summaryProductInfo span,
+html[data-bs-theme="dark"] .checkoutPage .summaryProductInfo small {
+  color: #6f6872 !important;
+}
+
+html.dark .checkoutPage .summaryProductInfo strong,
+html[data-bs-theme="dark"] .checkoutPage .summaryProductInfo strong {
+  color: #241b28 !important;
+}
+
+html.dark .checkoutPage .summaryValues > div,
+html[data-bs-theme="dark"] .checkoutPage .summaryValues > div {
+  color: #6f6872 !important;
+}
+
+html.dark .checkoutPage .summaryValues > div > span,
+html[data-bs-theme="dark"] .checkoutPage .summaryValues > div > span {
+  color: #6f6872 !important;
+}
+
+html.dark .checkoutPage .summaryValues > div > strong,
+html[data-bs-theme="dark"] .checkoutPage .summaryValues > div > strong {
+  color: #302a33 !important;
+}
+
+html.dark .checkoutPage .summaryValues .summaryTotal,
+html[data-bs-theme="dark"] .checkoutPage .summaryValues .summaryTotal {
+  color: #241b28 !important;
+  border-top-color: #e8e3e9 !important;
+}
+
+html.dark .checkoutPage .summaryTotal > span,
+html[data-bs-theme="dark"] .checkoutPage .summaryTotal > span {
+  color: #241b28 !important;
+}
+
+html.dark .checkoutPage .summaryTotal > strong,
+html[data-bs-theme="dark"] .checkoutPage .summaryTotal > strong {
+  color: #00a9d4 !important;
+}
+
+html.dark .checkoutPage .securityText,
+html[data-bs-theme="dark"] .checkoutPage .securityText {
+  color: #777079 !important;
+}
+
+html.dark .checkoutPage .securityText span,
+html[data-bs-theme="dark"] .checkoutPage .securityText span {
+  color: #777079 !important;
 }
 
 /* =========================================

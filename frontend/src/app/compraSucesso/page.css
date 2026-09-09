@@ -1,76 +1,114 @@
-/* =========================================
-   PÁGINA
-========================================= */
+/* ==========================================================================
+   PÁGINA DE COMPRA REALIZADA
+   ========================================================================== */
 
 .sucessoPage {
   min-height: 100vh;
-  background: #f8f7f9;
-  color: #29232d;
+  min-height: 100dvh;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  padding: 32px 20px;
+  box-sizing: border-box;
+
+  background: #f8f7f9;
+  color: #29232d;
+
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
 }
 
 .sucessoContainer {
-  width: min(1420px, 100%);
-  padding: 40px 28px;
+  width: min(100%, 1420px);
+  margin: 0 auto;
+
   display: flex;
   align-items: center;
   justify-content: center;
-}
 
-/* =========================================
-   CARD
-========================================= */
+  box-sizing: border-box;
+}
 
 .sucessoCard {
   width: min(600px, 100%);
-  padding: 52px 45px;
+  box-sizing: border-box;
+
+  padding: 48px 44px 46px;
+
   background: #ffffff;
   border: 1px solid #ebe7ed;
   border-radius: 20px;
+
   box-shadow: 0 8px 28px rgba(36, 18, 43, 0.06);
+
   text-align: center;
+
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease;
 }
 
-/* =========================================
+
+/* ==========================================================================
    ÍCONE DE SUCESSO
-========================================= */
+   ========================================================================== */
 
 .sucessoIcon {
   width: 76px;
   height: 76px;
+
   margin: 0 auto 24px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  color: #ffffff;
+  color: #ffffff !important;
   background: #00a9d4;
+
   border-radius: 50%;
 
   font-size: 38px;
+  line-height: 1;
 
   box-shadow: 0 8px 20px rgba(0, 169, 212, 0.18);
 }
 
-/* =========================================
+.sucessoIcon i {
+  color: #ffffff !important;
+}
+
+
+/* ==========================================================================
    TEXTOS
-========================================= */
+   ========================================================================== */
 
 .sucessoEyebrow {
-  color: #00a9d4;
+  display: block;
+
+  margin-bottom: 10px;
+
+  color: #00a9d4 !important;
+
   font-size: 11px;
   font-weight: 800;
+  line-height: 1.3;
+
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .sucessoCard h1 {
-  margin: 8px 0 12px;
+  margin: 0 auto 14px;
 
-  color: #241b28;
+  max-width: 500px;
+
+  color: #241b28 !important;
+
   font-size: clamp(28px, 4vw, 38px);
   font-weight: 750;
   line-height: 1.12;
@@ -78,104 +116,269 @@
 
 .sucessoMensagem {
   max-width: 480px;
+
   margin: 0 auto;
 
-  color: #777079;
+  color: #777079 !important;
+
   font-size: 14px;
   line-height: 1.7;
 }
 
+
+/* ==========================================================================
+   AVISO DE E-MAIL
+   ========================================================================== */
+
 .sucessoEmail {
+  width: 100%;
   max-width: 440px;
-  margin: 24px auto 30px;
+  box-sizing: border-box;
+
+  margin: 24px auto 28px;
   padding: 15px 18px;
 
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
 
-  color: #605863;
+  gap: 10px;
+
+  color: #605863 !important;
   background: rgba(0, 169, 212, 0.06);
+
   border: 1px solid rgba(0, 169, 212, 0.14);
   border-radius: 11px;
 
   font-size: 12px;
   line-height: 1.5;
+
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
 }
 
 .sucessoEmail i {
   flex-shrink: 0;
-  color: #00a9d4;
+
+  color: #00a9d4 !important;
+
   font-size: 17px;
+  line-height: 1;
 }
 
-/* =========================================
-   BOTÃO
-========================================= */
 
-.voltarInicio {
-  min-height: 50px;
-  padding: 0 24px;
+/* ==========================================================================
+   BOTÕES
+   ========================================================================== */
+
+.sucessoCard .voltarInicio {
+  min-height: 48px;
+  box-sizing: border-box;
+
+  padding: 0 20px;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
 
-  color: #ffffff;
-  background: #00a9d4;
+  gap: 8px;
 
+  color: #ffffff !important;
+  background: #00a9d4 !important;
+
+  border: 1px solid #00a9d4;
   border-radius: 10px;
 
   font-size: 13px;
   font-weight: 750;
+  line-height: 1.2;
+
   text-decoration: none;
 
-  transition: 0.2s;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    transform 200ms ease,
+    box-shadow 200ms ease;
 }
 
-.voltarInicio:hover {
-  color: #ffffff;
-  background: #1c3166;
+.sucessoCard .voltarInicio i {
+  color: #ffffff !important;
+}
+
+.sucessoCard .voltarInicio:hover {
+  color: #ffffff !important;
+  background: #1c3166 !important;
+  border-color: #1c3166;
+
   transform: translateY(-1px);
+
+  box-shadow: 0 5px 14px rgba(28, 49, 102, 0.18);
 }
 
-/* =========================================
+.sucessoCard .voltarInicio:focus-visible {
+  outline: 3px solid rgba(0, 169, 212, 0.25);
+  outline-offset: 2px;
+}
+
+
+/* ==========================================================================
+   MODO ESCURO
+   ========================================================================== */
+
+/*
+ * O globals.css aplica regras globais com !important em main, h1 e p.
+ * Estes seletores específicos garantem que esta página mantenha sua
+ * identidade visual própria no tema escuro.
+ */
+
+html.dark .sucessoPage,
+html[data-bs-theme="dark"] .sucessoPage {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+}
+
+html.dark .sucessoCard,
+html[data-bs-theme="dark"] .sucessoCard {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+
+  box-shadow:
+    0 12px 35px rgba(0, 0, 0, 0.28) !important;
+}
+
+html.dark .sucessoCard h1,
+html[data-bs-theme="dark"] .sucessoCard h1 {
+  color: var(--text-primary) !important;
+}
+
+html.dark .sucessoMensagem,
+html[data-bs-theme="dark"] .sucessoMensagem {
+  color: var(--text-secondary) !important;
+}
+
+html.dark .sucessoEmail,
+html[data-bs-theme="dark"] .sucessoEmail {
+  color: #cbd5e1 !important;
+
+  background: rgba(56, 189, 248, 0.08);
+
+  border-color: rgba(56, 189, 248, 0.20);
+}
+
+html.dark .sucessoEmail i,
+html[data-bs-theme="dark"] .sucessoEmail i {
+  color: var(--accent-color) !important;
+}
+
+html.dark .sucessoCard .voltarInicio,
+html[data-bs-theme="dark"] .sucessoCard .voltarInicio {
+  color: #ffffff !important;
+  background: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+}
+
+html.dark .sucessoCard .voltarInicio i,
+html[data-bs-theme="dark"] .sucessoCard .voltarInicio i {
+  color: #ffffff !important;
+}
+
+html.dark .sucessoCard .voltarInicio:hover,
+html[data-bs-theme="dark"] .sucessoCard .voltarInicio:hover {
+  color: #ffffff !important;
+  background: #0284c7 !important;
+  border-color: #0284c7 !important;
+}
+
+
+/* ==========================================================================
    RESPONSIVO
-========================================= */
+   ========================================================================== */
 
 @media (max-width: 600px) {
-  .sucessoContainer {
-    padding: 25px 18px;
+  .sucessoPage {
+    padding: 24px 16px;
+    align-items: center;
   }
 
   .sucessoCard {
-    padding: 40px 22px;
+    padding: 38px 22px 32px;
     border-radius: 17px;
   }
 
   .sucessoIcon {
     width: 68px;
     height: 68px;
+
+    margin-bottom: 21px;
+
     font-size: 32px;
   }
 
+  .sucessoEyebrow {
+    margin-bottom: 9px;
+    font-size: 10px;
+  }
+
   .sucessoCard h1 {
+    margin-bottom: 13px;
     font-size: 29px;
   }
 
   .sucessoMensagem {
     font-size: 13px;
+    line-height: 1.65;
   }
 
   .sucessoEmail {
+    margin-top: 22px;
+    margin-bottom: 24px;
+
+    padding: 14px 15px;
+
     align-items: flex-start;
+    justify-content: flex-start;
+
     text-align: left;
   }
 
-  .voltarInicio {
+  .sucessoCard .voltarInicio {
     width: 100%;
   }
 }
 
+/* ==========================================================================
+   AÇÕES
+   ========================================================================== */
+
+.sucessoAcoes {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 10px;
+
+  width: 100%;
+}
+
+.sucessoAcoes .voltarInicio {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+
+/* ==========================================================================
+   RESPONSIVO
+   ========================================================================== */
+
+@media (max-width: 600px) {
+  .sucessoAcoes {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sucessoAcoes .voltarInicio {
+    width: 100%;
+  }
+}

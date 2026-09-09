@@ -35,23 +35,13 @@ function getErrorMessage(error) {
 }
 
 export default function CoresPage() {
-  /*
-   * =====================================================
-   * ESTADO
-   * =====================================================
-   */
-
   const [colors, setColors] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
   const [search, setSearch] = useState('');
-
   const [currentPage, setCurrentPage] = useState(1);
 
   const [pagination, setPagination] = useState({
@@ -62,16 +52,8 @@ export default function CoresPage() {
   });
 
   const [modal, setModal] = useState(null);
-
   const [selectedColor, setSelectedColor] = useState(null);
-
   const [form, setForm] = useState(emptyForm);
-
-  /*
-   * =====================================================
-   * BUSCAR CORES
-   * =====================================================
-   */
 
   const fetchColors = useCallback(async () => {
     setLoading(true);
@@ -104,68 +86,52 @@ export default function CoresPage() {
         );
       }
 
-      setColors(Array.isArray(result.dados) ? result.dados : []);
+      setColors(
+        Array.isArray(result.dados)
+          ? result.dados
+          : []
+      );
 
       setPagination({
-        pagina: result.paginacao?.pagina || currentPage,
+        pagina:
+          result.paginacao?.pagina || currentPage,
         limite:
-          result.paginacao?.limite || LIMITE_POR_PAGINA,
-        total: result.paginacao?.total || 0,
+          result.paginacao?.limite ||
+          LIMITE_POR_PAGINA,
+        total:
+          result.paginacao?.total || 0,
         totalPaginas:
           result.paginacao?.totalPaginas || 1,
       });
     } catch (err) {
-      console.error('Erro ao carregar cores:', err);
+      console.error(
+        'Erro ao carregar cores:',
+        err
+      );
 
       setColors([]);
-
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
   }, [currentPage]);
 
-  /*
-   * =====================================================
-   * CARREGAR AO ENTRAR / TROCAR PÁGINA
-   * =====================================================
-   */
-
   useEffect(() => {
     fetchColors();
   }, [fetchColors]);
-
-  /*
-   * =====================================================
-   * LIMPAR MENSAGENS
-   * =====================================================
-   */
 
   const clearMessages = () => {
     setError('');
     setSuccess('');
   };
 
-  /*
-   * =====================================================
-   * FECHAR MODAL
-   * =====================================================
-   */
-
   const closeModal = () => {
     setModal(null);
     setSelectedColor(null);
-
     setForm({
       ...emptyForm,
     });
   };
-
-  /*
-   * =====================================================
-   * MODAL CRIAR
-   * =====================================================
-   */
 
   const openCreateModal = () => {
     clearMessages();
@@ -179,12 +145,6 @@ export default function CoresPage() {
     setModal('create');
   };
 
-  /*
-   * =====================================================
-   * MODAL EDITAR
-   * =====================================================
-   */
-
   const openEditModal = (color) => {
     clearMessages();
 
@@ -193,31 +153,19 @@ export default function CoresPage() {
     setForm({
       tom: color.tom || '',
       nomeCor: color.nomeCor || '',
-      codigoCor: color.codigoCor || '#2563EB',
+      codigoCor:
+        color.codigoCor || '#2563EB',
     });
 
     setModal('edit');
   };
 
-  /*
-   * =====================================================
-   * MODAL EXCLUIR
-   * =====================================================
-   */
-
   const openDeleteModal = (color) => {
     clearMessages();
 
     setSelectedColor(color);
-
     setModal('delete');
   };
-
-  /*
-   * =====================================================
-   * FORM
-   * =====================================================
-   */
 
   const handleFormChange = (event) => {
     const { name, value } = event.target;
@@ -228,12 +176,6 @@ export default function CoresPage() {
     }));
   };
 
-  /*
-   * =====================================================
-   * COR HEX
-   * =====================================================
-   */
-
   const handleColorChange = (event) => {
     const { value } = event.target;
 
@@ -243,24 +185,15 @@ export default function CoresPage() {
     }));
   };
 
-  /*
-   * =====================================================
-   * CRIAR / EDITAR
-   * =====================================================
-   */
-
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     clearMessages();
 
     const tom = form.tom.trim();
     const nomeCor = form.nomeCor.trim();
-    const codigoCor = form.codigoCor.trim().toUpperCase();
-
-    /*
-     * Validação frontend
-     */
+    const codigoCor = form.codigoCor
+      .trim()
+      .toUpperCase();
 
     if (!tom) {
       setError('Informe o tom da cor.');
@@ -339,9 +272,6 @@ export default function CoresPage() {
           : 'Cor criada com sucesso.'
       );
 
-      /*
-       * Recarrega os dados reais do backend.
-       */
       await fetchColors();
     } catch (err) {
       console.error(
@@ -354,12 +284,6 @@ export default function CoresPage() {
       setSubmitting(false);
     }
   };
-
-  /*
-   * =====================================================
-   * EXCLUIR
-   * =====================================================
-   */
 
   const handleDelete = async () => {
     if (!selectedColor) {
@@ -405,11 +329,6 @@ export default function CoresPage() {
 
       setSuccess('Cor excluída com sucesso.');
 
-      /*
-       * Se a página atual ficar vazia após excluir
-       * o último registro, volta uma página.
-       */
-
       if (
         colors.length === 1 &&
         currentPage > 1
@@ -429,19 +348,6 @@ export default function CoresPage() {
       setDeleting(false);
     }
   };
-
-  /*
-   * =====================================================
-   * BUSCA
-   * =====================================================
-   *
-   * O backend atual não possui endpoint de pesquisa
-   * por nome. Portanto, a busca abaixo filtra somente
-   * os registros da página atualmente carregada.
-   *
-   * Quando fizermos o backend de busca das entidades,
-   * podemos transformar isso em busca server-side.
-   */
 
   const normalizedSearch =
     search.trim().toLowerCase();
@@ -465,12 +371,6 @@ export default function CoresPage() {
     }
   );
 
-  /*
-   * =====================================================
-   * PAGINAÇÃO
-   * =====================================================
-   */
-
   const totalPages = Math.max(
     1,
     pagination.totalPaginas || 1
@@ -480,12 +380,6 @@ export default function CoresPage() {
     currentPage,
     totalPages
   );
-
-  /*
-   * =====================================================
-   * ALTERAR PÁGINA
-   * =====================================================
-   */
 
   const goToPage = (page) => {
     const nextPage = Math.min(
@@ -498,34 +392,33 @@ export default function CoresPage() {
     }
   };
 
-  /*
-   * =====================================================
-   * ATUALIZAR
-   * =====================================================
-   */
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
+
+    setSearch(value);
+
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearch('');
+
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  };
 
   const handleRefresh = async () => {
     clearMessages();
-
     await fetchColors();
-
     setSuccess('Dados atualizados.');
   };
-
-  /*
-   * =====================================================
-   * PAGE
-   * =====================================================
-   */
 
   return (
     <>
       <main className="users-page">
-
-        {/* =================================================
-            PAGE HEADER
-        ================================================= */}
-
         <section className="users-heading">
           <div>
             <span className="users-eyebrow">
@@ -542,7 +435,6 @@ export default function CoresPage() {
           </div>
 
           <div className="users-heading-actions">
-
             <button
               type="button"
               className="users-btn users-btn-secondary"
@@ -569,16 +461,10 @@ export default function CoresPage() {
               disabled={submitting}
             >
               <i className="bi bi-plus-lg" />
-
               Nova cor
             </button>
-
           </div>
         </section>
-
-        {/* =================================================
-            MENSAGENS
-        ================================================= */}
 
         {error && (
           <div
@@ -587,7 +473,6 @@ export default function CoresPage() {
           >
             <div className="d-flex align-items-center gap-2">
               <i className="bi bi-exclamation-circle" />
-
               <span>{error}</span>
             </div>
 
@@ -607,7 +492,6 @@ export default function CoresPage() {
           >
             <div className="d-flex align-items-center gap-2">
               <i className="bi bi-check-circle" />
-
               <span>{success}</span>
             </div>
 
@@ -620,14 +504,8 @@ export default function CoresPage() {
           </div>
         )}
 
-        {/* =================================================
-            TABLE CARD
-        ================================================= */}
-
         <section className="users-card">
-
           <div className="users-card-header">
-
             <div>
               <span className="users-card-label">
                 Gerenciamento
@@ -639,17 +517,13 @@ export default function CoresPage() {
             </div>
 
             <div className="users-card-header-right">
-
               <div className="users-search">
-
                 <i className="bi bi-search" />
 
                 <input
                   type="text"
                   value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                  }}
+                  onChange={handleSearchChange}
                   placeholder="Buscar cor..."
                   aria-label="Buscar cor"
                 />
@@ -658,29 +532,18 @@ export default function CoresPage() {
                   <button
                     type="button"
                     className="users-search-clear"
-                    onClick={() =>
-                      setSearch('')
-                    }
+                    onClick={clearSearch}
                     aria-label="Limpar busca"
                   >
                     <i className="bi bi-x" />
                   </button>
                 )}
-
               </div>
-
             </div>
-
           </div>
 
-          {/* =================================================
-              TABLE
-          ================================================= */}
-
           <div className="table-responsive users-table-wrapper">
-
             <table className="table users-table align-middle">
-
               <thead>
                 <tr>
                   <th>Cor</th>
@@ -691,16 +554,13 @@ export default function CoresPage() {
               </thead>
 
               <tbody>
-
                 {loading ? (
-
                   <tr>
                     <td
                       colSpan="4"
                       className="users-empty"
                     >
                       <div className="users-empty-content">
-
                         <div className="users-empty-icon">
                           <i className="bi bi-arrow-repeat" />
                         </div>
@@ -712,23 +572,14 @@ export default function CoresPage() {
                         <span>
                           Buscando dados do servidor.
                         </span>
-
                       </div>
                     </td>
                   </tr>
-
                 ) : filteredColors.length > 0 ? (
-
                   filteredColors.map((color) => (
-
                     <tr key={color.idCor}>
-
-                      {/* COR */}
-
                       <td>
-
                         <div className="user-cell">
-
                           <div
                             className="color-preview"
                             style={{
@@ -741,7 +592,6 @@ export default function CoresPage() {
                           />
 
                           <div className="user-information">
-
                             <span className="user-name">
                               {color.nomeCor}
                             </span>
@@ -749,40 +599,25 @@ export default function CoresPage() {
                             <span className="user-id">
                               ID #{color.idCor}
                             </span>
-
                           </div>
-
                         </div>
-
                       </td>
 
-                      {/* HEX */}
-
                       <td>
-
                         <span className="color-hex">
                           {color.codigoCor}
                         </span>
-
                       </td>
 
-                      {/* TOM */}
-
                       <td>
-
                         <span className="table-muted">
                           {color.tom ||
                             'Sem tom informado'}
                         </span>
-
                       </td>
 
-                      {/* ACTIONS */}
-
                       <td>
-
                         <div className="user-actions">
-
                           <button
                             type="button"
                             className="user-action edit"
@@ -795,7 +630,6 @@ export default function CoresPage() {
                             }
                           >
                             <i className="bi bi-pencil" />
-
                             Editar
                           </button>
 
@@ -813,29 +647,19 @@ export default function CoresPage() {
                             }
                           >
                             <i className="bi bi-trash" />
-
                             Excluir
                           </button>
-
                         </div>
-
                       </td>
-
                     </tr>
-
                   ))
-
                 ) : (
-
                   <tr>
-
                     <td
                       colSpan="4"
                       className="users-empty"
                     >
-
                       <div className="users-empty-content">
-
                         <div className="users-empty-icon">
                           <i className="bi bi-palette" />
                         </div>
@@ -849,47 +673,33 @@ export default function CoresPage() {
                             ? 'Tente buscar por outro termo.'
                             : 'Ainda não existem cores cadastradas.'}
                         </span>
-
                       </div>
-
                     </td>
-
                   </tr>
-
                 )}
-
               </tbody>
-
             </table>
-
           </div>
 
-          {/* =================================================
-              FOOTER
-          ================================================= */}
-
           <div className="users-table-footer">
-
             <span>
               Mostrando{' '}
+
               <strong>
                 {filteredColors.length}
               </strong>{' '}
+
               de{' '}
+
               <strong>
                 {pagination.total}
               </strong>{' '}
+
               cores
             </span>
 
-            <nav
-              aria-label="Paginação de cores"
-            >
-
+            <nav aria-label="Paginação de cores">
               <ul className="pagination users-pagination">
-
-                {/* ANTERIOR */}
-
                 <li
                   className={`page-item ${
                     safeCurrentPage === 1
@@ -897,7 +707,6 @@ export default function CoresPage() {
                       : ''
                   }`}
                 >
-
                   <button
                     type="button"
                     className="page-link"
@@ -913,10 +722,7 @@ export default function CoresPage() {
                   >
                     <i className="bi bi-chevron-left" />
                   </button>
-
                 </li>
-
-                {/* PÁGINAS */}
 
                 {Array.from(
                   {
@@ -924,7 +730,6 @@ export default function CoresPage() {
                   },
                   (_, index) => index + 1
                 ).map((page) => (
-
                   <li
                     key={page}
                     className={`page-item ${
@@ -934,7 +739,6 @@ export default function CoresPage() {
                         : ''
                     }`}
                   >
-
                     <button
                       type="button"
                       className="page-link"
@@ -945,12 +749,8 @@ export default function CoresPage() {
                     >
                       {page}
                     </button>
-
                   </li>
-
                 ))}
-
-                {/* PRÓXIMA */}
 
                 <li
                   className={`page-item ${
@@ -960,7 +760,6 @@ export default function CoresPage() {
                       : ''
                   }`}
                 >
-
                   <button
                     type="button"
                     className="page-link"
@@ -977,26 +776,15 @@ export default function CoresPage() {
                   >
                     <i className="bi bi-chevron-right" />
                   </button>
-
                 </li>
-
               </ul>
-
             </nav>
-
           </div>
-
         </section>
-
       </main>
-
-      {/* ===================================================
-          CREATE / EDIT MODAL
-      =================================================== */}
 
       {(modal === 'create' ||
         modal === 'edit') && (
-
         <div
           className="users-modal-backdrop"
           onMouseDown={(event) => {
@@ -1008,20 +796,14 @@ export default function CoresPage() {
             }
           }}
         >
-
           <div
             className="users-modal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="color-modal-title"
           >
-
-            {/* HEADER */}
-
             <div className="users-modal-header">
-
               <div>
-
                 <span className="users-modal-label">
                   {modal === 'create'
                     ? 'Nova cor'
@@ -1033,7 +815,6 @@ export default function CoresPage() {
                     ? 'Criar cor'
                     : 'Editar cor'}
                 </h2>
-
               </div>
 
               <button
@@ -1045,31 +826,21 @@ export default function CoresPage() {
               >
                 <i className="bi bi-x-lg" />
               </button>
-
             </div>
 
-            {/* FORM */}
-
             <form onSubmit={handleSubmit}>
-
               <div className="users-modal-body">
-
                 <div className="order-modal-icon">
                   <i className="bi bi-palette" />
                 </div>
 
                 <div className="user-form-grid">
-
-                  {/* TOM */}
-
                   <div className="user-form-field">
-
                     <label htmlFor="color-tom">
                       Tom
                     </label>
 
                     <div className="user-input-wrapper">
-
                       <i className="bi bi-palette" />
 
                       <input
@@ -1085,21 +856,15 @@ export default function CoresPage() {
                         required
                         disabled={submitting}
                       />
-
                     </div>
-
                   </div>
 
-                  {/* NOME */}
-
                   <div className="user-form-field">
-
                     <label htmlFor="color-name">
                       Nome da cor
                     </label>
 
                     <div className="user-input-wrapper">
-
                       <i className="bi bi-type" />
 
                       <input
@@ -1115,21 +880,15 @@ export default function CoresPage() {
                         required
                         disabled={submitting}
                       />
-
                     </div>
-
                   </div>
 
-                  {/* HEX */}
-
                   <div className="user-form-field full">
-
                     <label htmlFor="color-hex">
                       Código HEX
                     </label>
 
                     <div className="color-input-wrapper">
-
                       <input
                         id="color-hex"
                         name="codigoCor"
@@ -1154,7 +913,6 @@ export default function CoresPage() {
                           form.codigoCor
                         }
                         onChange={(event) => {
-
                           let value =
                             event.target.value
                               .toUpperCase();
@@ -1173,7 +931,6 @@ export default function CoresPage() {
                                 value,
                             })
                           );
-
                         }}
                         placeholder="#2563EB"
                         maxLength={7}
@@ -1181,19 +938,12 @@ export default function CoresPage() {
                         required
                         disabled={submitting}
                       />
-
                     </div>
-
                   </div>
-
                 </div>
-
               </div>
 
-              {/* FOOTER */}
-
               <div className="users-modal-footer">
-
                 <button
                   type="button"
                   className="users-modal-btn secondary"
@@ -1208,7 +958,6 @@ export default function CoresPage() {
                   className="users-modal-btn primary"
                   disabled={submitting}
                 >
-
                   {submitting ? (
                     <>
                       <span
@@ -1233,49 +982,33 @@ export default function CoresPage() {
                         : 'Salvar alterações'}
                     </>
                   )}
-
                 </button>
-
               </div>
-
             </form>
-
           </div>
-
         </div>
-
       )}
-
-      {/* ===================================================
-          DELETE MODAL
-      =================================================== */}
 
       {modal === 'delete' &&
         selectedColor && (
-
           <div
             className="users-modal-backdrop"
             onMouseDown={(event) => {
-
               if (
                 event.target ===
                 event.currentTarget
               ) {
                 closeModal();
               }
-
             }}
           >
-
             <div
               className="users-modal users-delete-modal"
               role="dialog"
               aria-modal="true"
               aria-labelledby="delete-color-title"
             >
-
               <div className="users-delete-content">
-
                 <div className="users-delete-icon">
                   <i className="bi bi-trash3" />
                 </div>
@@ -1291,17 +1024,17 @@ export default function CoresPage() {
                 <p>
                   Você está prestes a excluir a
                   cor{' '}
+
                   <strong>
                     {selectedColor.nomeCor}
                   </strong>
+
                   . Essa ação não poderá ser
                   desfeita.
                 </p>
-
               </div>
 
               <div className="users-modal-footer">
-
                 <button
                   type="button"
                   className="users-modal-btn secondary"
@@ -1317,7 +1050,6 @@ export default function CoresPage() {
                   onClick={handleDelete}
                   disabled={deleting}
                 >
-
                   {deleting ? (
                     <>
                       <span
@@ -1333,17 +1065,11 @@ export default function CoresPage() {
                       Excluir cor
                     </>
                   )}
-
                 </button>
-
               </div>
-
             </div>
-
           </div>
-
         )}
-
     </>
   );
 }

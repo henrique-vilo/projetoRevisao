@@ -935,7 +935,7 @@ export default function DashboardPage() {
               <h2>Pedidos recentes</h2>
             </div>
 
-            <Link href="/pedidos" className="dashboard-link">
+            <Link href="/admin/pedidos" className="dashboard-link">
               Ver todos
               <i className="bi bi-arrow-right" />
             </Link>
@@ -1024,7 +1024,7 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <Link href="/pedidos" className="dashboard-link block">
+          <Link href="/admin/pedidos" className="dashboard-link block">
             Ver todas as atividades
             <i className="bi bi-arrow-right" />
           </Link>

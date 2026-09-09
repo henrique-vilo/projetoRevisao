@@ -22,13 +22,7 @@
 
   overflow: hidden;
 
-  background:
-    linear-gradient(
-      135deg,
-      #102a43,
-      #1769aa,
-      #00a9d4
-    );
+  background: #102a43;
 
   color: #ffffff;
 }
@@ -133,7 +127,7 @@
 ========================================= */
 
 .suporte-duvidas {
-  padding: 80px 0 60px;
+  padding: 70px 0 35px;
 
   background: #f5f8fc;
 }
@@ -168,22 +162,12 @@
 
   height: 2px;
 
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      #00a9d4
-    );
+  background: #00a9d4;
 }
 
 
 .suporte-linha:last-child {
-  background:
-    linear-gradient(
-      90deg,
-      #00a9d4,
-      transparent
-    );
+  background: #00a9d4;
 }
 
 
@@ -396,12 +380,7 @@
 
 
 .suporte-item.item-aberto .suporte-pergunta {
-  background:
-    linear-gradient(
-      90deg,
-      #1769aa,
-      #00a9d4
-    );
+  background: #00a9d4;
 
   color: #ffffff;
 }
@@ -425,11 +404,6 @@
 
 /* =========================================
    RESPOSTA
-
-   IMPORTANTE:
-   Não usamos max-height.
-   O React só renderiza a resposta
-   quando ela está aberta.
 ========================================= */
 
 .suporte-resposta {
@@ -442,7 +416,6 @@
 
 
 @keyframes abrirResposta {
-
   from {
     opacity: 0;
 
@@ -454,7 +427,6 @@
 
     transform: translateY(0);
   }
-
 }
 
 
@@ -516,7 +488,7 @@
 ========================================= */
 
 .suporte-contato {
-  padding: 30px 0 85px;
+  padding: 25px 0 70px;
 
   background: #f5f8fc;
 }
@@ -654,12 +626,7 @@
 
   border-radius: 9px;
 
-  background:
-    linear-gradient(
-      90deg,
-      #1769aa,
-      #00a9d4
-    );
+  background: #1769aa;
 
   color: #ffffff;
 
@@ -671,12 +638,15 @@
 
   transition:
     transform 0.3s ease,
-    box-shadow 0.3s ease;
+    box-shadow 0.3s ease,
+    background 0.3s ease;
 }
 
 
 .btn-suporte:hover {
   transform: translateY(-3px);
+
+  background: #135b91;
 
   box-shadow:
     0 10px 25px rgba(0, 120, 170, 0.22);
@@ -753,7 +723,6 @@
 
 
 @keyframes abrirModal {
-
   from {
     opacity: 0;
 
@@ -765,7 +734,6 @@
 
     transform: translateY(0) scale(1);
   }
-
 }
 
 
@@ -919,6 +887,8 @@
 
   resize: vertical;
 
+  box-sizing: border-box;
+
   border: 1px solid #d5e0ea;
 
   border-radius: 10px;
@@ -1019,12 +989,7 @@
 
   border-radius: 9px;
 
-  background:
-    linear-gradient(
-      90deg,
-      #1769aa,
-      #00a9d4
-    );
+  background: #1769aa;
 
   color: #ffffff;
 
@@ -1037,12 +1002,15 @@
   transition:
     transform 0.25s ease,
     box-shadow 0.25s ease,
-    opacity 0.25s ease;
+    opacity 0.25s ease,
+    background 0.25s ease;
 }
 
 
 .btn-enviar:hover:not(:disabled) {
   transform: translateY(-2px);
+
+  background: #135b91;
 
   box-shadow:
     0 8px 20px rgba(0, 120, 170, 0.20);
@@ -1082,12 +1050,7 @@
 
   border-radius: 50%;
 
-  background:
-    linear-gradient(
-      135deg,
-      #1769aa,
-      #00a9d4
-    );
+  background: #00a9d4;
 
   color: #ffffff;
 
@@ -1142,7 +1105,6 @@
 
 
 @keyframes aparecerBackdrop {
-
   from {
     opacity: 0;
   }
@@ -1150,7 +1112,422 @@
   to {
     opacity: 1;
   }
+}
 
+
+/* ==========================================================================
+   MODO ESCURO
+   ========================================================================== */
+
+html.dark .suporte-page,
+html[data-bs-theme="dark"] .suporte-page {
+  background: var(--background) !important;
+
+  color: var(--foreground) !important;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+html.dark .suporte-header,
+html[data-bs-theme="dark"] .suporte-header {
+  background: #102a43 !important;
+
+  color: #ffffff !important;
+}
+
+html.dark .suporte-header h1,
+html[data-bs-theme="dark"] .suporte-header h1 {
+  color: #ffffff !important;
+}
+
+html.dark .suporte-header h1 span,
+html[data-bs-theme="dark"] .suporte-header h1 span {
+  color: #40ffdc !important;
+}
+
+html.dark .suporte-subtitulo,
+html[data-bs-theme="dark"] .suporte-subtitulo {
+  color: #bceeff !important;
+}
+
+html.dark .suporte-descricao,
+html[data-bs-theme="dark"] .suporte-descricao {
+  color: #dff6ff !important;
+}
+
+
+/* =========================================
+   DÚVIDAS
+========================================= */
+
+html.dark .suporte-duvidas,
+html[data-bs-theme="dark"] .suporte-duvidas {
+  background: var(--background) !important;
+}
+
+html.dark .suporte-titulo-secao h2,
+html[data-bs-theme="dark"] .suporte-titulo-secao h2 {
+  color: var(--text-primary) !important;
+}
+
+html.dark .suporte-mini-titulo,
+html[data-bs-theme="dark"] .suporte-mini-titulo {
+  color: var(--accent-color) !important;
+}
+
+html.dark .suporte-linha,
+html[data-bs-theme="dark"] .suporte-linha {
+  background: var(--accent-color) !important;
+}
+
+
+/* =========================================
+   FAQ
+========================================= */
+
+html.dark .suporte-item,
+html[data-bs-theme="dark"] .suporte-item {
+  background: var(--card-bg) !important;
+
+  border-color: var(--card-border) !important;
+
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.22) !important;
+}
+
+html.dark .suporte-pergunta,
+html[data-bs-theme="dark"] .suporte-pergunta {
+  background: var(--card-bg) !important;
+
+  color: var(--text-primary) !important;
+}
+
+html.dark .suporte-pergunta:hover,
+html[data-bs-theme="dark"] .suporte-pergunta:hover {
+  background: #26364a !important;
+
+  color: #ffffff !important;
+}
+
+html.dark .pergunta-numero,
+html[data-bs-theme="dark"] .pergunta-numero {
+  background: rgba(56, 189, 248, 0.12) !important;
+
+  color: var(--accent-color) !important;
+}
+
+html.dark .pergunta-icone,
+html[data-bs-theme="dark"] .pergunta-icone {
+  background: #243447 !important;
+
+  color: var(--accent-color) !important;
+}
+
+
+/* =========================================
+   FAQ ABERTO
+========================================= */
+
+html.dark .suporte-item.item-aberto,
+html[data-bs-theme="dark"] .suporte-item.item-aberto {
+  border-color: #2563a6 !important;
+
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.28) !important;
+}
+
+
+html.dark .suporte-item.item-aberto .suporte-pergunta,
+html[data-bs-theme="dark"] .suporte-item.item-aberto .suporte-pergunta {
+  background: #00a9d4 !important;
+
+  color: #ffffff !important;
+}
+
+
+html.dark .suporte-item.item-aberto .pergunta-numero,
+html[data-bs-theme="dark"] .suporte-item.item-aberto .pergunta-numero {
+  background: rgba(255, 255, 255, 0.18) !important;
+
+  color: #ffffff !important;
+}
+
+
+html.dark .suporte-item.item-aberto .pergunta-icone,
+html[data-bs-theme="dark"] .suporte-item.item-aberto .pergunta-icone {
+  background: #40ffdc !important;
+
+  color: #102a43 !important;
+}
+
+
+/* =========================================
+   RESPOSTA
+========================================= */
+
+html.dark .suporte-resposta,
+html[data-bs-theme="dark"] .suporte-resposta {
+  background: var(--card-bg) !important;
+
+  border-top-color: var(--card-border) !important;
+}
+
+
+html.dark .resposta-conteudo p,
+html[data-bs-theme="dark"] .resposta-conteudo p {
+  color: var(--text-secondary) !important;
+}
+
+
+html.dark .resposta-icone,
+html[data-bs-theme="dark"] .resposta-icone {
+  background: rgba(56, 189, 248, 0.12) !important;
+
+  color: var(--accent-color) !important;
+}
+
+
+/* =========================================
+   CONTATO
+========================================= */
+
+html.dark .suporte-contato,
+html[data-bs-theme="dark"] .suporte-contato {
+  background: var(--background) !important;
+}
+
+
+html.dark .contato-card,
+html[data-bs-theme="dark"] .contato-card {
+  background: var(--card-bg) !important;
+
+  border-color: var(--card-border) !important;
+
+  border-top-color: #40c0cb !important;
+
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.25) !important;
+}
+
+
+html.dark .contato-mini,
+html[data-bs-theme="dark"] .contato-mini {
+  color: var(--accent-color) !important;
+}
+
+
+html.dark .contato-texto h2,
+html[data-bs-theme="dark"] .contato-texto h2 {
+  color: var(--text-primary) !important;
+}
+
+
+html.dark .contato-texto > p:last-child,
+html[data-bs-theme="dark"] .contato-texto > p:last-child {
+  color: var(--text-secondary) !important;
+}
+
+
+html.dark .contato-icone,
+html[data-bs-theme="dark"] .contato-icone {
+  background: rgba(56, 189, 248, 0.12) !important;
+
+  color: var(--accent-color) !important;
+}
+
+
+/* =========================================
+   BOTÃO SUPORTE
+========================================= */
+
+html.dark .btn-suporte,
+html[data-bs-theme="dark"] .btn-suporte {
+  background: #1769aa !important;
+
+  color: #ffffff !important;
+}
+
+
+html.dark .btn-suporte:hover,
+html[data-bs-theme="dark"] .btn-suporte:hover {
+  background: #135b91 !important;
+
+  color: #ffffff !important;
+}
+
+
+html.dark .btn-suporte i,
+html[data-bs-theme="dark"] .btn-suporte i {
+  color: #ffffff !important;
+}
+
+
+/* =========================================
+   MODAL
+========================================= */
+
+html.dark .modal-content-custom,
+html[data-bs-theme="dark"] .modal-content-custom {
+  background: var(--card-bg) !important;
+
+  border-color: var(--card-border) !important;
+
+  border-top-color: #40c0cb !important;
+}
+
+
+html.dark .modal-header-custom,
+html[data-bs-theme="dark"] .modal-header-custom {
+  border-bottom-color: var(--card-border) !important;
+}
+
+
+html.dark .modal-icone,
+html[data-bs-theme="dark"] .modal-icone {
+  background: rgba(56, 189, 248, 0.12) !important;
+
+  color: var(--accent-color) !important;
+}
+
+
+html.dark .modal-titulo-area p,
+html[data-bs-theme="dark"] .modal-titulo-area p {
+  color: var(--accent-color) !important;
+}
+
+
+html.dark .modal-titulo-area h2,
+html[data-bs-theme="dark"] .modal-titulo-area h2 {
+  color: var(--text-primary) !important;
+}
+
+
+html.dark .modal-fechar,
+html[data-bs-theme="dark"] .modal-fechar {
+  background: #243447 !important;
+
+  color: #cbd5e1 !important;
+}
+
+
+html.dark .modal-fechar:hover,
+html[data-bs-theme="dark"] .modal-fechar:hover {
+  background: #1769aa !important;
+
+  color: #ffffff !important;
+}
+
+
+html.dark .modal-label,
+html[data-bs-theme="dark"] .modal-label {
+  color: var(--text-primary) !important;
+}
+
+
+html.dark .modal-textarea,
+html[data-bs-theme="dark"] .modal-textarea {
+  background: #0f172a !important;
+
+  border-color: #334155 !important;
+
+  color: #f8fafc !important;
+}
+
+
+html.dark .modal-textarea::placeholder,
+html[data-bs-theme="dark"] .modal-textarea::placeholder {
+  color: #64748b !important;
+}
+
+
+html.dark .modal-textarea:focus,
+html[data-bs-theme="dark"] .modal-textarea:focus {
+  border-color: var(--accent-color) !important;
+
+  box-shadow:
+    0 0 0 3px rgba(56, 189, 248, 0.14) !important;
+}
+
+
+html.dark .btn-cancelar,
+html[data-bs-theme="dark"] .btn-cancelar {
+  background: #243447 !important;
+
+  border-color: #334155 !important;
+
+  color: #cbd5e1 !important;
+}
+
+
+html.dark .btn-cancelar:hover,
+html[data-bs-theme="dark"] .btn-cancelar:hover {
+  background: #334155 !important;
+
+  border-color: #38bdf8 !important;
+
+  color: #ffffff !important;
+}
+
+
+html.dark .btn-enviar,
+html[data-bs-theme="dark"] .btn-enviar {
+  background: #1769aa !important;
+
+  color: #ffffff !important;
+}
+
+
+html.dark .btn-enviar:hover:not(:disabled),
+html[data-bs-theme="dark"] .btn-enviar:hover:not(:disabled) {
+  background: #135b91 !important;
+
+  color: #ffffff !important;
+}
+
+
+/* =========================================
+   MENSAGEM DE SUCESSO
+========================================= */
+
+html.dark .mensagem-sucesso h3,
+html[data-bs-theme="dark"] .mensagem-sucesso h3 {
+  color: var(--text-primary) !important;
+}
+
+
+html.dark .mensagem-sucesso p,
+html[data-bs-theme="dark"] .mensagem-sucesso p {
+  color: var(--text-secondary) !important;
+}
+
+
+html.dark .icone-sucesso,
+html[data-bs-theme="dark"] .icone-sucesso {
+  background: #00a9d4 !important;
+
+  color: #ffffff !important;
+}
+
+
+/* =========================================
+   GARANTIA: ZERO DEGRADÊS NESTA PÁGINA
+========================================= */
+
+.suporte-page .suporte-header,
+.suporte-page .suporte-duvidas,
+.suporte-page .suporte-contato,
+.suporte-page .suporte-item,
+.suporte-page .suporte-pergunta,
+.suporte-page .suporte-resposta,
+.suporte-page .contato-card,
+.suporte-page .btn-suporte,
+.suporte-page .modal-content-custom,
+.suporte-page .btn-enviar,
+.suporte-page .icone-sucesso {
+  background-image: none !important;
 }
 
 
@@ -1169,7 +1546,7 @@
   }
 
   .suporte-duvidas {
-    padding: 65px 15px 50px;
+    padding: 65px 15px 40px;
   }
 
   .suporte-titulo-secao h2 {
@@ -1202,7 +1579,7 @@
   }
 
   .suporte-duvidas {
-    padding: 55px 15px 40px;
+    padding: 55px 15px 35px;
   }
 
   .suporte-titulo-secao {

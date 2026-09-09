@@ -96,13 +96,13 @@ export default function Suporte() {
     setCarregando(true);
 
     try {
-      //const token = localStorage.getItem("token") || ""; 
+      const token = localStorage.getItem("token") || ""; 
 
       const respostaApi = await fetch("http://localhost:3001/api/suporte", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-        //  "Authorization": `Bearer ${token}`
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
           assunto: assunto.trim(),

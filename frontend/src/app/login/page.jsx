@@ -3,22 +3,32 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
 import styles from "../auth.module.css";
 
 const API_URL = (
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
 ).replace(/\/$/, "");
 
-function AuthBrand() {
-  return (
-    <Link href="/" className={styles.brand} aria-label="Everett — página inicial">
-      <span className={styles.brandMark} aria-hidden="true">
-        <span className={styles.brandLetter}>E</span>
-      </span>
-      <span>Everett</span>
-    </Link>
-  );
+/*
+ * ============================================================
+ * TEMA
+ * ============================================================
+ */
+
+function aplicarTema(isDark) {
+  if (typeof document === "undefined") return;
+
+  const html = document.documentElement;
+
+  if (isDark) {
+    html.classList.add("dark");
+    html.setAttribute("data-bs-theme", "dark");
+    localStorage.setItem("tema", "dark");
+  } else {
+    html.classList.remove("dark");
+    html.setAttribute("data-bs-theme", "light");
+    localStorage.setItem("tema", "light");
+  }
 }
 
 function EyeIcon({ hidden }) {
@@ -61,25 +71,41 @@ function EyeIcon({ hidden }) {
   );
 }
 
-function PasswordField({ id, label, name, autoComplete }) {
+function PasswordField({
+  id,
+  label,
+  name,
+  autoComplete,
+  showValidation,
+}) {
   const [visible, setVisible] = useState(false);
 
   return (
-    <div>
+    <div className="mb-3">
       <label htmlFor={id} className={styles.formLabel}>
         {label}
       </label>
+
       <div className={styles.passwordWrap}>
         <input
           id={id}
           name={name}
           type={visible ? "text" : "password"}
-          className={`form-control ${styles.formControl} ${styles.passwordControl}`}
+          className={[
+            "form-control",
+            styles.formControl,
+            styles.passwordControl,
+            !showValidation ? "no-validation-icon" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           placeholder="Digite sua senha"
           autoComplete={autoComplete}
           minLength={6}
           required
+          aria-describedby={`${id}-feedback`}
         />
+
         <button
           type="button"
           className={styles.passwordButton}
@@ -89,7 +115,8 @@ function PasswordField({ id, label, name, autoComplete }) {
         >
           <EyeIcon hidden={visible} />
         </button>
-        <div className="invalid-feedback">
+
+        <div id={`${id}-feedback`} className="invalid-feedback">
           A senha deve possuir pelo menos 6 caracteres.
         </div>
       </div>
@@ -99,36 +126,61 @@ function PasswordField({ id, label, name, autoComplete }) {
 
 export default function LoginPage() {
   const router = useRouter();
+
   const [validated, setValidated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
+
+  /*
+   * ============================================================
+   * FEEDBACK DE AUTENTICAÇÃO
+   * ============================================================
+   */
 
   useEffect(() => {
     const mensagem = sessionStorage.getItem("authFeedback");
 
     if (mensagem) {
-      setFeedback({ tipo: "success", mensagem });
+      setFeedback({
+        tipo: "success",
+        mensagem,
+      });
+
       sessionStorage.removeItem("authFeedback");
     }
   }, []);
+
+  /*
+   * ============================================================
+   * LOGIN
+   * ============================================================
+   */
 
   async function handleSubmit(event) {
     event.preventDefault();
 
     const form = event.currentTarget;
+
+    // A validação visual só começa depois que o usuário tenta enviar.
     setValidated(true);
     setFeedback(null);
 
     if (!form.checkValidity()) {
-      event.preventDefault();
       event.stopPropagation();
       return;
     }
 
     const formData = new FormData(form);
+
+    const email = String(formData.get("email") || "")
+      .trim()
+      .toLowerCase();
+
+    const senha = String(formData.get("senha") || "");
+
     const payload = {
-      email: formData.get("email").trim().toLowerCase(),
-      senha: formData.get("senha"),
+      email,
+      senha,
     };
 
     try {
@@ -146,7 +198,9 @@ export default function LoginPage() {
 
       if (!response.ok) {
         throw new Error(
-          resultado?.mensagem || resultado?.erro || "Não foi possível fazer login."
+          resultado?.mensagem ||
+            resultado?.erro ||
+            "E-mail ou senha incorretos."
         );
       }
 
@@ -154,15 +208,38 @@ export default function LoginPage() {
       const usuario = resultado?.dados?.usuario;
 
       if (!token || !usuario) {
-        throw new Error("A resposta do servidor não contém os dados do login.");
+        throw new Error(
+          "A resposta do servidor não contém os dados do login."
+        );
       }
 
+      /*
+       * Salva a sessão.
+       */
       localStorage.setItem("token", token);
       localStorage.setItem("usuario", JSON.stringify(usuario));
 
+      /*
+       * ========================================================
+       * ADMINISTRADOR
+       * ========================================================
+       *
+       * Ao entrar com uma conta admin, força automaticamente
+       * o modo claro, seguindo exatamente a lógica do Header.
+       */
+      if (usuario.tipo === "admin") {
+        aplicarTema(false);
+      }
+
+      /*
+       * Redirecionamento.
+       */
       router.replace(
-        usuario.tipo === "admin" ? "/admin/dashboard" : "/"
+        usuario.tipo === "admin"
+          ? "/admin/dashboard"
+          : "/"
       );
+
       router.refresh();
     } catch (error) {
       setFeedback({
@@ -170,7 +247,8 @@ export default function LoginPage() {
         mensagem:
           error instanceof TypeError
             ? "Não foi possível conectar ao servidor. Verifique se a API está funcionando."
-            : error.message || "Não foi possível fazer login. Tente novamente.",
+            : error.message ||
+              "Não foi possível fazer login. Tente novamente.",
       });
     } finally {
       setLoading(false);
@@ -184,23 +262,34 @@ export default function LoginPage() {
           className={`${styles.authCard} ${styles.loginCard}`}
           aria-labelledby="login-title"
         >
-          <header className="text-center mb-4 mb-md-5 d-flex flex-column">
-            <AuthBrand />
-            <h1 id="login-title" className={`${styles.heading} mt-4 mt-md-5`}>
+          <header className="text-center mb-4 mb-md-5">
+            <h1
+              id="login-title"
+              className={`${styles.heading} mb-3`}
+            >
               Bem-vindo de volta
             </h1>
+
             <p className={styles.supportingText}>
-              Faça login para acessar suas compras, pedidos e ofertas exclusivas.
+              Faça login para acessar suas compras, pedidos e ofertas
+              exclusivas.
             </p>
           </header>
 
           {feedback && (
             <div
-              className={`alert alert-${feedback.tipo}`}
+              className={`alert alert-${feedback.tipo} ${styles.authFeedback}`}
               role="alert"
               aria-live="polite"
             >
-              {feedback.mensagem}
+              <span
+                className={styles.feedbackIcon}
+                aria-hidden="true"
+              >
+                {feedback.tipo === "success" ? "✓" : "!"}
+              </span>
+
+              <span>{feedback.mensagem}</span>
             </div>
           )}
 
@@ -211,9 +300,13 @@ export default function LoginPage() {
             aria-busy={loading}
           >
             <div className="mb-3">
-              <label htmlFor="login-email" className={styles.formLabel}>
+              <label
+                htmlFor="login-email"
+                className={styles.formLabel}
+              >
                 E-mail
               </label>
+
               <input
                 id="login-email"
                 name="email"
@@ -224,7 +317,10 @@ export default function LoginPage() {
                 inputMode="email"
                 required
               />
-              <div className="invalid-feedback">Digite um e-mail válido.</div>
+
+              <div className="invalid-feedback">
+                Digite um e-mail válido.
+              </div>
             </div>
 
             <PasswordField
@@ -232,18 +328,14 @@ export default function LoginPage() {
               name="senha"
               label="Senha"
               autoComplete="current-password"
+              showValidation={validated}
             />
-
-            <div className="text-end mt-3">
-              <Link href="/recuperar-senha" className={styles.textLink}>
-                Esqueci minha senha
-              </Link>
-            </div>
 
             <button
               type="submit"
               className={`btn w-100 mt-4 ${styles.primaryButton}`}
               disabled={loading}
+              aria-disabled={loading}
             >
               {loading && (
                 <span
@@ -251,13 +343,20 @@ export default function LoginPage() {
                   aria-hidden="true"
                 />
               )}
+
               {loading ? "Entrando..." : "Entrar"}
             </button>
           </form>
 
-          <p className={`${styles.footerText} text-center mb-0 mt-4`}>
+          <p
+            className={`${styles.footerText} text-center mb-0 mt-4`}
+          >
             Ainda não tem uma conta?{" "}
-            <Link href="/cadastro" className={styles.textLink}>
+
+            <Link
+              href="/cadastro"
+              className={styles.textLink}
+            >
               Cadastre-se
             </Link>
           </p>

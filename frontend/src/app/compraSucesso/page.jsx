@@ -29,14 +29,17 @@ export default function CompraSucesso() {
             pedido no seu e-mail.
           </p>
 
-          <Link href="/" className="voltarInicio">
-            <i className="bi bi-house"></i>
-            Voltar para a página inicial
-          </Link>
-          <Link href="/meus-pedidos" className="voltarInicio">
-            <i className="bi bi-box-seam"></i>
-            Acompanhar meus pedidos
-          </Link>
+          <div className="sucessoAcoes">
+            <Link href="/" className="voltarInicio">
+              <i className="bi bi-house"></i>
+              Voltar para a página inicial
+            </Link>
+
+            <Link href="/meus-pedidos" className="voltarInicio">
+              <i className="bi bi-box-seam"></i>
+              Acompanhar meus pedidos
+            </Link>
+          </div>
         </div>
       </div>
     </main>

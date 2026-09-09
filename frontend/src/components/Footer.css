@@ -1,6 +1,7 @@
 /* ==========================================================================
-   ESTILOS DO FOOTER (MODO CLARO)
+   ESTILOS DO FOOTER
    ========================================================================== */
+
 .footer {
   background: linear-gradient(
     180deg,
@@ -8,39 +9,70 @@
     #e6effd 100%
   );
   color: #111;
-  font-family: Arial, sans-serif;
+  font-family: "Inter", Arial, sans-serif;
 }
 
+
+/* ==========================================================================
+   MARCA
+   ========================================================================== */
+
 .brand-text-top {
-  font-family: serif;
-  font-size: 1.2rem;
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
   color: #333;
 }
 
 .brand-name {
+  font-family: "Inter", Arial, sans-serif;
   font-size: 3rem;
-  letter-spacing: 2px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 1;
   color: #000;
 }
 
 .brand-description {
+  font-family: "Inter", Arial, sans-serif;
   color: #555;
-  font-size: 1rem;
+  font-size: 0.92rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.6;
 }
+
+
+/* ==========================================================================
+   REDES SOCIAIS
+   ========================================================================== */
 
 .social-link {
   color: #111;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
+  font-weight: 400;
   text-decoration: none;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.3s ease;
+
+  transition:
+    color 0.25s ease,
+    transform 0.25s ease;
 }
 
 .social-link:hover {
   color: #555;
+  transform: translateY(-2px);
 }
+
+
+/* ==========================================================================
+   DIVISÓRIA
+   ========================================================================== */
 
 .footer hr {
   border-color: rgba(0, 0, 0, 0.1);
@@ -48,49 +80,104 @@
   margin: 0 auto;
 }
 
+
+/* ==========================================================================
+   COLUNAS DO FOOTER
+   ========================================================================== */
+
 .footer-columns {
   max-width: 90%;
   margin: 0 auto;
 }
 
 .footer-columns ul li {
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 }
 
+
+/* ==========================================================================
+   TÍTULOS DAS COLUNAS
+   ========================================================================== */
+
 .column-header {
-  font-size: 1.1rem;
-  letter-spacing: 1px;
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
   text-transform: uppercase;
   color: #000;
 }
 
+
+/* ==========================================================================
+   LINKS
+   ========================================================================== */
+
 .footer-link {
+  font-family: "Inter", Arial, sans-serif;
   color: #333;
   text-decoration: none;
+
   display: inline-block;
+
   padding: 2px 0;
-  transition: color 0.2s ease;
+
+  font-size: 0.88rem;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  line-height: 1.5;
+
+  transition:
+    color 0.2s ease,
+    text-decoration-color 0.2s ease;
 }
 
 .footer-link:hover {
   color: #000;
   text-decoration: underline;
+  text-underline-offset: 3px;
 }
+
+
+/* ==========================================================================
+   CONTATO E MISSÃO
+   ========================================================================== */
 
 .contact-info,
 .mission-text {
+  font-family: "Inter", Arial, sans-serif;
   color: #333;
+  font-size: 0.88rem;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  line-height: 1.6;
   margin-bottom: 5px;
 }
 
+.mission-text {
+  max-width: 240px;
+}
+
+
+/* ==========================================================================
+   COPYRIGHT
+   ========================================================================== */
+
 .copyright-text {
-  font-size: 0.9rem;
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 0.76rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
   color: #666;
 }
 
+
 /* ==========================================================================
-   ADAPTAÇÃO DO FOOTER PARA O MODO ESCURO
+   MODO ESCURO
    ========================================================================== */
+
 html.dark .footer,
 html[data-bs-theme="dark"] .footer {
   background: linear-gradient(
@@ -98,6 +185,7 @@ html[data-bs-theme="dark"] .footer {
     #0f172a 0%,
     #030712 100%
   ) !important;
+
   color: #f8fafc !important;
 }
 
@@ -156,4 +244,52 @@ html[data-bs-theme="dark"] .mission-text {
 html.dark .copyright-text,
 html[data-bs-theme="dark"] .copyright-text {
   color: #64748b !important;
+}
+
+
+/* ==========================================================================
+   RESPONSIVIDADE
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .brand-name {
+    font-size: 2.4rem;
+    letter-spacing: 0.12em;
+  }
+
+  .brand-text-top {
+    font-size: 0.95rem;
+  }
+
+  .brand-description {
+    font-size: 0.88rem;
+  }
+
+  .column-header {
+    font-size: 0.74rem;
+    letter-spacing: 0.12em;
+  }
+
+  .footer-link,
+  .contact-info,
+  .mission-text {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-name {
+    font-size: 2rem;
+    letter-spacing: 0.1em;
+  }
+
+  .brand-description {
+    max-width: 280px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .social-link {
+    font-size: 1.3rem;
+  }
 }
