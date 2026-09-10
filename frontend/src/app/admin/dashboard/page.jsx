@@ -865,7 +865,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="quick-actions">
-            <Link href="/pedidos" className="quick-action">
+            <Link href="/admin/pedidos" className="quick-action">
               <span className="quick-action-icon blue">
                 <i className="bi bi-plus-lg" />
               </span>
@@ -876,7 +876,7 @@ export default function DashboardPage() {
               <i className="bi bi-chevron-right" />
             </Link>
 
-            <Link href="/produtos" className="quick-action">
+            <Link href="/admin/produtos" className="quick-action">
               <span className="quick-action-icon purple">
                 <i className="bi bi-box-seam" />
               </span>
@@ -898,7 +898,7 @@ export default function DashboardPage() {
               <i className="bi bi-chevron-right" />
             </button>
 
-            <Link href="/usuarios" className="quick-action">
+            <Link href="/admin/usuarios" className="quick-action">
               <span className="quick-action-icon orange">
                 <i className="bi bi-person-plus" />
               </span>

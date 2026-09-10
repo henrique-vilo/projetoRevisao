@@ -448,12 +448,12 @@ export default function CadastroPage() {
                   />
                   <label className="form-check-label" htmlFor="aceite-termos">
                     Li e aceito os{" "}
-                    <Link href="/termos-de-uso" className={styles.textLink}>
+                    <Link href="/documentos/termos-de-uso.pdf" className={styles.textLink}>
                       Termos de Uso
                     </Link>{" "}
                     e a{" "}
                     <Link
-                      href="/politica-de-privacidade"
+                      href="/documentos/politica-de-privacidade.pdf"
                       className={styles.textLink}
                     >
                       Política de Privacidade

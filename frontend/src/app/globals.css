@@ -39,7 +39,6 @@ html[data-bs-theme="dark"] {
   --accent-color: #38bdf8;
 }
 
-
 /* ==========================================================================
   2. ESTILOS BASE
   ========================================================================== */
@@ -66,9 +65,7 @@ a {
   text-decoration: none;
 }
 
-
 /* O layout do header pertence a components/Header.css. */
-
 
 /* ==========================================================================
   4. DROPDOWN DO HEADER
@@ -187,18 +184,25 @@ a {
   color: var(--accent-color) !important;
 }
 
-
 /* ==========================================================================
-  5. DROPDOWN NO MODO ESCURO
+  5. DROPDOWN E HEADER NO MODO ESCURO
   ========================================================================== */
 
+/* CORREÇÃO: Inclusão de submenus, mega-menus e áreas "Ver Mais" no header */
 html.dark .dropdown-menu,
 html.dark .nav-item-container > div,
+html.dark [class*="submenu"],
+html.dark [class*="mega-menu"],
+html.dark [class*="menu-mais"],
+html.dark [class*="ver-mais"],
 html[data-bs-theme="dark"] .dropdown-menu,
-html[data-bs-theme="dark"] .nav-item-container > div {
+html[data-bs-theme="dark"] .nav-item-container > div,
+html[data-bs-theme="dark"] [class*="submenu"],
+html[data-bs-theme="dark"] [class*="mega-menu"],
+html[data-bs-theme="dark"] [class*="menu-mais"],
+html[data-bs-theme="dark"] [class*="ver-mais"] {
   background-color: #1e293b !important;
   border: 1px solid #334155 !important;
-
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
 }
 
@@ -208,15 +212,23 @@ html[data-bs-theme="dark"] .nav-item-container > div {
 */
 html.dark .dropdown-menu,
 html.dark .nav-item-container > div,
+html.dark [class*="submenu"],
+html.dark [class*="mega-menu"],
 html[data-bs-theme="dark"] .dropdown-menu,
-html[data-bs-theme="dark"] .nav-item-container > div {
+html[data-bs-theme="dark"] .nav-item-container > div,
+html[data-bs-theme="dark"] [class*="submenu"],
+html[data-bs-theme="dark"] [class*="mega-menu"] {
   color: #f8fafc !important;
 }
 
 html.dark .dropdown-menu > *,
 html.dark .nav-item-container > div > *,
+html.dark [class*="submenu"] > *,
+html.dark [class*="mega-menu"] > *,
 html[data-bs-theme="dark"] .dropdown-menu > *,
-html[data-bs-theme="dark"] .nav-item-container > div > * {
+html[data-bs-theme="dark"] .nav-item-container > div > *,
+html[data-bs-theme="dark"] [class*="submenu"] > *,
+html[data-bs-theme="dark"] [class*="mega-menu"] > * {
   color: inherit;
 }
 
@@ -229,8 +241,12 @@ html[data-bs-theme="dark"] .dropdown-count {
 
 html.dark .dropdown-menu a:hover,
 html.dark .dropdown-menu li:hover,
+html.dark [class*="submenu"] a:hover,
+html.dark [class*="submenu"] li:hover,
 html[data-bs-theme="dark"] .dropdown-menu a:hover,
-html[data-bs-theme="dark"] .dropdown-menu li:hover {
+html[data-bs-theme="dark"] .dropdown-menu li:hover,
+html[data-bs-theme="dark"] [class*="submenu"] a:hover,
+html[data-bs-theme="dark"] [class*="submenu"] li:hover {
   background-color: #334155 !important;
   color: #ffffff !important;
 }
@@ -246,11 +262,12 @@ html[data-bs-theme="dark"] .dropdown-footer-link {
 
 html.dark .dropdown-footer-link,
 html.dark .dropdown-menu a[href*="categoria"],
+html.dark [class*="ver-mais"] a,
 html[data-bs-theme="dark"] .dropdown-footer-link,
-html[data-bs-theme="dark"] .dropdown-menu a[href*="categoria"] {
+html[data-bs-theme="dark"] .dropdown-menu a[href*="categoria"],
+html[data-bs-theme="dark"] [class*="ver-mais"] a {
   color: #38bdf8 !important;
 }
-
 
 /* ==========================================================================
   6. MODO ESCURO GERAL DA APLICAÇÃO
@@ -278,8 +295,6 @@ html[data-bs-theme="dark"] .bg-body {
 
 /*
 * Texto geral.
-* Evita usar seletores excessivamente genéricos como [class*="title"],
-* que poderiam alterar componentes que não pertencem ao conteúdo principal.
 */
 html.dark h1,
 html.dark h2,
@@ -315,7 +330,6 @@ html[data-bs-theme="dark"] .text-secondary {
   color: var(--text-secondary) !important;
 }
 
-
 /* ==========================================================================
   6.1 CARDS
   ========================================================================== */
@@ -330,7 +344,6 @@ html[data-bs-theme="dark"] [class*="product-item"] {
   color: var(--foreground) !important;
   border-color: var(--card-border) !important;
 }
-
 
 /* ==========================================================================
   6.2 INPUTS
@@ -364,7 +377,6 @@ html[data-bs-theme="dark"] option {
   background-color: var(--input-bg);
   color: var(--foreground);
 }
-
 
 /* ==========================================================================
   7. CARROSSEL & FOOTER
@@ -454,7 +466,6 @@ html[data-bs-theme="dark"] .copyright-text {
   color: #64748b !important;
 }
 
-
 /* ==========================================================================
   8. BOTÕES E CTA EM BANNERS
   ========================================================================== */
@@ -477,9 +488,20 @@ html[data-bs-theme="dark"] .copyright-text {
   visibility: visible !important;
 }
 
+html.dark #heroCarousel .carousel-item a:not(.btn-white):not(.btn-light),
+html.dark .hero-section a:not(.btn-white):not(.btn-light),
+html.dark [class*="banner"] a:not(.btn-white):not(.btn-light),
+html[data-bs-theme="dark"] #heroCarousel .carousel-item a:not(.btn-white):not(.btn-light),
+html[data-bs-theme="dark"] .hero-section a:not(.btn-white):not(.btn-light),
+html[data-bs-theme="dark"] [class*="banner"] a:not(.btn-white):not(.btn-light) {
+  background-color: var(--accent-color) !important;
+  color: #ffffff !important;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+}
+
 /*
 * Somente os botões explicitamente claros recebem fundo branco.
-* Isso evita transformar todos os links de banners em botões brancos.
 */
 .btn-white,
 .btn-light,
@@ -501,7 +523,6 @@ html[data-bs-theme="dark"] .btn-light * {
   color: #0f172a !important;
 }
 
-
 /* ==========================================================================
   9. BARRA LATERAL DE FILTROS & PRODUTOS
   ========================================================================== */
@@ -511,6 +532,15 @@ html[data-bs-theme="dark"] aside {
   background-color: var(--card-bg) !important;
   border: 1px solid var(--card-border) !important;
   color: var(--foreground) !important;
+}
+
+html.dark [class*="sidebar"] a,
+html.dark [class*="filter"] a,
+html.dark [class*="filtros"] a,
+html[data-bs-theme="dark"] [class*="sidebar"] a,
+html[data-bs-theme="dark"] [class*="filter"] a,
+html[data-bs-theme="dark"] [class*="filtros"] a {
+  color: var(--text-primary) !important;
 }
 
 html.dark [class*="filter"] label,
@@ -592,15 +622,9 @@ html[data-bs-theme="dark"] [class*="filtros"] a[class*="limpar"] {
   color: var(--accent-color) !important;
 }
 
-
 /* ==========================================================================
   10. PREÇOS E TÍTULOS NOS CARDS
   ========================================================================== */
-
-/*
-* Os seletores de preço ficam separados dos textos gerais para evitar
-* que uma regra posterior sobrescreva o azul de destaque.
-*/
 
 [class*="price"],
 [class*="preco"],
@@ -626,7 +650,6 @@ html[data-bs-theme="dark"] .card-price {
 
 /*
 * Texto normal dos cards.
-* A regra não inclui elementos de preço para evitar sobrescrevê-los.
 */
 
 html.dark [class*="card"] a:not([class*="price"]):not([class*="preco"]),
@@ -653,7 +676,6 @@ html[data-bs-theme="dark"] [class*="card"] h6 {
   color: var(--foreground) !important;
 }
 
-
 /* Preço promocional */
 
 html.dark [class*="old-price"],
@@ -669,7 +691,6 @@ html[data-bs-theme="dark"] del {
   color: var(--text-secondary) !important;
   opacity: 0.75;
 }
-
 
 /* ==========================================================================
   11. SELOS, BADGES E TAGS
@@ -687,9 +708,7 @@ html[data-bs-theme="dark"] del {
 .card-badge {
   background-color: #323c523d !important;
   color: #ffffff !important;
-
   border: 1px solid rgba(196, 196, 196, 0.075) !important;
-
   font-weight: 700 !important;
   z-index: 10 !important;
 }
@@ -704,11 +723,9 @@ html[data-bs-theme="dark"] del {
   color: #ffffff !important;
 }
 
-
 /*
 * Badges explicitamente brancas continuam com texto escuro.
 */
-
 .bg-white[class*="badge"],
 .bg-white[class*="tag"],
 .bg-white[class*="selo"],
@@ -746,13 +763,11 @@ html[data-bs-theme="dark"] .bg-light[class*="selo"] * {
   color: #0f172a !important;
 }
 
-
 /* ==========================================================================
   12. CARROSSEL
   ========================================================================== */
 
 /* Indicadores */
-
 .carousel-indicators [data-bs-target],
 .carousel-indicators button,
 .swiper-pagination-bullet,
@@ -767,7 +782,6 @@ html[data-bs-theme="dark"] .bg-light[class*="selo"] * {
   background-color: var(--accent-color) !important;
   opacity: 1 !important;
 }
-
 
 /* ==========================================================================
   13. FAIXA DE BENEFÍCIOS / INFORMAÇÕES
@@ -814,9 +828,7 @@ html[data-bs-theme="dark"] [class*="hero-footer"] {
   color: #f8fafc !important;
 }
 
-
 /* Textos da faixa */
-
 html.dark [class*="benefit"] *,
 html.dark [class*="vantag"] *,
 html.dark [class*="feature"] *,
@@ -840,9 +852,7 @@ html[data-bs-theme="dark"] [class*="hero-footer"] * {
   color: #f8fafc !important;
 }
 
-
 /* Ícones SVG / FontAwesome / Bootstrap Icons */
-
 html.dark [class*="benefit"] svg,
 html.dark [class*="vantag"] svg,
 html.dark [class*="feature"] svg,
@@ -887,16 +897,6 @@ html[data-bs-theme="dark"] [class*="hero-footer"] i {
   fill: currentColor !important;
   stroke: currentColor !important;
 }
-
-
-/*
-* IMPORTANTE:
-* Não aplicar filter: brightness(0) invert(1) em todas as imagens.
-*
-* Imagens coloridas, logos e ilustrações podem ficar visualmente incorretas.
-* Caso exista um ícone especificamente escuro que precise ser invertido,
-* aplique a classe .dark-icon nele individualmente.
-*/
 
 html.dark .dark-icon,
 html[data-bs-theme="dark"] .dark-icon {

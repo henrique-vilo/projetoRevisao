@@ -974,6 +974,46 @@ export default function Header() {
 
   /*
    * ============================================================
+   * CONTROLE DAS CATEGORIAS DO HEADER
+   * ============================================================
+   *
+   * Mantemos todas as categorias vindas do banco, mas exibimos
+   * apenas algumas diretamente no Header. O restante fica dentro
+   * do menu "Mais", evitando que o Header quebre quando novas
+   * categorias forem cadastradas.
+   */
+
+  const LIMITE_CATEGORIAS_HEADER = 5;
+
+  // Ordena as categorias pela quantidade de produtos, da maior para a menor.
+  // Assim, as categorias mais populares aparecem primeiro no Header.
+  const categoriasOrdenadas = [...categorias].sort((a, b) => {
+    const totalA = Number(a?.totalProdutos) || 0;
+    const totalB = Number(b?.totalProdutos) || 0;
+
+    if (totalB !== totalA) {
+      return totalB - totalA;
+    }
+
+    // Em caso de empate, mantém uma ordem estável pelo nome.
+    return String(a?.nomeCategoria || "").localeCompare(
+      String(b?.nomeCategoria || ""),
+      "pt-BR",
+      { sensitivity: "base" }
+    );
+  });
+
+  const categoriasVisiveis = categoriasOrdenadas.slice(
+    0,
+    LIMITE_CATEGORIAS_HEADER
+  );
+
+  const categoriasExtras = categoriasOrdenadas.slice(
+    LIMITE_CATEGORIAS_HEADER
+  );
+
+  /*
+   * ============================================================
    * RENDER
    * ============================================================
    */
@@ -991,6 +1031,124 @@ export default function Header() {
         }
       }}
     >
+      <style>{`
+        .categories-list {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          flex-wrap: nowrap;
+          overflow: visible;
+        }
+
+        .categories-list > .category-item {
+          flex-shrink: 0;
+        }
+
+        .category-more {
+          position: relative;
+          flex-shrink: 0;
+        }
+
+        .category-more-button {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+          font: inherit;
+        }
+
+        .category-more-dropdown {
+          position: absolute;
+          top: calc(100% + 10px);
+          right: 0;
+          width: 280px;
+          max-height: 420px;
+          overflow-y: auto;
+          padding: 10px;
+          border-radius: 16px;
+          background: var(--header-background, #ffffff);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          box-shadow: 0 14px 35px rgba(0, 0, 0, 0.15);
+          z-index: 2000;
+        }
+
+        .category-more-header {
+          padding: 8px 10px 12px;
+          margin-bottom: 5px;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .category-more-header div {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+        }
+
+        .category-more-header span {
+          font-size: 12px;
+          opacity: 0.65;
+        }
+
+        .category-more-header strong {
+          font-size: 15px;
+        }
+
+        .category-more-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+
+        .category-more-list li {
+          width: 100%;
+        }
+
+        .category-more-list li a {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          width: 100%;
+          padding: 10px 12px;
+          border-radius: 10px;
+          text-decoration: none;
+          box-sizing: border-box;
+        }
+
+        .category-more-list li a:hover {
+          background: rgba(0, 0, 0, 0.05);
+        }
+
+        .category-more-list li a span {
+          flex: 1;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .category-more-list li a small {
+          flex-shrink: 0;
+          font-size: 11px;
+          opacity: 0.6;
+          white-space: nowrap;
+        }
+
+        .category-more-list li a i {
+          flex-shrink: 0;
+          font-size: 12px;
+          opacity: 0.5;
+        }
+
+        @media (max-width: 900px) {
+          .category-more-dropdown {
+            width: 250px;
+            right: -10px;
+          }
+        }
+      `}</style>
+
       <nav
         className="navbar-main"
         aria-label="Categorias de produtos"
@@ -1039,12 +1197,12 @@ export default function Header() {
             </>
           ) : null}
 
-          {categorias.map((categoria) => {
+          {categoriasVisiveis.map((categoria) => {
             const estaAberta =
-              categoriaAtiva ===
-              categoria.idCategoria;
+              categoriaAtiva === categoria.idCategoria;
 
-            const categoriaUrl = `/produtos?idCategoria=${categoria.idCategoria}`;
+            const categoriaUrl =
+              `/produtos?idCategoria=${categoria.idCategoria}`;
 
             return (
               <li
@@ -1058,14 +1216,10 @@ export default function Header() {
                   href={categoriaUrl}
                   className="category-link"
                   onMouseEnter={() =>
-                    setCategoriaAtiva(
-                      categoria.idCategoria
-                    )
+                    setCategoriaAtiva(categoria.idCategoria)
                   }
                   onFocus={() =>
-                    setCategoriaAtiva(
-                      categoria.idCategoria
-                    )
+                    setCategoriaAtiva(categoria.idCategoria)
                   }
                   onClick={() =>
                     setCategoriaAtiva(null)
@@ -1093,8 +1247,7 @@ export default function Header() {
                       </span>
                     </div>
 
-                    {categoria.subcategorias?.length >
-                    0 ? (
+                    {categoria.subcategorias?.length > 0 ? (
                       <ul className="subcategory-list">
                         {categoria.subcategorias.map(
                           (subcategoria) => (
@@ -1156,6 +1309,90 @@ export default function Header() {
               </li>
             );
           })}
+
+          {categoriasExtras.length > 0 ? (
+            <li
+              className={`category-item category-more ${
+                categoriaAtiva === "mais" ? "active" : ""
+              }`}
+              onMouseEnter={() =>
+                setCategoriaAtiva("mais")
+              }
+              onFocus={() =>
+                setCategoriaAtiva("mais")
+              }
+              onBlur={fecharMenuAoSair}
+            >
+              <button
+                type="button"
+                className="category-link category-more-button"
+                aria-expanded={categoriaAtiva === "mais"}
+                aria-haspopup="menu"
+              >
+                Mais
+
+                <i
+                  className="bi bi-chevron-down"
+                  aria-hidden="true"
+                />
+              </button>
+
+              {categoriaAtiva === "mais" ? (
+                <div
+                  className="category-more-dropdown"
+                  role="menu"
+                  aria-label="Mais categorias"
+                >
+                  <div className="category-more-header">
+                    <div>
+                      <span>Mais categorias</span>
+                      <strong>
+                        {categoriasExtras.length} disponíveis
+                      </strong>
+                    </div>
+                  </div>
+
+                  <ul className="category-more-list">
+                    {categoriasExtras.map((categoria) => {
+                      const categoriaUrl =
+                        `/produtos?idCategoria=${categoria.idCategoria}`;
+
+                      return (
+                        <li key={categoria.idCategoria}>
+                          <Link
+                            href={categoriaUrl}
+                            role="menuitem"
+                            onMouseEnter={() =>
+                              setCategoriaAtiva("mais")
+                            }
+                            onClick={() =>
+                              setCategoriaAtiva(null)
+                            }
+                          >
+                            <span>
+                              {categoria.nomeCategoria}
+                            </span>
+
+                            <small>
+                              {categoria.totalProdutos} produto
+                              {categoria.totalProdutos === 1
+                                ? ""
+                                : "s"}
+                            </small>
+
+                            <i
+                              className="bi bi-arrow-right"
+                              aria-hidden="true"
+                            />
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ) : null}
+            </li>
+          ) : null}
 
           {!carregando && erro ? (
             <li

@@ -26,7 +26,7 @@ export default function Footer() {
           </h1>
 
           <p className="brand-description mb-4">
-            Estilo, qualidade e personalidade para todos os momentos.
+            Estilo a sua altura
           </p>
 
           {/* Redes sociais - links externos */}
